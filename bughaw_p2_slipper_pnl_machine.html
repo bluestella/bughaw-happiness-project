@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bughaw P2 — Coconut Slipper P&amp;L Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F6F4EE;
+    --surface: #FFFFFF;
+    --surface-sunken: #EFEBE1;
+    --ink: #24231F;
+    --ink-secondary: #6B6A62;
+    --ink-muted: #9B9A90;
+    --border: #E1DDD0;
+    --teal: #0F6E56;
+    --teal-bg: #E1F5EE;
+    --teal-text: #085041;
+    --coral: #D85A30;
+    --coral-bg: #FAECE7;
+    --coral-text: #712B13;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+    padding: 0 0 4rem;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 0 24px;
+    margin-bottom: 32px;
+  }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 28px;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .subhead {
+    color: var(--ink-secondary);
+    font-size: 14px;
+    margin: 0;
+    max-width: 640px;
+  }
+  h2.section-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--ink-secondary);
+    margin: 0 0 16px;
+  }
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .field { margin-bottom: 18px; position: relative; }
+  .field:last-child { margin-bottom: 0; }
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .field-label {
+    font-size: 13px;
+    color: var(--ink-secondary);
+    flex: 1;
+  }
+  .field-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    text-align: right;
+    min-width: 64px;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--surface-sunken);
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--teal);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--teal);
+  }
+  .info-btn {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--ink-muted);
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .info-btn:hover, .info-btn[aria-expanded="true"] {
+    border-color: var(--teal);
+    color: var(--teal);
+  }
+  .popover {
+    display: none;
+    position: absolute;
+    z-index: 20;
+    top: -6px;
+    left: 100%;
+    margin-left: 10px;
+    width: 220px;
+    background: var(--ink);
+    color: #F6F4EE;
+    font-size: 12.5px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+  .popover.open { display: block; }
+  .popover::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: -5px;
+    width: 8px;
+    height: 8px;
+    background: var(--ink);
+    transform: rotate(45deg);
+  }
+  @media (max-width: 700px) {
+    .popover { left: auto; right: 0; top: 26px; margin-left: 0; }
+    .popover::before { display: none; }
+  }
+  .chart-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px 12px;
+    margin-bottom: 20px;
+  }
+  .chart-box { position: relative; width: 100%; height: 320px; }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+  }
+  .metric-label-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .metric-label {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+  .metric-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 26px;
+  }
+  footer {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Bughaw Innovations · BughawPack P2</p>
+    <h1>Coconut slipper — 12-month P&amp;L model</h1>
+    <p class="subhead">Adjust the assumptions below to stress-test breakeven timing and year-1 cash needs for the coir-cassava slipper line. Tap the <strong>i</strong> next to any factor for what it means.</p>
+  </header>
+
+  <div class="panels">
+
+    <div class="panel">
+      <h2 class="section-label">Growth</h2>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">Pairs sold, month 1</span>
+          <button class="info-btn" type="button" data-pop="pop-unitsM1" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="unitsM1-out">150</span>
+        </div>
+        <div class="popover" id="pop-unitsM1" role="tooltip">Estimated pairs shipped to hotel partners in your first month of paid orders.</div>
+        <input type="range" id="unitsM1" min="50" max="100000" step="50" value="150" />
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">Monthly growth</span>
+          <button class="info-btn" type="button" data-pop="pop-growth" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="growthPct-out">15%</span>
+        </div>
+        <div class="popover" id="pop-growth" role="tooltip">Expected month-over-month growth in pairs sold, compounding each month as you add hotel accounts.</div>
+        <input type="range" id="growthPct" min="0" max="30" step="1" value="15" />
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-label">Unit economics per pair</h2>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">Hotel price</span>
+          <button class="info-btn" type="button" data-pop="pop-price" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="price-out">₱150</span>
+        </div>
+        <div class="popover" id="pop-price" role="tooltip">What we charge the hotel per pair. Should sit within the ~10% willingness-to-pay ceiling above their current amenity supplier cost.</div>
+        <input type="range" id="price" min="80" max="300" step="5" value="150" />
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">COGS</span>
+          <button class="info-btn" type="button" data-pop="pop-cogs" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="cogs-out">₱30</span>
+        </div>
+        <div class="popover" id="pop-cogs" role="tooltip">Cost of goods sold — the raw coir-cassava composite material, production labor, and packaging to make one pair.</div>
+        <input type="range" id="cogs" min="10" max="10000" step="10" value="30" />
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">CAC per new pair</span>
+          <button class="info-btn" type="button" data-pop="pop-cac" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="cac-out">₱40</span>
+        </div>
+        <div class="popover" id="pop-cac" role="tooltip">Customer acquisition cost — sales and outreach spend behind each incremental pair of new business this month (samples, travel, pitching).</div>
+        <input type="range" id="cac" min="10" max="200" step="5" value="40" />
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-label">Monthly opex</h2>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">Machines</span>
+          <button class="info-btn" type="button" data-pop="pop-machines" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="opexMachines-out">₱20,000</span>
+        </div>
+        <div class="popover" id="pop-machines" role="tooltip">Monthly cost of production equipment — depreciation, upkeep, and any leased molding or extrusion machinery.</div>
+        <input type="range" id="opexMachines" min="2000" max="80000" step="1000" value="20000" />
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">Salaries</span>
+          <button class="info-btn" type="button" data-pop="pop-salaries" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="opexSalaries-out">₱30,000</span>
+        </div>
+        <div class="popover" id="pop-salaries" role="tooltip">Monthly payroll for the team running production, sales, and supply chain for this line.</div>
+        <input type="range" id="opexSalaries" min="10000" max="150000" step="1000" value="30000" />
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <span class="field-label">Logistics</span>
+          <button class="info-btn" type="button" data-pop="pop-logistics" aria-expanded="false" aria-label="What this means">i</button>
+          <span class="field-value" id="opexLogistics-out">₱6,000</span>
+        </div>
+        <div class="popover" id="pop-logistics" role="tooltip">Monthly cost to move raw input and finished pairs — freight, warehousing, and delivery to hotel partners.</div>
+        <input type="range" id="opexLogistics" min="1000" max="40000" step="1000" value="6000" />
+      </div>
+    </div>
+
+  </div>
+
+  <div class="chart-panel">
+    <h2 class="section-label">Operating profit by month</h2>
+    <div class="chart-box">
+      <canvas id="pnlChart" role="img" aria-label="Bar chart of monthly operating profit for the coconut slipper line across 12 months, coral bars for losses and teal for profit"></canvas>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label-row">
+        <span class="metric-label">Breakeven month</span>
+        <button class="info-btn" type="button" data-pop="pop-bem" aria-expanded="false" aria-label="What this means">i</button>
+      </div>
+      <div class="popover" id="pop-bem" role="tooltip">The first month operating profit turns positive at these settings.</div>
+      <div class="metric-value" id="breakevenMonth">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label-row">
+        <span class="metric-label">Breakeven pairs / mo</span>
+        <button class="info-btn" type="button" data-pop="pop-beu" aria-expanded="false" aria-label="What this means">i</button>
+      </div>
+      <div class="popover" id="pop-beu" role="tooltip">Volume of pairs sold in the breakeven month above.</div>
+      <div class="metric-value" id="breakevenUnits">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label-row">
+        <span class="metric-label">Year 1 cumulative</span>
+        <button class="info-btn" type="button" data-pop="pop-y1" aria-expanded="false" aria-label="What this means">i</button>
+      </div>
+      <div class="popover" id="pop-y1" role="tooltip">Total operating profit or loss summed across all 12 months — the capital gap this model implies needs bridging.</div>
+      <div class="metric-value" id="year1Cum">—</div>
+    </div>
+  </div>
+
+  <footer>
+    Internal planning tool. Figures are modeling assumptions, not confirmed pilot-scale financials — validate COGS and CAC against actual Track 1 data before using for external commitments.
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script>
+(function() {
+  var ids = ['unitsM1','growthPct','price','cogs','cac','opexMachines','opexSalaries','opexLogistics'];
+  var els = {};
+  ids.forEach(function(id) { els[id] = document.getElementById(id); });
+
+  function formatPeso(v) {
+    var n = Math.round(v);
+    var sign = n < 0 ? '-' : '';
+    return sign + '\u20b1' + Math.abs(n).toLocaleString();
+  }
+  function formatK(v) {
+    var n = Math.round(v);
+    var sign = n < 0 ? '-' : '+';
+    return sign + '\u20b1' + (Math.abs(n) / 1000).toFixed(1) + 'k';
+  }
+
+  var tealColor = '#0F6E56';
+  var coralColor = '#D85A30';
+
+  var ctx = document.getElementById('pnlChart').getContext('2d');
+  var chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['M1','M2','M3','M4','M5','M6','M7','M8','M9','M10','M11','M12'],
+      datasets: [{
+        data: [],
+        backgroundColor: [],
+        borderRadius: 4,
+        maxBarThickness: 40
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 24, bottom: 24 } },
+      scales: {
+        x: { ticks: { autoSkip: false, color: '#9B9A90' }, grid: { display: false } },
+        y: { display: false }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(c) { return formatPeso(c.parsed.y); } } },
+        datalabels: {
+          color: function(c) { return c.dataset.data[c.dataIndex] < 0 ? coralColor : tealColor; },
+          anchor: 'end',
+          align: function(c) { return c.dataset.data[c.dataIndex] < 0 ? 'bottom' : 'top'; },
+          font: { size: 11, weight: 500 },
+          formatter: function(v) { return formatK(v); }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  function compute() {
+    var unitsM1 = parseFloat(els.unitsM1.value);
+    var growth = parseFloat(els.growthPct.value) / 100;
+    var price = parseFloat(els.price.value);
+    var cogs = parseFloat(els.cogs.value);
+    var cac = parseFloat(els.cac.value);
+    var machines = parseFloat(els.opexMachines.value);
+    var salaries = parseFloat(els.opexSalaries.value);
+    var logistics = parseFloat(els.opexLogistics.value);
+
+    document.getElementById('unitsM1-out').textContent = unitsM1.toLocaleString();
+    document.getElementById('growthPct-out').textContent = Math.round(growth * 100) + '%';
+    document.getElementById('price-out').textContent = formatPeso(price);
+    document.getElementById('cogs-out').textContent = formatPeso(cogs);
+    document.getElementById('cac-out').textContent = formatPeso(cac);
+    document.getElementById('opexMachines-out').textContent = formatPeso(machines);
+    document.getElementById('opexSalaries-out').textContent = formatPeso(salaries);
+    document.getElementById('opexLogistics-out').textContent = formatPeso(logistics);
+
+    var units = [];
+    var profits = [];
+    var prevUnits = 0;
+    var breakevenMonth = null;
+    var breakevenUnits = null;
+    var cumulative = 0;
+
+    for (var m = 1; m <= 12; m++) {
+      var u = m === 1 ? unitsM1 : Math.round(units[m - 2] * (1 + growth));
+      units.push(u);
+      var newUnits = m === 1 ? u : Math.max(0, u - prevUnits);
+      var marketing = newUnits * cac;
+      var revenue = u * price;
+      var cogsTotal = u * cogs;
+      var grossProfit = revenue - cogsTotal;
+      var opex = machines + salaries + logistics + marketing;
+      var profit = grossProfit - opex;
+      profits.push(profit);
+      cumulative += profit;
+      if (breakevenMonth === null && profit >= 0) {
+        breakevenMonth = m;
+        breakevenUnits = u;
+      }
+      prevUnits = u;
+    }
+
+    chart.data.datasets[0].data = profits;
+    chart.data.datasets[0].backgroundColor = profits.map(function(p) { return p < 0 ? coralColor : tealColor; });
+    chart.update();
+
+    document.getElementById('breakevenMonth').textContent = breakevenMonth ? ('M' + breakevenMonth) : 'Not within 12 mo';
+    document.getElementById('breakevenUnits').textContent = breakevenUnits ? (breakevenUnits.toLocaleString() + ' pairs') : '—';
+    document.getElementById('year1Cum').textContent = formatPeso(cumulative);
+  }
+
+  ids.forEach(function(id) { els[id].addEventListener('input', compute); });
+  compute();
+
+  var popovers = document.querySelectorAll('.popover');
+  var infoBtns = document.querySelectorAll('.info-btn');
+
+  function closeAll(except) {
+    popovers.forEach(function(p) {
+      if (p !== except) p.classList.remove('open');
+    });
+    infoBtns.forEach(function(b) {
+      if (document.getElementById(b.getAttribute('data-pop')) !== except) b.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  infoBtns.forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var pop = document.getElementById(btn.getAttribute('data-pop'));
+      var isOpen = pop.classList.contains('open');
+      closeAll(null);
+      if (!isOpen) {
+        pop.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  document.addEventListener('click', function() { closeAll(null); });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAll(null);
+  });
+})();
+</script>
+</body>
+</html>

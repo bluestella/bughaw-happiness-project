@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bughaw Unit Cost Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F7F3EA;
+  --panel:#FFFFFF;
+  --ink:#2B2620;
+  --ink-soft:#6B6355;
+  --coir:#5C7A4F;
+  --coir-dark:#43593B;
+  --clay:#B4703F;
+  --line:#DED6C4;
+  --danger:#A6432F;
+  --amber:#C68A2E;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  padding:32px 20px 60px;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+}
+
+.wrap{max-width:1100px;margin:0 auto;}
+
+header{
+  margin-bottom:28px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:20px;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--coir-dark);
+  margin:0 0 6px;
+}
+h1{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:30px;
+  margin:0 0 8px;
+  color:var(--ink);
+}
+.sub{
+  color:var(--ink-soft);
+  font-size:14px;
+  max-width:640px;
+  line-height:1.5;
+}
+
+.table-scroll{
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--panel);
+}
+
+table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:920px;
+}
+
+thead th{
+  text-align:left;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  padding:12px 10px;
+  border-bottom:1px solid var(--line);
+  background:#FBF9F3;
+  white-space:nowrap;
+}
+
+tbody td{
+  padding:8px 10px;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+}
+
+tbody tr:last-child td{border-bottom:none;}
+
+input[type=text], input[type=number], select{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:7px 8px;
+  font-family:'Inter',sans-serif;
+  font-size:13.5px;
+  color:var(--ink);
+  background:#fff;
+}
+input[type=number]{font-family:'IBM Plex Mono',monospace;}
+input:focus, select:focus{
+  outline:none;
+  border-color:var(--coir);
+  box-shadow:0 0 0 3px rgba(92,122,79,.15);
+}
+
+.col-name{min-width:170px;}
+.col-num{width:88px;}
+.col-unit{width:78px;}
+.col-computed{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;
+  white-space:nowrap;
+  color:var(--ink);
+}
+.col-computed .label{
+  display:block;
+  font-size:9.5px;
+  color:var(--ink-soft);
+  letter-spacing:.03em;
+  text-transform:uppercase;
+  margin-bottom:2px;
+}
+.remove-btn{
+  background:none;
+  border:1px solid var(--line);
+  color:var(--danger);
+  width:30px;height:30px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+}
+.remove-btn:hover{background:#FBEBE6;border-color:var(--danger);}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+button.primary{
+  background:var(--coir);
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:7px;
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:13.5px;
+  cursor:pointer;
+}
+button.primary:hover{background:var(--coir-dark);}
+button.ghost{
+  background:none;
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:10px 16px;
+  border-radius:7px;
+  font-family:'Inter',sans-serif;
+  font-size:13.5px;
+  cursor:pointer;
+}
+button.ghost:hover{border-color:var(--ink-soft);}
+
+.summary{
+  margin-top:26px;
+  display:grid;
+  grid-template-columns:1.1fr 1fr;
+  gap:18px;
+}
+@media (max-width:760px){.summary{grid-template-columns:1fr;}}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:20px 22px;
+}
+.panel h2{
+  font-family:'Fraunces',serif;
+  font-size:16px;
+  font-weight:600;
+  margin:0 0 14px;
+}
+.total-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  padding:8px 0;
+  border-bottom:1px dashed var(--line);
+}
+.total-row:last-child{border-bottom:none;}
+.total-row .tlabel{font-size:13px;color:var(--ink-soft);}
+.total-row .tval{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:15px;
+  font-weight:600;
+}
+.total-row.big .tval{font-size:19px;color:var(--coir-dark);}
+
+.field{
+  margin-bottom:12px;
+}
+.field label{
+  display:block;
+  font-size:12px;
+  color:var(--ink-soft);
+  margin-bottom:5px;
+}
+.field input{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:14px;
+}
+
+.pair-result{
+  margin-top:14px;
+  padding:14px 16px;
+  background:#F1F6EE;
+  border:1px solid #D6E4CE;
+  border-radius:8px;
+}
+.pair-result .amount{
+  font-family:'Fraunces',serif;
+  font-size:26px;
+  font-weight:600;
+  color:var(--coir-dark);
+}
+.pair-result .note{
+  font-size:12px;
+  color:var(--ink-soft);
+  margin-top:4px;
+}
+
+.status{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+  margin-top:10px;
+  min-height:14px;
+}
+
+.tbd{color:var(--amber);font-style:italic;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Bughaw Innovations — Internal R&amp;D Costing</p>
+  <h1>Unit Cost Calculator</h1>
+  <p class="sub">Enter each ingredient or equipment item's purchase size, purchase price, and quantity used per run. Costs recalculate automatically. Add or remove rows as your formulation changes. Data is saved to this artifact for next time.</p>
+</header>
+
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr>
+      <th class="col-name">Item</th>
+      <th class="col-num">Purchase amt</th>
+      <th class="col-unit">Unit</th>
+      <th class="col-num">Purchase price (₱)</th>
+      <th class="col-num">Qty used</th>
+      <th class="col-unit">Unit</th>
+      <th class="col-num">Amortize over (runs)</th>
+      <th>Unit price</th>
+      <th>Cost this run</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+</div>
+
+<div class="toolbar">
+  <button class="primary" id="addRow">+ Add row</button>
+  <button class="ghost" id="resetDefaults">Reset to baseline</button>
+</div>
+<div class="status" id="status"></div>
+
+<div class="summary">
+  <div class="panel">
+    <h2>Run totals</h2>
+    <div class="total-row big">
+      <span class="tlabel">Total cost per run</span>
+      <span class="tval" id="totalRun">₱0.00</span>
+    </div>
+    <div class="field" style="margin-top:14px;">
+      <label>Total treated output from this run (e.g. grams of treated coco peat)</label>
+      <input type="number" id="outputAmount" value="60">
+    </div>
+    <div class="total-row">
+      <span class="tlabel">Cost per unit of output</span>
+      <span class="tval" id="costPerOutputUnit">₱0.00 / unit</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Cost per pair of slippers</h2>
+    <div class="field">
+      <label>Output amount used per pair (same unit as above)</label>
+      <input type="number" id="amountPerPair" placeholder="TBD — pending R&D confirmation">
+    </div>
+    <div class="pair-result">
+      <div class="amount" id="pairCost">TBD</div>
+      <div class="note" id="pairNote">Waiting on grams-of-treated-coco-peat-per-pair from R&D to finalize.</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const UNIT_FACTORS = { g:1, kg:1000, mL:1, L:1000, pcs:1 };
+const UNIT_OPTIONS = ['g','kg','mL','L','pcs'];
+
+const DEFAULT_ROWS = [
+  { name:'Coco peat', purchaseAmt:20, purchaseUnit:'kg', price:400, qty:60, qtyUnit:'g', amortize:1 },
+  { name:'NaOH (Caustic Soda Micropearls)', purchaseAmt:1, purchaseUnit:'kg', price:165, qty:120, qtyUnit:'g', amortize:1 },
+  { name:'Hydrogen Peroxide 12%', purchaseAmt:500, purchaseUnit:'mL', price:135, qty:500, qtyUnit:'mL', amortize:1 },
+  { name:'Distilled water', purchaseAmt:1000, purchaseUnit:'mL', price:30, qty:700, qtyUnit:'mL', amortize:1 },
+  { name:'Glass Beaker 1000ml', purchaseAmt:1, purchaseUnit:'pcs', price:724.55, qty:1, qtyUnit:'pcs', amortize:50 },
+  { name:'Glass Stirring Rod 30cm', purchaseAmt:1, purchaseUnit:'pcs', price:44.55, qty:1, qtyUnit:'pcs', amortize:50 },
+  { name:'Heat-Resistant Gloves', purchaseAmt:1, purchaseUnit:'pcs', price:91.35, qty:1, qtyUnit:'pcs', amortize:50 },
+];
+
+let rows = [];
+let outputAmount = 60;
+let amountPerPair = null;
+let rowIdCounter = 0;
+
+function newRow(data){
+  rowIdCounter++;
+  return Object.assign({ id:'r'+rowIdCounter }, data);
+}
+
+function peso(n){
+  if(isNaN(n)) return '—';
+  return '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function unitSelectHTML(rowId, field, current){
+  return '<select data-row="'+rowId+'" data-field="'+field+'">' +
+    UNIT_OPTIONS.map(u => '<option value="'+u+'"'+(u===current?' selected':'')+'>'+u+'</option>').join('') +
+    '</select>';
+}
+
+function computeRow(r){
+  const purchaseBase = (parseFloat(r.purchaseAmt)||0) * (UNIT_FACTORS[r.purchaseUnit]||1);
+  const qtyBase = (parseFloat(r.qty)||0) * (UNIT_FACTORS[r.qtyUnit]||1);
+  const amortize = parseFloat(r.amortize)||1;
+  const effectivePrice = (parseFloat(r.price)||0) / (amortize || 1);
+  const unitPrice = purchaseBase > 0 ? effectivePrice / purchaseBase : 0;
+  const costRun = unitPrice * qtyBase;
+  return { unitPrice, costRun };
+}
+
+function render(){
+  const tbody = document.getElementById('rows');
+  tbody.innerHTML = '';
+  let total = 0;
+
+  rows.forEach(r => {
+    const { unitPrice, costRun } = computeRow(r);
+    total += costRun;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="col-name"><input type="text" data-row="${r.id}" data-field="name" value="${escapeAttr(r.name)}"></td>
+      <td class="col-num"><input type="number" step="any" data-row="${r.id}" data-field="purchaseAmt" value="${r.purchaseAmt}"></td>
+      <td class="col-unit">${unitSelectHTML(r.id,'purchaseUnit', r.purchaseUnit)}</td>
+      <td class="col-num"><input type="number" step="any" data-row="${r.id}" data-field="price" value="${r.price}"></td>
+      <td class="col-num"><input type="number" step="any" data-row="${r.id}" data-field="qty" value="${r.qty}"></td>
+      <td class="col-unit">${unitSelectHTML(r.id,'qtyUnit', r.qtyUnit)}</td>
+      <td class="col-num"><input type="number" step="any" min="1" data-row="${r.id}" data-field="amortize" value="${r.amortize}"></td>
+      <td class="col-computed"><span class="label">₱/unit</span>${unitPrice.toFixed(4)}</td>
+      <td class="col-computed"><span class="label">this run</span>${peso(costRun)}</td>
+      <td><button class="remove-btn" data-remove="${r.id}" title="Remove row">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('totalRun').textContent = peso(total);
+
+  const outAmt = parseFloat(outputAmount) || 0;
+  const costPerOutputUnit = outAmt > 0 ? total / outAmt : 0;
+  document.getElementById('costPerOutputUnit').textContent = outAmt > 0 ? (peso(costPerOutputUnit) + ' / unit') : '—';
+
+  const pairCostEl = document.getElementById('pairCost');
+  const pairNoteEl = document.getElementById('pairNote');
+  if(amountPerPair && parseFloat(amountPerPair) > 0 && outAmt > 0){
+    const pc = costPerOutputUnit * parseFloat(amountPerPair);
+    pairCostEl.textContent = peso(pc);
+    pairCostEl.classList.remove('tbd');
+    pairNoteEl.textContent = 'Based on ' + amountPerPair + ' output units per pair.';
+  } else {
+    pairCostEl.textContent = 'TBD';
+    pairCostEl.classList.add('tbd');
+    pairNoteEl.textContent = 'Waiting on output-amount-per-pair from R&D to finalize.';
+  }
+
+  attachRowListeners();
+  saveState();
+}
+
+function escapeAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function attachRowListeners(){
+  document.querySelectorAll('#rows input, #rows select').forEach(el => {
+    el.addEventListener('input', (e) => {
+      const rowId = e.target.getAttribute('data-row');
+      const field = e.target.getAttribute('data-field');
+      const row = rows.find(r => r.id === rowId);
+      if(!row) return;
+      row[field] = e.target.value;
+      render();
+      // restore focus after re-render
+      const again = document.querySelector(`[data-row="${rowId}"][data-field="${field}"]`);
+      if(again) again.focus();
+    });
+  });
+  document.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.getAttribute('data-remove');
+      rows = rows.filter(r => r.id !== id);
+      render();
+    });
+  });
+}
+
+document.getElementById('addRow').addEventListener('click', () => {
+  rows.push(newRow({ name:'New item', purchaseAmt:1, purchaseUnit:'g', price:0, qty:1, qtyUnit:'g', amortize:1 }));
+  render();
+});
+
+document.getElementById('resetDefaults').addEventListener('click', () => {
+  rowIdCounter = 0;
+  rows = DEFAULT_ROWS.map(newRow);
+  outputAmount = 60;
+  amountPerPair = null;
+  document.getElementById('outputAmount').value = 60;
+  document.getElementById('amountPerPair').value = '';
+  render();
+});
+
+document.getElementById('outputAmount').addEventListener('input', (e) => {
+  outputAmount = e.target.value;
+  render();
+});
+document.getElementById('amountPerPair').addEventListener('input', (e) => {
+  amountPerPair = e.target.value;
+  render();
+});
+
+async function saveState(){
+  try{
+    const state = { rows, outputAmount, amountPerPair };
+    await window.storage.set('bughaw-cost-calc-state', JSON.stringify(state));
+    setStatus('Saved');
+  }catch(err){
+    setStatus('Could not save — changes may not persist');
+  }
+}
+
+function setStatus(msg){
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  if(msg === 'Saved'){
+    setTimeout(() => { if(el.textContent === 'Saved') el.textContent = ''; }, 1500);
+  }
+}
+
+async function loadState(){
+  try{
+    const result = await window.storage.get('bughaw-cost-calc-state');
+    if(result && result.value){
+      const state = JSON.parse(result.value);
+      rowIdCounter = 0;
+      rows = (state.rows||[]).map(r => newRow(r));
+      outputAmount = state.outputAmount ?? 60;
+      amountPerPair = state.amountPerPair ?? null;
+      document.getElementById('outputAmount').value = outputAmount;
+      document.getElementById('amountPerPair').value = amountPerPair || '';
+      render();
+      return;
+    }
+  }catch(err){
+    // no saved state yet, fall through to defaults
+  }
+  rows = DEFAULT_ROWS.map(newRow);
+  render();
+}
+
+loadState();
+</script>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bughaw — Coconut Slipper Unit Economics Simulator</title>
+<style>
+  :root{
+    --bg: #0c1015;
+    --panel: #151b22;
+    --panel-border: #262f3a;
+    --text: #e9edf2;
+    --muted: #8b96a3;
+    --faint: #5a6570;
+    --price: #4f9dbd;
+    --material: #b08968;
+    --labor: #8a7a9c;
+    --freight: #6b7480;
+    --breakage: #a3603f;
+    --duties: #444d58;
+    --equipment: #5a7d8c;
+    --good: #6fae5a;
+    --good-bright: #86c96f;
+    --warn: #d9a441;
+    --track: #232b34;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: 'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
+    padding: 28px 32px 40px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:2px;
+    color: var(--material);
+    font-weight:700;
+    text-transform:uppercase;
+  }
+  h1{
+    font-size:38px;
+    margin:8px 0 4px;
+    font-weight:800;
+    letter-spacing:-0.5px;
+  }
+  h1 span{ color: var(--price); }
+  .subtitle{
+    color:var(--muted);
+    font-size:14px;
+    margin-bottom:20px;
+  }
+  .toprow{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:26px;
+  }
+  button#resetBtn{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    padding:8px 16px;
+    border-radius:8px;
+    font-size:13px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button#resetBtn:hover{ border-color: var(--price); color: var(--price); }
+  .hint{ color:var(--faint); font-size:13px; font-style:italic; }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 420px 1fr;
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:22px 24px;
+  }
+  .panel h2{
+    font-size:12px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 18px;
+    font-weight:700;
+  }
+  .panel h2.section-sep{ margin-top:26px; padding-top:22px; border-top:1px solid var(--panel-border); }
+
+  .row{ margin-bottom:20px; }
+  .row-label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:8px;
+    font-size:14px;
+  }
+  .row-label .val{ font-weight:700; color:var(--text); font-variant-numeric: tabular-nums; }
+  .row-label .name{ color:var(--text); }
+
+  input[type=range]{
+    -webkit-appearance:none;
+    width:100%;
+    height:4px;
+    border-radius:2px;
+    background:var(--track);
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px;height:18px;border-radius:50%;
+    background: var(--price);
+    border: 3px solid #0c1015;
+    cursor:pointer;
+    box-shadow: 0 0 0 1px var(--price);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;
+    background: var(--price);
+    border: 3px solid #0c1015;
+    cursor:pointer;
+  }
+  .placeholder-note{
+    font-size:11.5px;
+    color:var(--faint);
+    margin-top:14px;
+    line-height:1.5;
+  }
+
+  /* Right column */
+  .flow-bars{ margin-bottom:8px; }
+  .barline{
+    display:grid;
+    grid-template-columns: 90px 1fr 90px;
+    align-items:center;
+    gap:14px;
+    margin-bottom:16px;
+  }
+  .barline .lbl{ color:var(--muted); font-size:13px; text-align:right; }
+  .barline .amt{ font-weight:700; font-variant-numeric: tabular-nums; }
+  .bartrack{
+    position:relative;
+    height:34px;
+    border-radius:7px;
+    background: var(--track);
+    overflow:hidden;
+    display:flex;
+  }
+  .seg{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:700;
+    color:#0c1015;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .seg.price{ background:var(--price); color:#06212c; }
+  .seg.material{ background:var(--material); }
+  .seg.labor{ background:var(--labor); color:#f2eef7;}
+  .seg.freight{ background:var(--freight); color:#e9edf2; }
+  .seg.breakage{ background:var(--breakage); color:#f5ece6; }
+  .seg.duties{ background:var(--duties); color:#c7cdd4; }
+  .seg.equipment{ background:var(--equipment); color:#0c1015; }
+  .seg.leftover{ background: var(--good); color:#0e2109; }
+
+  .legend{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-top:6px;
+    padding-top:16px;
+    border-top:1px solid var(--panel-border);
+  }
+  .legend-item{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); }
+  .swatch{ width:11px; height:11px; border-radius:3px; display:inline-block; }
+
+  .cards{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:16px;
+    margin-top:18px;
+  }
+  @media (max-width: 760px){ .cards{ grid-template-columns: repeat(2,1fr); } }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:20px;
+  }
+  .card .k{
+    font-size:11.5px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .card .v{
+    font-size:28px;
+    font-weight:800;
+    font-variant-numeric: tabular-nums;
+    margin-bottom:6px;
+  }
+  .card .v.blue{ color: var(--price); }
+  .card .v.green{ color: var(--good-bright); }
+  .card .sub{ font-size:12px; color:var(--faint); line-height:1.4; }
+
+  .gate{
+    margin-top:16px;
+    padding:14px 18px;
+    border-radius:10px;
+    border:1px solid var(--panel-border);
+    background: #10151b;
+    font-size:12.5px;
+    color: var(--muted);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .gate .status{ font-weight:700; }
+  .gate .status.pass{ color: var(--good-bright); }
+  .gate .status.fail{ color: var(--warn); }
+
+  .footer-note{
+    margin-top:22px;
+    font-size:13px;
+    color:var(--faint);
+    font-style:italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Live Build · Coconut Slippers (BughawPack™ P2)</div>
+<h1>The Unit Economics <span>Simulator</span></h1>
+<div class="subtitle">Per-pair margin, hotel-account CAC, and payback — adjust the sliders to test scenarios.</div>
+
+<div class="toprow">
+  <button id="resetBtn">↺ Reset to defaults</button>
+  <span class="hint">All figures are illustrative placeholders — replace with confirmed COGS before external use.</span>
+</div>
+
+<div class="grid">
+  <!-- LEFT: INPUTS -->
+  <div class="panel">
+    <h2>The Unit: One Pair</h2>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Price per pair (to hotel)</span><span class="val">₱<span id="v-price">180</span></span></div>
+      <input type="range" id="price" min="60" max="400" step="5" value="180">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Materials (coir–TPS + packaging)</span><span class="val">₱<span id="v-material">52</span></span></div>
+      <input type="range" id="material" min="5" max="180" step="1" value="52">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Labor & molding</span><span class="val">₱<span id="v-labor">22</span></span></div>
+      <input type="range" id="labor" min="0" max="100" step="1" value="22">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Freight</span><span class="val">₱<span id="v-freight">8</span></span></div>
+      <input type="range" id="freight" min="0" max="60" step="1" value="8">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Breakage / spoilage</span><span class="val">₱<span id="v-breakage">4</span></span></div>
+      <input type="range" id="breakage" min="0" max="60" step="1" value="4">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Duties (domestic supply chain = 0)</span><span class="val">₱<span id="v-duties">0</span></span></div>
+      <input type="range" id="duties" min="0" max="60" step="1" value="0">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Equipment (amortized per pair)</span><span class="val">₱<span id="v-equipment">15</span></span></div>
+      <input type="range" id="equipment" min="0" max="100" step="1" value="15">
+    </div>
+
+    <h2 class="section-sep">The Hotel Account</h2>
+
+    <div class="row">
+      <div class="row-label"><span class="name">CAC — cost to win one hotel</span><span class="val">₱<span id="v-cac">8,000</span></span></div>
+      <input type="range" id="cac" min="500" max="60000" step="500" value="8000">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Pairs ordered / month</span><span class="val"><span id="v-vol">60</span></span></div>
+      <input type="range" id="vol" min="10" max="1000" step="10" value="60">
+    </div>
+
+    <div class="row">
+      <div class="row-label"><span class="name">Contract / reorder lifetime</span><span class="val"><span id="v-life">12</span> mo</span></div>
+      <input type="range" id="life" min="1" max="36" step="1" value="12">
+    </div>
+
+    <div class="placeholder-note">
+      Cost lines follow the landed-cost framework (materials + labor + freight + duties + breakage), plus equipment — molds/machine cost spread across expected pilot volume. Duties default to ₱0 since Bughaw's supply chain is domestic — move it only if imported inputs enter the mix. Pairs/month is a proxy for hotel size × turnover. CAC covers sales visits, samples, and relationship time to close one property.
+    </div>
+  </div>
+
+  <!-- RIGHT: OUTPUT -->
+  <div>
+    <div class="panel">
+      <h2>Where the ₱ Goes — One Pair</h2>
+
+      <div class="flow-bars">
+        <div class="barline">
+          <span class="lbl">Price</span>
+          <div class="bartrack"><div class="seg price" id="bar-price" style="width:100%">₱180</div></div>
+          <span class="amt" id="amt-price">₱180</span>
+        </div>
+        <div class="barline">
+          <span class="lbl">Costs</span>
+          <div class="bartrack" id="bar-costs"></div>
+          <span class="amt" id="amt-costs">₱80</span>
+        </div>
+        <div class="barline">
+          <span class="lbl">Left over</span>
+          <div class="bartrack"><div class="seg leftover" id="bar-leftover" style="width:100%">+₱100</div></div>
+          <span class="amt" id="amt-leftover">+₱100</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:var(--material)"></span>Materials</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--labor)"></span>Labor</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--freight)"></span>Freight</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--breakage)"></span>Breakage</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--duties)"></span>Duties</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--equipment)"></span>Equipment</div>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="k">Contribution</div>
+        <div class="v blue" id="c-contribution">+₱100</div>
+        <div class="sub" id="c-margin">margin 55.6% of price</div>
+      </div>
+      <div class="card">
+        <div class="k">LTV (per hotel)</div>
+        <div class="v" id="c-ltv">₱72,000</div>
+        <div class="sub">margin/pair × pairs/mo × lifetime</div>
+      </div>
+      <div class="card">
+        <div class="k">LTV : CAC</div>
+        <div class="v green" id="c-ratio">9.0x</div>
+        <div class="sub">a healthy account is ≥3x</div>
+      </div>
+      <div class="card">
+        <div class="k">CAC Payback</div>
+        <div class="v green" id="c-payback">1.3 mo</div>
+        <div class="sub">months to earn the CAC back</div>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span>Reference — Bughaw Go/No-Go gate: gross margin ≥30% at scale</span>
+      <span class="status pass" id="gate-status">55.6% — clears gate</span>
+    </div>
+
+    <div class="footer-note">Ask for the guess first, then press play with the sliders — never the other way around. "What does a hotel actually order per month?"</div>
+  </div>
+</div>
+
+<script>
+const ids = ['price','material','labor','freight','breakage','duties','equipment','cac','vol','life'];
+const el = {};
+ids.forEach(id => el[id] = document.getElementById(id));
+
+function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+
+function render(){
+  const price = +el.price.value;
+  const material = +el.material.value;
+  const labor = +el.labor.value;
+  const freight = +el.freight.value;
+  const breakage = +el.breakage.value;
+  const duties = +el.duties.value;
+  const equipment = +el.equipment.value;
+  const cac = +el.cac.value;
+  const vol = +el.vol.value;
+  const life = +el.life.value;
+
+  const totalCost = material + labor + freight + breakage + duties + equipment;
+  const contribution = price - totalCost;
+  const marginPct = price > 0 ? (contribution / price * 100) : 0;
+
+  // update slider readouts
+  document.getElementById('v-price').textContent = fmt(price);
+  document.getElementById('v-material').textContent = fmt(material);
+  document.getElementById('v-labor').textContent = fmt(labor);
+  document.getElementById('v-freight').textContent = fmt(freight);
+  document.getElementById('v-breakage').textContent = fmt(breakage);
+  document.getElementById('v-duties').textContent = fmt(duties);
+  document.getElementById('v-equipment').textContent = fmt(equipment);
+  document.getElementById('v-cac').textContent = fmt(cac);
+  document.getElementById('v-vol').textContent = fmt(vol);
+  document.getElementById('v-life').textContent = fmt(life);
+
+  // price bar (reference length = 100%)
+  document.getElementById('bar-price').textContent = '₱' + fmt(price);
+  document.getElementById('amt-price').textContent = '₱' + fmt(price);
+
+  // cost segments, scaled relative to price
+  const costsBar = document.getElementById('bar-costs');
+  costsBar.innerHTML = '';
+  const segs = [
+    {v: material, cls:'material', label:'Materials'},
+    {v: labor, cls:'labor', label:'Labor'},
+    {v: freight, cls:'freight', label:'Freight'},
+    {v: breakage, cls:'breakage', label:'Breakage'},
+    {v: duties, cls:'duties', label:'Duties'},
+    {v: equipment, cls:'equipment', label:'Equipment'}
+  ];
+  segs.forEach(s => {
+    if (s.v <= 0) return;
+    const pct = Math.max(0, (s.v / price) * 100);
+    const d = document.createElement('div');
+    d.className = 'seg ' + s.cls;
+    d.style.width = pct + '%';
+    if (pct > 8) d.textContent = s.label;
+    costsBar.appendChild(d);
+  });
+  document.getElementById('amt-costs').textContent = '₱' + fmt(totalCost);
+
+  // leftover bar
+  const leftoverPct = Math.max(0, (Math.abs(contribution) / price) * 100);
+  const leftoverBar = document.getElementById('bar-leftover');
+  leftoverBar.style.width = Math.min(leftoverPct,100) + '%';
+  leftoverBar.textContent = (contribution>=0?'+':'') + '₱' + fmt(contribution);
+  leftoverBar.style.background = contribution >= 0 ? 'var(--good)' : '#c0524a';
+
+  document.getElementById('amt-leftover').textContent = (contribution>=0?'+':'') + '₱' + fmt(contribution);
+
+  // cards
+  document.getElementById('c-contribution').textContent = (contribution>=0?'+':'') + '₱' + fmt(contribution);
+  document.getElementById('c-contribution').className = 'v ' + (contribution>=0 ? 'blue' : '');
+  document.getElementById('c-contribution').style.color = contribution >= 0 ? '' : '#d9776f';
+  document.getElementById('c-margin').textContent = 'margin ' + marginPct.toFixed(1) + '% of price';
+
+  const monthlyContribution = contribution * vol;
+  const ltv = monthlyContribution * life;
+  document.getElementById('c-ltv').textContent = '₱' + fmt(ltv);
+
+  const ratio = cac > 0 ? (ltv / cac) : 0;
+  document.getElementById('c-ratio').textContent = ratio.toFixed(1) + 'x';
+  const ratioCard = document.getElementById('c-ratio');
+  ratioCard.style.color = ratio >= 3 ? '' : '#d9a441';
+
+  const payback = monthlyContribution > 0 ? (cac / monthlyContribution) : Infinity;
+  document.getElementById('c-payback').textContent = isFinite(payback) ? payback.toFixed(1) + ' mo' : '—';
+  const paybackCard = document.getElementById('c-payback');
+  paybackCard.style.color = (payback <= life && isFinite(payback)) ? '' : '#d9a441';
+
+  // gate
+  const gateStatus = document.getElementById('gate-status');
+  if (marginPct >= 30){
+    gateStatus.textContent = marginPct.toFixed(1) + '% — clears gate';
+    gateStatus.className = 'status pass';
+  } else {
+    gateStatus.textContent = marginPct.toFixed(1) + '% — below gate';
+    gateStatus.className = 'status fail';
+  }
+}
+
+ids.forEach(id => el[id].addEventListener('input', render));
+
+const defaults = { price:180, material:52, labor:22, freight:8, breakage:4, duties:0, equipment:15, cac:8000, vol:60, life:12 };
+document.getElementById('resetBtn').addEventListener('click', () => {
+  ids.forEach(id => el[id].value = defaults[id]);
+  render();
+});
+
+render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bughaw Pipeline Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg: #12181f;
+    --surface: #1b232c;
+    --surface-raised: #222c37;
+    --line: #2b3540;
+    --tan: #c98a4b;
+    --tan-dim: #8a6237;
+    --teal: #4fb3ac;
+    --teal-dim: #2f6f6a;
+    --text: #e8e4da;
+    --muted: #8b93a0;
+    --danger: #b3564a;
+    --danger-bg: #23191a;
+    --good: #4fb37f;
+    --good-bg: #142822;
+    --warn: #d9b26a;
+    --warn-bg: #26200f;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; background: var(--bg); color: var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  body{ padding: 26px 24px 60px; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  header.top{
+    display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    gap:16px; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:16px;
+  }
+  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--tan); margin:0 0 6px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:27px; margin:0; letter-spacing:-0.01em; }
+  h1 span{ color: var(--teal); }
+  .sub{ color:var(--muted); font-size:13px; margin-top:6px; max-width:560px; }
+
+  .checkpoint{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 17px; min-width:210px; }
+  .checkpoint .label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  .checkpoint .date{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:16px; margin-top:2px; }
+  .checkpoint .days{ font-family:'JetBrains Mono',monospace; color:var(--tan); font-size:12px; margin-top:4px; }
+
+  .tabs{ display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+  .tab-btn{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; padding:9px 16px;
+    border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--muted); cursor:pointer;
+  }
+  .tab-btn.active{ background:var(--surface-raised); color:var(--text); border-color:var(--tan); }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  /* --- Simulator --- */
+  .verdict{
+    border-radius:12px; padding:16px 20px; margin-bottom:18px; border:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .verdict.met{ background: var(--good-bg); border-color:#2b5c44; }
+  .verdict.notmet{ background: var(--danger-bg); border-color:#4a2c28; }
+  .verdict .vtitle{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15.5px; }
+  .verdict.met .vtitle{ color: var(--good); }
+  .verdict.notmet .vtitle{ color: var(--danger); }
+  .verdict .vsub{ color:var(--muted); font-size:12.5px; margin-top:3px; }
+
+  .compare{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+  .compare .stat{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 15px; min-width:118px; }
+  .compare .stat .l{ font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .compare .stat .pair{ display:flex; align-items:baseline; gap:6px; margin-top:3px; font-family:'Space Grotesk',sans-serif; font-weight:700; }
+  .compare .stat .today{ font-size:15px; color:var(--muted); }
+  .compare .stat .arrow{ color:var(--tan-dim); font-size:13px; }
+  .compare .stat .proj{ font-size:19px; }
+
+  .presets{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  button{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; cursor:pointer;
+    border-radius:8px; border:1px solid var(--line); background:var(--surface-raised); color:var(--text);
+    padding:8px 13px; transition:border-color .15s ease;
+  }
+  button:hover{ border-color: var(--tan); }
+  button.primary{ background: var(--tan); color:#1a1108; border-color: var(--tan); }
+  button.primary:hover{ background:#d69a5c; }
+  button.primary:disabled{ background: var(--surface-raised); color:var(--muted); border-color:var(--line); cursor:default; }
+  button.ghost{ background:transparent; }
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible{ outline:2px solid var(--teal); outline-offset:1px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  thead th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted);
+    padding:10px 14px; border-bottom:1px solid var(--line); background: rgba(255,255,255,0.02);
+  }
+  tbody td{ padding:10px 14px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+  select{ background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--text); padding:6px 9px; font-family:'Inter',sans-serif; font-size:12.5px; }
+  .tag{ font-family:'JetBrains Mono',monospace; font-size:10px; padding:2px 7px; border-radius:20px; border:1px solid var(--line); color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .tag.seg-a{ color:var(--tan); border-color:var(--tan-dim); }
+  .tag.seg-b{ color:var(--teal); border-color:var(--teal-dim); }
+  .tag.hyp{ color:#e0c68a; border-color:#6d5a34; }
+  .name-cell .nm{ font-weight:600; }
+  .add-row{ display:flex; gap:8px; margin:16px 0; flex-wrap:wrap; align-items:center; }
+  .add-row input{ background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--text); padding:8px 10px; font-family:'Inter',sans-serif; font-size:12.5px; }
+  .add-row input[type=text]{ min-width:180px; }
+  .del-x{ background:transparent; border:none; color:var(--danger); font-size:14px; cursor:pointer; padding:2px 6px; }
+  .hint{ color:var(--muted); font-size:12px; margin: 4px 0 16px; }
+
+  /* --- Tracker (unchanged board) --- */
+  .board{ display:grid; grid-template-columns: repeat(5, minmax(200px,1fr)); gap:14px; }
+  @media (max-width:1100px){ .board{ grid-template-columns: repeat(2,minmax(200px,1fr)); } }
+  @media (max-width:620px){ .board{ grid-template-columns: 1fr; } }
+  .column{ background: rgba(255,255,255,0.015); border:1px solid var(--line); border-radius:12px; padding:12px; min-height:100px; }
+  .column .col-head{ display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid var(--tan-dim); padding-bottom:8px; margin-bottom:10px; }
+  .column .col-head h3{ font-family:'Space Grotesk',sans-serif; font-size:13px; margin:0; font-weight:600; }
+  .column .col-head .count{ font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:12px; }
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:11px 12px; margin-bottom:10px; cursor:pointer; }
+  .card:hover{ border-color:var(--teal-dim); }
+  .card .name{ font-weight:600; font-size:13px; }
+  .card .prop{ color:var(--muted); font-size:11px; margin-top:2px; }
+  .card .tags{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .empty-col{ color:var(--muted); font-size:12px; padding:6px 2px; font-style:italic; }
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap; }
+  .graveyard{ margin-top:28px; }
+  .graveyard h2{ font-family:'Space Grotesk',sans-serif; font-size:14.5px; color:var(--danger); display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+  .graveyard h2 .arrow{ font-size:11px; transition:transform .15s ease; }
+  .graveyard h2 .arrow.open{ transform:rotate(90deg); }
+  .graveyard .gy-body{ display:none; margin-top:12px; }
+  .graveyard .gy-body.open{ display:grid; grid-template-columns: repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+  .gy-card{ background:var(--danger-bg); border:1px solid #4a2c28; border-radius:9px; padding:11px 12px; }
+  .gy-card .name{ font-weight:600; font-size:13px; }
+  .gy-card .reason{ color:#c99a94; font-size:11.5px; margin-top:6px; line-height:1.4; }
+
+  /* --- Unit Economics --- */
+  .econ-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; gap:12px; flex-wrap:wrap; }
+  .mode-toggle{ display:flex; gap:6px; }
+  .econ-actions{ display:flex; gap:8px; }
+  .econ-grid{ display:grid; grid-template-columns: 300px 1fr; gap:18px; align-items:start; }
+  @media (max-width:880px){ .econ-grid{ grid-template-columns:1fr; } }
+  .econ-inputs{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .econ-inputs h3{ font-family:'Space Grotesk',sans-serif; font-size:14px; margin:0 0 14px; }
+  .econ-inputs .field label .warn{ color: var(--warn); text-transform:none; letter-spacing:0; font-size:10.5px; }
+  .econ-inputs .field input{ width:100%; background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:9px 10px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px; }
+
+  .econ-reveal{ display:grid; grid-template-columns: repeat(2, minmax(160px,1fr)); gap:14px; }
+  @media (max-width:520px){ .econ-reveal{ grid-template-columns:1fr; } }
+  .econ-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px;
+    min-height:118px; display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .ec-label{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .ec-value{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:26px; margin-top:10px; }
+  .ec-value.dash{ color: var(--line); font-size:26px; }
+  .ec-note{ color:var(--muted); font-size:10.5px; margin-top:8px; font-style:italic; }
+  .econ-card.good .ec-value{ color: var(--good); }
+  .econ-card.warn .ec-value{ color: var(--warn); }
+  .econ-card.bad .ec-value{ color: var(--danger); }
+
+  /* Modal */
+  .overlay{ position:fixed; inset:0; background:rgba(8,10,13,0.72); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .overlay.open{ display:flex; }
+  .modal{ background:var(--surface-raised); border:1px solid var(--line); border-radius:14px; width:100%; max-width:460px; padding:22px; max-height:88vh; overflow-y:auto; }
+  .modal h2{ font-family:'Space Grotesk',sans-serif; font-size:16px; margin:0 0 16px; }
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+  .field input, .field select, .field textarea{ width:100%; background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:9px 10px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; }
+  .field textarea{ min-height:60px; resize:vertical; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modal-actions{ display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .modal-actions .left{ display:flex; gap:8px; }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; margin-bottom:13px; }
+  .checkbox-row input{ width:auto; }
+  .checkbox-row label{ margin:0; text-transform:none; letter-spacing:0; font-size:12.5px; color:var(--text); }
+  .status-msg{ font-size:12px; color:var(--muted); margin-top:10px; min-height:16px; }
+  .status-msg.err{ color:var(--danger); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <p class="eyebrow">Internal — Bughaw Innovations</p>
+    <h1>Pipeline <span>Simulator</span></h1>
+    <p class="sub">Model what has to happen by the checkpoint, then see what it actually costs to get there.</p>
+  </div>
+  <div class="checkpoint">
+    <div class="label">Joint decision checkpoint</div>
+    <div class="date">July 24, 2026</div>
+    <div class="days mono" id="daysLeft">—</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" id="tabSimBtn">Simulator</button>
+  <button class="tab-btn" id="tabEconBtn">Unit Economics</button>
+  <button class="tab-btn" id="tabTrackBtn">Real Pipeline (source data)</button>
+</div>
+
+<!-- SIMULATOR PANEL -->
+<div class="panel active" id="panelSim">
+  <div class="verdict" id="verdictBox">
+    <div><div class="vtitle" id="verdictTitle">—</div><div class="vsub" id="verdictSub">—</div></div>
+  </div>
+  <div class="compare" id="compareBar"></div>
+  <div class="presets">
+    <button id="resetBtn">Reset to current state</button>
+    <button id="advanceBtn">Everyone advances one stage</button>
+  </div>
+  <table id="simTable">
+    <thead><tr><th>Account</th><th>Segment</th><th>Current stage</th><th>Projected by Jul 24</th><th></th></tr></thead>
+    <tbody id="simBody"></tbody>
+  </table>
+  <div class="add-row">
+    <input type="text" id="hypName" placeholder="Hypothetical lead name (e.g. new referral)">
+    <select id="hypSegment"><option value="A">Segment A</option><option value="B">Segment B</option></select>
+    <select id="hypStage"></select>
+    <button class="primary" id="hypAddBtn">+ Add hypothetical</button>
+  </div>
+  <p class="hint">Hypothetical leads exist only in the simulator — they won't appear in the real pipeline tab until you actually add them there.</p>
+  <div class="status-msg" id="statusMsgSim"></div>
+</div>
+
+<!-- UNIT ECONOMICS PANEL -->
+<div class="panel" id="panelEcon">
+  <div class="econ-toolbar">
+    <div class="mode-toggle">
+      <button class="tab-btn active" id="modeTodayBtn">Today (real)</button>
+      <button class="tab-btn" id="modeProjBtn">Projected (Jul 24 scenario)</button>
+    </div>
+    <div class="econ-actions">
+      <button class="primary" id="revealBtn">Reveal ▸ Accounts in play</button>
+      <button class="ghost" id="showAllBtn">Show all</button>
+    </div>
+  </div>
+
+  <div class="econ-grid">
+    <div class="econ-inputs">
+      <h3>Your inputs</h3>
+      <div class="field">
+        <label>Sales &amp; BD spend this period (₱)</label>
+        <input type="number" id="e-spend" min="0" step="1000" placeholder="e.g. advisor fee + travel + samples">
+      </div>
+      <div class="field">
+        <label>Avg annual revenue per paying account (₱)</label>
+        <input type="number" id="e-revenue" min="0" step="1000" placeholder="your best current estimate">
+      </div>
+      <div class="field">
+        <label>Gross margin % <span class="warn">(unconfirmed COGS)</span></label>
+        <input type="number" id="e-margin" min="0" max="100" step="1" placeholder="e.g. 82–91, model projection">
+      </div>
+      <div class="field">
+        <label>Expected relationship length (years)</label>
+        <input type="number" id="e-years" min="0" step="0.5" placeholder="e.g. 2">
+      </div>
+      <p class="hint">Nothing here is pre-filled. These are your assumptions — change them and the reveal updates live.</p>
+    </div>
+
+    <div class="econ-reveal">
+      <div class="econ-card" id="cardPlay">
+        <div class="ec-label">Accounts in play</div>
+        <div class="ec-value dash" id="valPlay">—</div>
+      </div>
+      <div class="econ-card" id="cardPayers">
+        <div class="ec-label">Payers (PO Signed+)</div>
+        <div class="ec-value dash" id="valPayers">—</div>
+      </div>
+      <div class="econ-card" id="cardCAC">
+        <div class="ec-label">Derived CAC</div>
+        <div class="ec-value dash" id="valCAC">—</div>
+        <div class="ec-note">spend ÷ payers</div>
+      </div>
+      <div class="econ-card" id="cardLTV">
+        <div class="ec-label">LTV vs CAC</div>
+        <div class="ec-value dash" id="valLTV">—</div>
+        <div class="ec-note">annual revenue × margin × years</div>
+      </div>
+    </div>
+  </div>
+  <div class="status-msg" id="statusMsgEcon"></div>
+</div>
+
+<!-- TRACKER PANEL -->
+<div class="panel" id="panelTrack">
+  <div class="toolbar">
+    <button class="primary" id="addBtn">+ Add account</button>
+    <span class="hint" style="margin:0;">This is the real data the simulator and unit economics project from. Click a card to edit it.</span>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="graveyard">
+    <h2 id="gyToggle"><span class="arrow" id="gyArrow">▶</span> Disqualified — do not re-chase (<span id="gyCount">0</span>)</h2>
+    <div class="gy-body" id="gyBody"></div>
+  </div>
+  <div class="status-msg" id="statusMsgTrack"></div>
+</div>
+
+<!-- Modal (shared, used by tracker tab) -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add account</h2>
+    <div class="field"><label>Hotel / property</label><input id="f-name" placeholder="e.g. Grand Hyatt Manila"></div>
+    <div class="row2">
+      <div class="field"><label>Segment</label>
+        <select id="f-segment"><option value="A">A — owner-operated, rating-aspiring</option><option value="B">B — ESG-reporting conglomerate</option></select>
+      </div>
+      <div class="field"><label>Stage</label>
+        <select id="f-stage"><option>Warm Contact</option><option>Meeting Secured</option><option>Sample Delivered</option><option>PO Signed</option><option>Repeat Order</option><option>Disqualified</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Contact person</label><input id="f-contact" placeholder="e.g. Denise Ann Samson"></div>
+    <div class="field" id="reasonField" style="display:none;"><label>Why disqualified</label><textarea id="f-reason" placeholder="e.g. Centralized procurement, GM can't decide"></textarea></div>
+    <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="What's true right now, what's next"></textarea></div>
+    <div class="field"><label>Referred by (optional)</label><input id="f-referredby" placeholder="e.g. Grand Hyatt Manila"></div>
+    <div class="checkbox-row"><input type="checkbox" id="f-generatedref"><label for="f-generatedref">This account has generated a referral to someone else</label></div>
+    <div class="modal-actions">
+      <div class="left"><button class="ghost" id="cancelBtn">Cancel</button><button class="ghost" id="deleteBtn" style="display:none; color:var(--danger); border-color:#4a2c28;">Delete</button></div>
+      <button class="primary" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ACCOUNTS_KEY = 'bughaw-pipeline-accounts';
+const SIM_KEY = 'bughaw-pipeline-simulator';
+const ECON_KEY = 'bughaw-unit-econ';
+const STAGES = ['Warm Contact','Meeting Secured','Sample Delivered','PO Signed','Repeat Order'];
+const SIM_STAGES = [...STAGES, 'Dropped Out'];
+const ECON_LABELS = ['Accounts in play','Payers','Derived CAC','LTV vs CAC'];
+
+const SEED_DATA = [
+  { id:'gh', name:'Grand Hyatt Manila', property:'461 rooms', segment:'B', contact:'Denise Ann Samson (Sustainability Manager)', stage:'Sample Delivered',
+    notes:'Hand-delivered Jul 9. RGM approval pending. Coconut slipper flagged as most viable entry product.', referredBy:'', generatedReferral:true, reason:'' },
+  { id:'marsham', name:'Marsham Hotel', property:'Zamboanga', segment:'A', contact:'Alain (Owner-operator)', stage:'Sample Delivered',
+    notes:'Hand-delivered Jul 10. Source of the 10% WTP ceiling validation. DOT accreditation-aspiring.', referredBy:'', generatedReferral:false, reason:'' },
+  { id:'newsegA', name:'New Segment A prospect', property:'TBD', segment:'A', contact:'Not yet identified', stage:'Warm Contact',
+    notes:'Beta-round repeatability test target — confirm identity and book a meeting before Jul 24.', referredBy:'', generatedReferral:false, reason:'' },
+  { id:'elnido', name:'El Nido Resorts', property:'Ayala Land', segment:'B', contact:'Not yet identified', stage:'Warm Contact',
+    notes:'GTPI signatory — committed to phasing out all single-use guest amenities. Highest-conviction warm lead in the pipeline.', referredBy:'Grand Hyatt Manila', generatedReferral:false, reason:'' },
+  { id:'holidayinn', name:'Holiday Inn (Ayala group)', property:'', segment:'B', contact:'Not yet identified', stage:'Warm Contact',
+    notes:'Warm referral from Denise, not yet contacted.', referredBy:'Grand Hyatt Manila', generatedReferral:false, reason:'' },
+  { id:'redplanet', name:'Red Planet QC', property:'Budget chain', segment:'B', contact:'Arvin (Operations Lead)', stage:'Disqualified',
+    notes:'', referredBy:'', generatedReferral:false, reason:'Centralized corporate procurement through Makati HQ — property GMs cannot decide. Already removed single-use dispensers. PHP 45 amenity kit benchmark.' },
+  { id:'llda', name:'QC boutique (LLDA-regulated)', property:'Small property', segment:'A', contact:'', stage:'Disqualified',
+    notes:'', referredBy:'', generatedReferral:false, reason:'Existing sustainable supplier relationship. Primary sustainability concern is water quality, not packaging — low fit.' },
+];
+
+let accounts = [];
+let sim = { projections: {}, hypothetical: [] };
+let econ = { spend:'', revenue:'', margin:'', years:'', mode:'today' };
+let revealStep = 0;
+let editingId = null;
+
+const $ = (sel) => document.querySelector(sel);
+
+function setStatus(elId, msg, isErr){
+  const el = $(elId);
+  el.textContent = msg || '';
+  el.className = 'status-msg' + (isErr ? ' err' : '');
+  if(msg && !isErr){ setTimeout(()=>{ if(el.textContent === msg) el.textContent = ''; }, 2200); }
+}
+function daysUntil(dateStr){
+  const target = new Date(dateStr + 'T00:00:00');
+  const now = new Date();
+  return Math.ceil((target - now) / (1000*60*60*24));
+}
+function renderCheckpoint(){
+  const d = daysUntil('2026-07-24');
+  const el = $('#daysLeft');
+  if(d > 0) el.textContent = d + ' day' + (d===1?'':'s') + ' away';
+  else if(d === 0) el.textContent = 'today';
+  else el.textContent = Math.abs(d) + ' day' + (Math.abs(d)===1?'':'s') + ' past';
+}
+function escapeHtml(str){ return (str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fmtPeso(n){ return '₱' + Math.round(n).toLocaleString('en-PH'); }
+
+/* ---------- Storage ---------- */
+async function loadAccounts(){
+  try{
+    const res = await window.storage.get(ACCOUNTS_KEY, false);
+    accounts = (res && res.value) ? JSON.parse(res.value) : SEED_DATA;
+    if(!res || !res.value) await saveAccounts(true);
+  }catch(e){
+    accounts = SEED_DATA;
+    try{ await saveAccounts(true); }catch(e2){}
+  }
+}
+async function saveAccounts(silent){
+  try{
+    const result = await window.storage.set(ACCOUNTS_KEY, JSON.stringify(accounts), false);
+    if(!result) throw new Error('no result');
+    if(!silent) setStatus('#statusMsgTrack', 'Saved.');
+  }catch(e){ setStatus('#statusMsgTrack', 'Could not save — change is visible now but may not persist.', true); }
+}
+async function loadSim(){
+  try{
+    const res = await window.storage.get(SIM_KEY, false);
+    sim = (res && res.value) ? JSON.parse(res.value) : { projections:{}, hypothetical:[] };
+  }catch(e){ sim = { projections:{}, hypothetical:[] }; }
+}
+async function saveSim(silent){
+  try{
+    const result = await window.storage.set(SIM_KEY, JSON.stringify(sim), false);
+    if(!result) throw new Error('no result');
+    if(!silent) setStatus('#statusMsgSim', 'Saved.');
+  }catch(e){ setStatus('#statusMsgSim', 'Could not save — change is visible now but may not persist.', true); }
+}
+async function loadEcon(){
+  try{
+    const res = await window.storage.get(ECON_KEY, false);
+    econ = (res && res.value) ? JSON.parse(res.value) : econ;
+  }catch(e){ /* keep defaults */ }
+}
+async function saveEcon(silent){
+  try{
+    const result = await window.storage.set(ECON_KEY, JSON.stringify(econ), false);
+    if(!result) throw new Error('no result');
+    if(!silent) setStatus('#statusMsgEcon', 'Saved.');
+  }catch(e){ setStatus('#statusMsgEcon', 'Could not save — change is visible now but may not persist.', true); }
+}
+
+/* ---------- Shared pipeline helpers ---------- */
+function activeAccounts(){ return accounts.filter(a => a.stage !== 'Disqualified'); }
+function projectionFor(acc){ return sim.projections[acc.id] || acc.stage; }
+
+function accountsInPlay(mode){
+  const active = activeAccounts();
+  if(mode === 'today') return active.length;
+  return active.length + sim.hypothetical.length;
+}
+function payersFor(mode){
+  const poIdx = STAGES.indexOf('PO Signed');
+  const active = activeAccounts();
+  if(mode === 'today'){
+    return active.filter(a => STAGES.indexOf(a.stage) >= poIdx).length;
+  }
+  const realPayers = active.filter(a => STAGES.indexOf(projectionFor(a)) >= poIdx).length;
+  const hypPayers = sim.hypothetical.filter(h => STAGES.indexOf(h.stage) >= poIdx).length;
+  return realPayers + hypPayers;
+}
+
+/* ---------- Simulator rendering ---------- */
+function renderSimulator(){
+  const active = activeAccounts();
+  const rows = active.map(a => {
+    const proj = projectionFor(a);
+    const opts = SIM_STAGES.map(s => `<option value="${s}" ${s===proj?'selected':''}>${s}</option>`).join('');
+    return `
+      <tr data-id="${a.id}" data-kind="real">
+        <td class="name-cell"><span class="nm">${escapeHtml(a.name)}</span></td>
+        <td><span class="tag seg-${a.segment==='A'?'a':'b'}">Segment ${a.segment}</span></td>
+        <td>${a.stage}</td>
+        <td><select class="proj-select">${opts}</select></td>
+        <td></td>
+      </tr>`;
+  }).join('');
+
+  const hypRows = sim.hypothetical.map(h => {
+    const opts = SIM_STAGES.map(s => `<option value="${s}" ${s===h.stage?'selected':''}>${s}</option>`).join('');
+    return `
+      <tr data-id="${h.id}" data-kind="hyp">
+        <td class="name-cell"><span class="nm">${escapeHtml(h.name)}</span> <span class="tag hyp">hypothetical</span></td>
+        <td><span class="tag seg-${h.segment==='A'?'a':'b'}">Segment ${h.segment}</span></td>
+        <td>—</td>
+        <td><select class="proj-select">${opts}</select></td>
+        <td><button class="del-x" title="Remove">✕</button></td>
+      </tr>`;
+  }).join('');
+
+  $('#simBody').innerHTML = rows + hypRows;
+
+  $('#simBody').querySelectorAll('tr').forEach(tr => {
+    const id = tr.getAttribute('data-id');
+    const kind = tr.getAttribute('data-kind');
+    tr.querySelector('.proj-select').addEventListener('change', async (e) => {
+      if(kind === 'real'){ sim.projections[id] = e.target.value; }
+      else { const h = sim.hypothetical.find(x=>x.id===id); if(h) h.stage = e.target.value; }
+      renderSimulator(); renderEcon();
+      await saveSim(true);
+    });
+    const delBtn = tr.querySelector('.del-x');
+    if(delBtn){
+      delBtn.addEventListener('click', async () => {
+        sim.hypothetical = sim.hypothetical.filter(x => x.id !== id);
+        renderSimulator(); renderEcon();
+        await saveSim();
+      });
+    }
+  });
+
+  const todayCounts = {}; STAGES.forEach(s => todayCounts[s] = active.filter(a=>a.stage===s).length);
+  const projCounts = {}; STAGES.forEach(s => projCounts[s] = 0); projCounts['Dropped Out'] = 0;
+  active.forEach(a => { const p = projectionFor(a); projCounts[p] = (projCounts[p]||0) + 1; });
+  sim.hypothetical.forEach(h => { projCounts[h.stage] = (projCounts[h.stage]||0) + 1; });
+
+  $('#compareBar').innerHTML = [...STAGES, 'Dropped Out'].map(s => `
+    <div class="stat"><div class="l">${s}</div>
+      <div class="pair"><span class="today">${todayCounts[s]||0}</span><span class="arrow">→</span><span class="proj">${projCounts[s]||0}</span></div>
+    </div>`).join('');
+
+  const metCount = payersFor('projected');
+  const sampleIdx = STAGES.indexOf('Sample Delivered');
+  const signalCount = active.filter(a => STAGES.indexOf(projectionFor(a)) >= sampleIdx).length
+                    + sim.hypothetical.filter(h => STAGES.indexOf(h.stage) >= sampleIdx).length;
+
+  const box = $('#verdictBox');
+  if(metCount > 0){
+    box.className = 'verdict met';
+    $('#verdictTitle').textContent = `Primary bar met: ${metCount} account${metCount===1?'':'s'} projected to PO Signed or beyond`;
+    $('#verdictSub').textContent = `${signalCount} account${signalCount===1?'':'s'} projected at Sample Delivered or beyond as supporting signal.`;
+  } else {
+    box.className = 'verdict notmet';
+    $('#verdictTitle').textContent = `Primary bar not met under this scenario — 0 accounts projected to PO Signed`;
+    $('#verdictSub').textContent = `${signalCount} account${signalCount===1?'':'s'} projected at Sample Delivered or beyond. Per the beta plan, earlier positive signals still count this round — but a paid PO is the primary bar.`;
+  }
+}
+
+function populateHypStageSelect(){ $('#hypStage').innerHTML = SIM_STAGES.map(s => `<option value="${s}">${s}</option>`).join(''); }
+
+$('#resetBtn').addEventListener('click', async () => {
+  sim = { projections:{}, hypothetical:[] };
+  renderSimulator(); renderEcon();
+  await saveSim();
+});
+$('#advanceBtn').addEventListener('click', async () => {
+  const active = activeAccounts();
+  active.forEach(a => {
+    const idx = STAGES.indexOf(projectionFor(a));
+    if(idx > -1 && idx < STAGES.length - 1) sim.projections[a.id] = STAGES[idx+1];
+  });
+  sim.hypothetical.forEach(h => {
+    const idx = STAGES.indexOf(h.stage);
+    if(idx > -1 && idx < STAGES.length - 1) h.stage = STAGES[idx+1];
+  });
+  renderSimulator(); renderEcon();
+  await saveSim();
+});
+$('#hypAddBtn').addEventListener('click', async () => {
+  const name = $('#hypName').value.trim();
+  if(!name){ setStatus('#statusMsgSim', 'Give the hypothetical lead a name first.', true); return; }
+  sim.hypothetical.push({ id: 'hyp-' + Date.now(), name, segment: $('#hypSegment').value, stage: $('#hypStage').value });
+  $('#hypName').value = '';
+  renderSimulator(); renderEcon();
+  await saveSim();
+});
+
+/* ---------- Unit Economics rendering ---------- */
+function updateRevealButton(){
+  const btn = $('#revealBtn');
+  if(revealStep >= ECON_LABELS.length){
+    btn.textContent = 'All revealed';
+    btn.disabled = true;
+  } else {
+    btn.textContent = 'Reveal ▸ ' + ECON_LABELS[revealStep];
+    btn.disabled = false;
+  }
+}
+
+function renderEcon(){
+  $('#e-spend').value = econ.spend;
+  $('#e-revenue').value = econ.revenue;
+  $('#e-margin').value = econ.margin;
+  $('#e-years').value = econ.years;
+  $('#modeTodayBtn').classList.toggle('active', econ.mode === 'today');
+  $('#modeProjBtn').classList.toggle('active', econ.mode === 'projected');
+
+  const play = accountsInPlay(econ.mode);
+  const payers = payersFor(econ.mode);
+  const spend = parseFloat(econ.spend) || 0;
+  const revenue = parseFloat(econ.revenue) || 0;
+  const margin = parseFloat(econ.margin) || 0;
+  const years = parseFloat(econ.years) || 0;
+
+  const cac = payers > 0 ? (spend / payers) : null;
+  const ltv = revenue * (margin/100) * years;
+  const ratio = (cac && cac > 0) ? (ltv / cac) : null;
+
+  const setCard = (idx, valId, cardId, text, cls) => {
+    const valEl = $(valId), cardEl = $(cardId);
+    if(revealStep > idx){
+      valEl.textContent = text;
+      valEl.classList.remove('dash');
+      cardEl.classList.remove('good','warn','bad');
+      if(cls) cardEl.classList.add(cls);
+    } else {
+      valEl.textContent = '—';
+      valEl.classList.add('dash');
+      cardEl.classList.remove('good','warn','bad');
+    }
+  };
+
+  setCard(0, '#valPlay', '#cardPlay', String(play), null);
+  setCard(1, '#valPayers', '#cardPayers', String(payers), payers > 0 ? 'good' : 'warn');
+  setCard(2, '#valCAC', '#cardCAC', cac !== null ? fmtPeso(cac) : 'Undefined — no payers yet', cac !== null ? null : 'warn');
+
+  let ltvText, ltvCls;
+  if(cac === null){
+    ltvText = ltv > 0 ? (fmtPeso(ltv) + ' · CAC undefined') : '—';
+    ltvCls = 'warn';
+  } else if(ratio === null || !isFinite(ratio)){
+    ltvText = fmtPeso(ltv);
+    ltvCls = null;
+  } else {
+    ltvText = fmtPeso(ltv) + ' · ' + ratio.toFixed(1) + '× CAC';
+    ltvCls = ratio >= 3 ? 'good' : (ratio >= 1 ? 'warn' : 'bad');
+  }
+  setCard(3, '#valLTV', '#cardLTV', ltvText, ltvCls);
+
+  updateRevealButton();
+}
+
+['e-spend','e-revenue','e-margin','e-years'].forEach(id => {
+  document.addEventListener('DOMContentLoaded', () => {});
+});
+function bindEconInputs(){
+  $('#e-spend').addEventListener('input', async (e) => { econ.spend = e.target.value; renderEcon(); await saveEcon(true); });
+  $('#e-revenue').addEventListener('input', async (e) => { econ.revenue = e.target.value; renderEcon(); await saveEcon(true); });
+  $('#e-margin').addEventListener('input', async (e) => { econ.margin = e.target.value; renderEcon(); await saveEcon(true); });
+  $('#e-years').addEventListener('input', async (e) => { econ.years = e.target.value; renderEcon(); await saveEcon(true); });
+}
+$('#modeTodayBtn').addEventListener('click', async () => { econ.mode = 'today'; revealStep = 0; renderEcon(); await saveEcon(true); });
+$('#modeProjBtn').addEventListener('click', async () => { econ.mode = 'projected'; revealStep = 0; renderEcon(); await saveEcon(true); });
+$('#revealBtn').addEventListener('click', () => { if(revealStep < ECON_LABELS.length){ revealStep++; renderEcon(); } });
+$('#showAllBtn').addEventListener('click', () => { revealStep = ECON_LABELS.length; renderEcon(); });
+
+/* ---------- Tracker rendering (real data) ---------- */
+function cardHTML(a){
+  const tags = [];
+  tags.push(`<span class="tag seg-${a.segment==='A'?'a':'b'}">Segment ${a.segment}</span>`);
+  if(a.referredBy) tags.push(`<span class="tag hyp">via ${escapeHtml(a.referredBy)}</span>`);
+  if(a.generatedReferral) tags.push(`<span class="tag hyp">refers others</span>`);
+  return `
+    <div class="card" data-id="${a.id}">
+      <div class="name">${escapeHtml(a.name)}</div>
+      <div class="prop">${escapeHtml(a.property||'')}${a.contact ? ' · ' + escapeHtml(a.contact) : ''}</div>
+      <div class="tags">${tags.join('')}</div>
+    </div>`;
+}
+function renderBoard(){
+  const board = $('#board');
+  board.innerHTML = STAGES.map(stage => {
+    const items = accounts.filter(a => a.stage === stage);
+    return `
+      <div class="column">
+        <div class="col-head"><h3>${stage}</h3><span class="count mono">${items.length}</span></div>
+        ${items.length ? items.map(cardHTML).join('') : '<div class="empty-col">No accounts here</div>'}
+      </div>`;
+  }).join('');
+  board.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => openModal(el.getAttribute('data-id'))));
+}
+function renderGraveyard(){
+  const items = accounts.filter(a => a.stage === 'Disqualified');
+  $('#gyCount').textContent = items.length;
+  $('#gyBody').innerHTML = items.map(a => `
+    <div class="gy-card" data-id="${a.id}"><div class="name">${escapeHtml(a.name)}</div><div class="reason">${escapeHtml(a.reason||'No reason logged.')}</div></div>
+  `).join('');
+  $('#gyBody').querySelectorAll('.gy-card').forEach(el => el.addEventListener('click', () => openModal(el.getAttribute('data-id'))));
+}
+
+function openModal(id){
+  editingId = id || null;
+  const a = id ? accounts.find(x => x.id === id) : null;
+  $('#modalTitle').textContent = a ? 'Edit account' : 'Add account';
+  $('#f-name').value = a ? a.name : '';
+  $('#f-segment').value = a ? a.segment : 'A';
+  $('#f-stage').value = a ? a.stage : 'Warm Contact';
+  $('#f-contact').value = a ? a.contact : '';
+  $('#f-notes').value = a ? a.notes : '';
+  $('#f-reason').value = a ? a.reason : '';
+  $('#f-referredby').value = a ? a.referredBy : '';
+  $('#f-generatedref').checked = a ? !!a.generatedReferral : false;
+  $('#deleteBtn').style.display = a ? 'inline-block' : 'none';
+  toggleReasonField();
+  $('#overlay').classList.add('open');
+  $('#f-name').focus();
+}
+function closeModal(){ $('#overlay').classList.remove('open'); editingId = null; }
+function toggleReasonField(){ $('#reasonField').style.display = ($('#f-stage').value === 'Disqualified') ? 'block' : 'none'; }
+
+$('#f-stage').addEventListener('change', toggleReasonField);
+$('#addBtn').addEventListener('click', () => openModal(null));
+$('#cancelBtn').addEventListener('click', closeModal);
+$('#overlay').addEventListener('click', (e) => { if(e.target === $('#overlay')) closeModal(); });
+
+$('#saveBtn').addEventListener('click', async () => {
+  const name = $('#f-name').value.trim();
+  if(!name){ setStatus('#statusMsgTrack', 'Give the account a name first.', true); return; }
+  const data = {
+    id: editingId || ('acc-' + Date.now()),
+    name, property: '', segment: $('#f-segment').value, stage: $('#f-stage').value,
+    contact: $('#f-contact').value.trim(), notes: $('#f-notes').value.trim(),
+    reason: $('#f-reason').value.trim(), referredBy: $('#f-referredby').value.trim(),
+    generatedReferral: $('#f-generatedref').checked,
+  };
+  if(editingId){ accounts = accounts.map(a => a.id === editingId ? {...a, ...data, property: a.property} : a); }
+  else{ accounts.push(data); }
+  closeModal();
+  renderAll();
+  await saveAccounts();
+});
+$('#deleteBtn').addEventListener('click', async () => {
+  if(!editingId) return;
+  accounts = accounts.filter(a => a.id !== editingId);
+  delete sim.projections[editingId];
+  closeModal();
+  renderAll();
+  await saveAccounts();
+  await saveSim(true);
+});
+$('#gyToggle').addEventListener('click', () => { $('#gyBody').classList.toggle('open'); $('#gyArrow').classList.toggle('open'); });
+
+/* ---------- Tabs ---------- */
+function showTab(which){
+  $('#tabSimBtn').classList.toggle('active', which==='sim');
+  $('#tabEconBtn').classList.toggle('active', which==='econ');
+  $('#tabTrackBtn').classList.toggle('active', which==='track');
+  $('#panelSim').classList.toggle('active', which==='sim');
+  $('#panelEcon').classList.toggle('active', which==='econ');
+  $('#panelTrack').classList.toggle('active', which==='track');
+}
+$('#tabSimBtn').addEventListener('click', () => showTab('sim'));
+$('#tabEconBtn').addEventListener('click', () => showTab('econ'));
+$('#tabTrackBtn').addEventListener('click', () => showTab('track'));
+
+function renderAll(){
+  renderCheckpoint();
+  renderSimulator();
+  renderEcon();
+  renderBoard();
+  renderGraveyard();
+}
+
+(async function init(){
+  populateHypStageSelect();
+  bindEconInputs();
+  await loadAccounts();
+  await loadSim();
+  await loadEcon();
+  renderAll();
+})();
+</script>
+</body>
+</html>
