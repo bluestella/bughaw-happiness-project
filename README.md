@@ -29,6 +29,8 @@ and a **Save to team** button (shared `saved_calculations` table, browsable at `
 2. Open the SQL editor and run `supabase/migrations/0001_init.sql`. **Edit the
    `allowed_emails` insert first** — every teammate who should be able to sign up must
    be listed (you can add more later from the Table Editor).
+   Then run `supabase/migrations/0002_task_management.sql` — **review the role
+   `update` statements first** (see [Roles & Task Management](#roles--task-management)).
 3. Auth settings:
    - Email provider is on by default. Optionally disable "Confirm email" for a smoother
      internal-tool flow (Authentication → Providers → Email).
@@ -64,8 +66,40 @@ CI (`.github/workflows/ci.yml`) runs lint + tests + build on every push/PR to `m
   request to `/login` (only `/login` and `/auth/*` are public).
 - Signups hit a `before insert` trigger on `auth.users` that rejects any email not in
   `public.allowed_emails` — this covers email/password *and* OAuth.
-- All data tables use RLS policies granting full access to the `authenticated` role:
-  one shared team workspace, nothing is per-user private.
+- The calculator/tool tables (`pipeline_accounts`, `app_state`,
+  `saved_calculations`) use RLS policies granting full access to the `authenticated`
+  role: one shared team workspace, nothing is per-user private. The task-management
+  tables are the exception — see below.
+
+## Roles & Task Management
+
+`supabase/migrations/0002_task_management.sql` adds the first **role-gated** feature:
+a Projects → Mini-Projects → Tasks hierarchy with a drag-and-drop Kanban board at
+`/tasks`.
+
+Every user has one global role, stored in `allowed_emails.role`
+(`app_role` enum). Roles are managed **only from the Supabase dashboard** — there is
+no self-service role change in the app. New allowlist rows default to `member`.
+
+| | `super_admin` | `member` | `contractor` |
+|---|---|---|---|
+| See calculators & tools | ✅ | ✅ | ❌ (redirected to `/tasks`) |
+| See projects/boards | all of them | only as contributor | only as contributor |
+| Create Projects | ✅ | ❌ | ❌ |
+| Create Mini-Projects | ✅ | ✅ (in accessible projects) | ❌ |
+| Create tasks / comment | ✅ | ✅ | ✅ |
+| Edit/move/delete tasks | any | any (in accessible boards) | only own tasks |
+| Add contributors | ✅ | ✅ | ❌ |
+| Remove contributors | ✅ | ❌ | ❌ |
+| Delete Projects/Mini-Projects | ✅ | ❌ | ❌ |
+
+Access scoping: being a contributor on a **Project** grants access to *all*
+mini-projects inside it; a **Mini-Project** can additionally have its own contributors
+(e.g. a contractor scoped to a single board). All of this is enforced by RLS policies
+(see the migration) — the UI helpers in `src/lib/permissions.ts` only mirror them for
+showing/hiding buttons. Task comments are append-only (no update/delete policies).
+`supabase/tests/task_management_rls.sql` is a reference script (not run in CI) that
+exercises each policy against a local/staging Supabase stack.
 
 ## Architecture notes
 

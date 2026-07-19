@@ -6,6 +6,7 @@ import { useState } from "react";
 import { CATEGORIES } from "@/lib/calculators/types";
 import { calculatorsByCategory, calculatorPath } from "@/lib/calculators/registry";
 import { TOOLS } from "@/lib/tools";
+import { canAccessCalculators, type Role } from "@/lib/permissions";
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,31 +33,43 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ role }: { role: Role | null }) {
   const [open, setOpen] = useState(false);
+  const showCalculators = canAccessCalculators(role);
 
   const nav = (
     <nav className="pb-8">
-      <NavLink href="/">Dashboard</NavLink>
-      <NavLink href="/saved">Saved calculations</NavLink>
+      {showCalculators && (
+        <>
+          <NavLink href="/">Dashboard</NavLink>
+          <NavLink href="/saved">Saved calculations</NavLink>
+        </>
+      )}
 
-      <SectionLabel>Tools</SectionLabel>
-      {TOOLS.map((t) => (
-        <NavLink key={t.id} href={t.path}>
-          {t.icon} {t.name}
-        </NavLink>
-      ))}
+      <SectionLabel>Task Management</SectionLabel>
+      <NavLink href="/tasks">🗂️ Projects &amp; boards</NavLink>
 
-      {CATEGORIES.map((cat) => (
-        <div key={cat.id}>
-          <SectionLabel>{cat.name}</SectionLabel>
-          {calculatorsByCategory(cat.id).map((c) => (
-            <NavLink key={c.id} href={calculatorPath(c)}>
-              {c.icon} {c.name}
+      {showCalculators && (
+        <>
+          <SectionLabel>Tools</SectionLabel>
+          {TOOLS.map((t) => (
+            <NavLink key={t.id} href={t.path}>
+              {t.icon} {t.name}
             </NavLink>
           ))}
-        </div>
-      ))}
+
+          {CATEGORIES.map((cat) => (
+            <div key={cat.id}>
+              <SectionLabel>{cat.name}</SectionLabel>
+              {calculatorsByCategory(cat.id).map((c) => (
+                <NavLink key={c.id} href={calculatorPath(c)}>
+                  {c.icon} {c.name}
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </>
+      )}
     </nav>
   );
 
