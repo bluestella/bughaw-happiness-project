@@ -9,3 +9,4 @@ build/
 next-env.d.ts
 coverage/
 .DS_Store
+supabase/.temp/
