@@ -39,7 +39,7 @@ const SLIDERS: {
   { id: "duties", label: "Duties (domestic supply chain = 0)", min: 0, max: 60, step: 1, peso: true, section: "pair" },
   { id: "equipment", label: "Equipment (amortized per pair)", min: 0, max: 100, step: 1, peso: true, section: "pair" },
   { id: "cac", label: "CAC — cost to win one hotel", min: 500, max: 60000, step: 500, peso: true, section: "account" },
-  { id: "vol", label: "Pairs ordered / month", min: 10, max: 1000, step: 10, section: "account" },
+  { id: "vol", label: "Pairs ordered / month", min: 10, max: 1000000, step: 10, section: "account" },
   { id: "life", label: "Contract / reorder lifetime", min: 1, max: 36, step: 1, suffix: " mo", section: "account" },
 ];
 
