@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import {
   canAddContributor,
@@ -11,6 +12,10 @@ import {
   canRemoveContributor,
   type Role,
 } from "@/lib/permissions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type Project = { id: string; name: string; description: string; created_by_email: string | null };
 type MiniProject = {
@@ -21,9 +26,6 @@ type MiniProject = {
   created_at: string;
 };
 type Contributor = { user_email: string; added_by_email: string | null; created_at: string };
-
-const inputCls =
-  "w-full border border-line rounded-md px-2.5 py-2 text-[13px] focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20 bg-white";
 
 export function ProjectDetail({
   project,
@@ -42,17 +44,13 @@ export function ProjectDetail({
   const router = useRouter();
   const [miniProjects, setMiniProjects] = useState(initialMiniProjects);
   const [contributors, setContributors] = useState(initialContributors);
-  const [status, setStatus] = useState("");
 
   const [mpFormOpen, setMpFormOpen] = useState(false);
   const [mpName, setMpName] = useState("");
   const [mpDescription, setMpDescription] = useState("");
   const [newEmail, setNewEmail] = useState("");
-
-  function flash(msg: string) {
-    setStatus(msg);
-    setTimeout(() => setStatus(""), 3000);
-  }
+  const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
+  const [deleteMiniId, setDeleteMiniId] = useState<string | null>(null);
 
   async function createMiniProject(e: React.FormEvent) {
     e.preventDefault();
@@ -63,13 +61,14 @@ export function ProjectDetail({
       .select("id, name, description, created_by_email, created_at")
       .single();
     if (error || !data) {
-      flash("Could not create mini-project: " + (error?.message ?? "unknown error"));
+      toast.error("Could not create mini-project: " + (error?.message ?? "unknown error"));
       return;
     }
     setMiniProjects((prev) => [...prev, data as MiniProject]);
     setMpName("");
     setMpDescription("");
     setMpFormOpen(false);
+    toast.success("Mini-project created.");
   }
 
   async function addContributor(e: React.FormEvent) {
@@ -77,7 +76,7 @@ export function ProjectDetail({
     const email = newEmail.trim().toLowerCase();
     if (!email) return;
     if (contributors.some((c) => c.user_email.toLowerCase() === email)) {
-      flash("Already a contributor.");
+      toast.message("Already a contributor.");
       return;
     }
     const { data, error } = await supabase
@@ -86,11 +85,12 @@ export function ProjectDetail({
       .select("user_email, added_by_email, created_at")
       .single();
     if (error || !data) {
-      flash("Could not add contributor: " + (error?.message ?? "unknown error"));
+      toast.error("Could not add contributor: " + (error?.message ?? "unknown error"));
       return;
     }
     setContributors((prev) => [...prev, data as Contributor]);
     setNewEmail("");
+    toast.success("Contributor added.");
   }
 
   async function removeContributor(email: string) {
@@ -103,30 +103,33 @@ export function ProjectDetail({
       .eq("user_email", email);
     if (error) {
       setContributors(prev);
-      flash("Could not remove contributor: " + error.message);
+      toast.error("Could not remove contributor: " + error.message);
+    } else {
+      toast.success("Contributor removed.");
     }
   }
 
   async function deleteMiniProject(id: string) {
-    if (!confirm("Delete this mini-project and all its tasks?")) return;
     const prev = miniProjects;
     setMiniProjects((m) => m.filter((x) => x.id !== id));
     const { error } = await supabase.from("mini_projects").delete().eq("id", id);
     if (error) {
       setMiniProjects(prev);
-      flash("Could not delete mini-project: " + error.message);
+      toast.error("Could not delete mini-project: " + error.message);
+      throw new Error(error.message);
     }
+    toast.success("Mini-project deleted.");
   }
 
   async function deleteProject() {
-    if (!confirm(`Delete project "${project.name}" and everything inside it?`)) return;
     const { error } = await supabase.from("projects").delete().eq("id", project.id);
     if (error) {
-      flash("Could not delete project: " + error.message);
-      return;
+      toast.error("Could not delete project: " + error.message);
+      throw new Error(error.message);
     }
     router.push("/tasks");
     router.refresh();
+    toast.success("Project deleted.");
   }
 
   return (
@@ -142,32 +145,20 @@ export function ProjectDetail({
           )}
         </div>
         {canDeleteProjectOrMiniProject(role) && (
-          <button
-            onClick={deleteProject}
-            className="text-[12px] text-danger border border-danger/40 rounded-md px-3 py-1.5 hover:bg-danger/5 shrink-0"
-          >
+          <Button intent="danger" size="sm" onClick={() => setDeleteProjectOpen(true)}>
             Delete project
-          </button>
+          </Button>
         )}
       </div>
-
-      {status && (
-        <p className="mb-4 text-[12px] text-clay border border-clay/40 bg-clay/5 rounded-md px-3 py-2">
-          {status}
-        </p>
-      )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display text-lg font-semibold text-ink">Mini-projects</h2>
             {canCreateMiniProject(role) && (
-              <button
-                onClick={() => setMpFormOpen((v) => !v)}
-                className="bg-coir text-white text-[13px] font-semibold rounded-md px-3 py-1.5 hover:bg-coir-dark"
-              >
+              <Button intent="primary" size="sm" onClick={() => setMpFormOpen((v) => !v)}>
                 + New Mini-Project
-              </button>
+              </Button>
             )}
           </div>
 
@@ -176,35 +167,25 @@ export function ProjectDetail({
               onSubmit={createMiniProject}
               className="border border-line rounded-xl bg-white p-4 mb-4 space-y-2.5"
             >
-              <input
-                className={inputCls}
+              <Input
                 placeholder="Mini-project name"
                 value={mpName}
                 onChange={(e) => setMpName(e.target.value)}
                 autoFocus
               />
-              <textarea
-                className={inputCls}
+              <Textarea
                 placeholder="Description (optional)"
                 rows={2}
                 value={mpDescription}
                 onChange={(e) => setMpDescription(e.target.value)}
               />
               <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMpFormOpen(false)}
-                  className="text-[13px] border border-line rounded-md px-3 py-1.5 text-ink"
-                >
+                <Button intent="secondary" size="sm" type="button" onClick={() => setMpFormOpen(false)}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!mpName.trim()}
-                  className="bg-coir text-white text-[13px] font-semibold rounded-md px-4 py-1.5 hover:bg-coir-dark disabled:opacity-50"
-                >
+                </Button>
+                <Button intent="primary" size="sm" type="submit" disabled={!mpName.trim()}>
                   Create
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -232,7 +213,7 @@ export function ProjectDetail({
                 </Link>
                 {canDeleteProjectOrMiniProject(role) && (
                   <button
-                    onClick={() => deleteMiniProject(mp.id)}
+                    onClick={() => setDeleteMiniId(mp.id)}
                     className="absolute top-2.5 right-2.5 text-[11px] text-ink-soft hover:text-danger"
                     aria-label={`Delete ${mp.name}`}
                   >
@@ -279,24 +260,40 @@ export function ProjectDetail({
           </ul>
           {canAddContributor(role) && (
             <form onSubmit={addContributor} className="flex gap-2">
-              <input
-                className={inputCls}
+              <Input
                 type="email"
                 placeholder="email@example.com"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
               />
-              <button
-                type="submit"
-                disabled={!newEmail.trim()}
-                className="bg-coir text-white text-[12px] font-semibold rounded-md px-3 hover:bg-coir-dark disabled:opacity-50 shrink-0"
-              >
+              <Button intent="primary" size="sm" type="submit" disabled={!newEmail.trim()}>
                 Add
-              </button>
+              </Button>
             </form>
           )}
         </aside>
       </div>
+
+      <ConfirmDialog
+        open={deleteProjectOpen}
+        onOpenChange={setDeleteProjectOpen}
+        title="Delete project?"
+        description={`Delete project "${project.name}" and everything inside it.`}
+        confirmLabel="Delete project"
+        onConfirm={deleteProject}
+      />
+
+      <ConfirmDialog
+        open={deleteMiniId !== null}
+        onOpenChange={(o) => !o && setDeleteMiniId(null)}
+        title="Delete mini-project?"
+        description="Delete this mini-project and all its tasks."
+        confirmLabel="Delete mini-project"
+        onConfirm={async () => {
+          if (!deleteMiniId) return;
+          await deleteMiniProject(deleteMiniId);
+        }}
+      />
     </div>
   );
 }

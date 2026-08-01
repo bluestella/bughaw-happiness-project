@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CATEGORIES } from "@/lib/calculators/types";
@@ -94,11 +95,21 @@ export function Sidebar({ role }: { role: Role | null }) {
         }`}
         onClick={() => setOpen(false)}
       >
-        <Link href="/" className="block px-3 mb-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-coir-dark">
-            Bughaw Innovations
-          </p>
-          <p className="font-display text-lg font-semibold text-ink">Calculators Hub</p>
+        <Link href="/" className="flex items-center gap-3 px-3 mb-4">
+          <Image
+            src="/brand/logo-mark.png"
+            alt="Bughaw"
+            width={32}
+            height={32}
+            priority
+            className="shrink-0"
+          />
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-coir-dark">
+              Bughaw Innovations
+            </p>
+            <p className="font-display text-lg font-semibold text-ink">Calculators Hub</p>
+          </div>
         </Link>
         {nav}
       </aside>

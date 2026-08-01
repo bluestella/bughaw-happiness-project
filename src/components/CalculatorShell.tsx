@@ -13,9 +13,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Dialog } from "@base-ui/react/dialog";
+import { toast } from "sonner";
 import type { CalculatorConfig, Inputs } from "@/lib/calculators/types";
 import { formatValue, pesoRound } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function defaultsFor(config: CalculatorConfig): Inputs {
   const out: Inputs = {};
@@ -40,7 +44,9 @@ function download(filename: string, content: string, mime: string) {
 export function CalculatorShell({ config }: { config: CalculatorConfig }) {
   const storageKey = `bughaw-calc-${config.id}`;
   const [inputs, setInputs] = useState<Inputs>(() => defaultsFor(config));
-  const [status, setStatus] = useState("");
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveLabel, setSaveLabel] = useState("");
+  const [savingToTeam, setSavingToTeam] = useState(false);
 
   useEffect(() => {
     try {
@@ -65,11 +71,6 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
     setInputs((prev) => ({ ...prev, [id]: isNaN(n) ? 0 : n }));
   }
 
-  function flash(msg: string) {
-    setStatus(msg);
-    setTimeout(() => setStatus(""), 2500);
-  }
-
   function exportCsv() {
     const rows: string[][] = [["Field", "Value"]];
     config.inputGroups.forEach((g) =>
@@ -92,8 +93,8 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
     );
   }
 
-  async function saveToTeam() {
-    const label = window.prompt("Label for this saved calculation (optional):") ?? "";
+  async function saveToTeam(label: string) {
+    setSavingToTeam(true);
     const supabase = createClient();
     const { error } = await supabase.from("saved_calculations").insert({
       calculator_id: config.id,
@@ -101,7 +102,13 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
       inputs,
       outputs,
     });
-    flash(error ? `Save failed: ${error.message}` : "Saved to team workspace.");
+    setSavingToTeam(false);
+    if (error) {
+      toast.error(`Save failed: ${error.message}`);
+      return;
+    }
+    toast.success("Saved to team workspace.");
+    setSaveOpen(false);
   }
 
   const chartData =
@@ -190,13 +197,12 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
               Export JSON
             </button>
             <button
-              onClick={saveToTeam}
+              onClick={() => setSaveOpen(true)}
               className="text-xs bg-coir hover:bg-coir-dark text-white font-semibold rounded-md px-3 py-2"
             >
               Save to team
             </button>
           </div>
-          <p className="font-mono text-[11px] text-ink-soft min-h-4">{status}</p>
         </div>
 
         <div className="space-y-5">
@@ -283,6 +289,41 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
           )}
         </div>
       </div>
+
+      <Dialog.Root open={saveOpen} onOpenChange={setSaveOpen}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 z-40 bg-ink/30" />
+          <Dialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-paper border border-line rounded-xl w-[calc(100vw-2rem)] max-w-md p-5">
+            <Dialog.Title className="font-display text-base font-semibold text-ink">
+              Save to team
+            </Dialog.Title>
+            <Dialog.Description className="text-[12px] text-ink-soft mt-1.5">
+              Optionally add a label to help your team find this later.
+            </Dialog.Description>
+            <div className="mt-3">
+              <Input
+                placeholder="Label (optional)"
+                value={saveLabel}
+                onChange={(e) => setSaveLabel(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Dialog.Close className="text-[12px] px-3 py-1.5 rounded-md font-semibold transition-colors border bg-white text-ink border-line hover:border-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 focus-visible:border-coir">
+                Cancel
+              </Dialog.Close>
+              <Button
+                intent="primary"
+                size="sm"
+                disabled={savingToTeam}
+                onClick={() => saveToTeam(saveLabel)}
+              >
+                {savingToTeam ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

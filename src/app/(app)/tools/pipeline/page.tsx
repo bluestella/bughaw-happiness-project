@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Dialog } from "@base-ui/react/dialog";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useAppState } from "@/lib/useAppState";
 import { pesoRound } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const STAGES = ["Warm Contact", "Meeting Secured", "Sample Delivered", "PO Signed", "Repeat Order"] as const;
 const SIM_STAGES = [...STAGES, "Dropped Out"];
@@ -40,9 +47,6 @@ const EMPTY_FORM: Omit<Account, "id"> = {
   contact: "", notes: "", reason: "", referred_by: "", generated_referral: false,
 };
 
-const inputCls =
-  "w-full border border-line rounded-md px-2.5 py-2 text-[13px] focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20 bg-white";
-
 function SegTag({ segment }: { segment: "A" | "B" }) {
   return (
     <span
@@ -60,10 +64,10 @@ export default function PipelinePage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountsLoaded, setAccountsLoaded] = useState(false);
   const [tab, setTab] = useState<"sim" | "econ" | "track">("sim");
-  const [status, setStatus] = useState("");
   const [editing, setEditing] = useState<Account | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<Omit<Account, "id">>(EMPTY_FORM);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [gyOpen, setGyOpen] = useState(false);
   const [hypName, setHypName] = useState("");
   const [hypSegment, setHypSegment] = useState<"A" | "B">("A");
@@ -82,15 +86,10 @@ export default function PipelinePage() {
         .select("*")
         .order("created_at", { ascending: true });
       if (!error && data) setAccounts(data as Account[]);
-      if (error) setStatus("Could not load accounts: " + error.message);
+      if (error) toast.error("Could not load accounts: " + error.message);
       setAccountsLoaded(true);
     })();
   }, [supabase]);
-
-  function flash(msg: string) {
-    setStatus(msg);
-    setTimeout(() => setStatus(""), 2500);
-  }
 
   const active = accounts.filter((a) => a.stage !== "Disqualified");
   const projectionFor = (a: Account) => sim.value.projections[a.id] || a.stage;
@@ -133,13 +132,19 @@ export default function PipelinePage() {
   }
 
   async function saveAccount() {
-    if (!form.name.trim()) return flash("Give the account a name first.");
+    if (!form.name.trim()) {
+      toast.message("Give the account a name first.");
+      return;
+    }
     if (editing) {
       const { error } = await supabase
         .from("pipeline_accounts")
         .update({ ...form, updated_at: new Date().toISOString() })
         .eq("id", editing.id);
-      if (error) return flash("Save failed: " + error.message);
+      if (error) {
+        toast.error("Save failed: " + error.message);
+        return;
+      }
       setAccounts((prev) => prev.map((a) => (a.id === editing.id ? { ...a, ...form } : a)));
     } else {
       const { data, error } = await supabase
@@ -147,17 +152,23 @@ export default function PipelinePage() {
         .insert(form)
         .select()
         .single();
-      if (error) return flash("Save failed: " + error.message);
+      if (error) {
+        toast.error("Save failed: " + error.message);
+        return;
+      }
       setAccounts((prev) => [...prev, data as Account]);
     }
     setModalOpen(false);
-    flash("Saved.");
+    toast.success("Saved.");
   }
 
   async function deleteAccount() {
     if (!editing) return;
     const { error } = await supabase.from("pipeline_accounts").delete().eq("id", editing.id);
-    if (error) return flash("Delete failed: " + error.message);
+    if (error) {
+      toast.error("Delete failed: " + error.message);
+      throw new Error(error.message);
+    }
     setAccounts((prev) => prev.filter((a) => a.id !== editing.id));
     sim.update((prev) => {
       const projections = { ...prev.projections };
@@ -165,7 +176,7 @@ export default function PipelinePage() {
       return { ...prev, projections };
     });
     setModalOpen(false);
-    flash("Deleted.");
+    toast.success("Deleted.");
   }
 
   // ---------- econ ----------
@@ -341,8 +352,7 @@ export default function PipelinePage() {
                         <td className="px-3.5 py-2.5"><SegTag segment={a.segment} /></td>
                         <td className="px-3.5 py-2.5 text-[13px]">{a.stage}</td>
                         <td className="px-3.5 py-2.5">
-                          <select
-                            className={inputCls}
+                          <Select
                             value={projectionFor(a)}
                             onChange={(e) =>
                               sim.update((prev) => ({
@@ -352,7 +362,7 @@ export default function PipelinePage() {
                             }
                           >
                             {SIM_STAGES.map((s) => <option key={s}>{s}</option>)}
-                          </select>
+                          </Select>
                         </td>
                         <td />
                       </tr>
@@ -368,8 +378,7 @@ export default function PipelinePage() {
                         <td className="px-3.5 py-2.5"><SegTag segment={h.segment} /></td>
                         <td className="px-3.5 py-2.5 text-[13px] text-ink-soft">—</td>
                         <td className="px-3.5 py-2.5">
-                          <select
-                            className={inputCls}
+                          <Select
                             value={h.stage}
                             onChange={(e) =>
                               sim.update((prev) => ({
@@ -381,7 +390,7 @@ export default function PipelinePage() {
                             }
                           >
                             {SIM_STAGES.map((s) => <option key={s}>{s}</option>)}
-                          </select>
+                          </Select>
                         </td>
                         <td className="px-3.5 py-2.5">
                           <button
@@ -404,23 +413,24 @@ export default function PipelinePage() {
               </div>
 
               <div className="flex gap-2 mt-4 flex-wrap items-center">
-                <input
-                  className={`${inputCls} max-w-56`}
+                <Input
+                  className="max-w-56"
                   placeholder="Hypothetical lead name (e.g. new referral)"
                   value={hypName}
                   onChange={(e) => setHypName(e.target.value)}
                 />
-                <select className={`${inputCls} w-auto`} value={hypSegment} onChange={(e) => setHypSegment(e.target.value as "A" | "B")}>
+                <Select className="w-auto" value={hypSegment} onChange={(e) => setHypSegment(e.target.value as "A" | "B")}>
                   <option value="A">Segment A</option>
                   <option value="B">Segment B</option>
-                </select>
-                <select className={`${inputCls} w-auto`} value={hypStage} onChange={(e) => setHypStage(e.target.value)}>
+                </Select>
+                <Select className="w-auto" value={hypStage} onChange={(e) => setHypStage(e.target.value)}>
                   {SIM_STAGES.map((s) => <option key={s}>{s}</option>)}
-                </select>
-                <button
-                  className="bg-coir hover:bg-coir-dark text-white font-semibold text-xs rounded-md px-3.5 py-2.5"
+                </Select>
+                <Button
+                  intent="primary"
+                  size="sm"
                   onClick={() => {
-                    if (!hypName.trim()) return flash("Give the hypothetical lead a name first.");
+                    if (!hypName.trim()) return toast.message("Give the hypothetical lead a name first.");
                     sim.update((prev) => ({
                       ...prev,
                       hypothetical: [
@@ -432,7 +442,7 @@ export default function PipelinePage() {
                   }}
                 >
                   + Add hypothetical
-                </button>
+                </Button>
               </div>
               <p className="text-xs text-ink-soft mt-2">
                 Hypothetical leads exist only in the simulator — they won&apos;t appear in the
@@ -490,9 +500,9 @@ export default function PipelinePage() {
                       <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">
                         {f.label}
                       </label>
-                      <input
+                      <Input
                         type="number"
-                        className={`${inputCls} font-mono`}
+                        className="font-mono"
                         placeholder={f.ph}
                         value={econ.value[f.id as keyof EconState] as string}
                         onChange={(e) => econ.update((p) => ({ ...p, [f.id]: e.target.value }))}
@@ -625,27 +635,30 @@ export default function PipelinePage() {
         </>
       )}
 
-      <p className="font-mono text-[11px] text-ink-soft mt-4 min-h-4">
-        {status || sim.status || econ.status}
-      </p>
+      <p className="font-mono text-[11px] text-ink-soft mt-4 min-h-4">{sim.status || econ.status}</p>
 
-      {modalOpen && (
-        <div
-          className="fixed inset-0 bg-ink/40 z-50 flex items-center justify-center p-5"
-          onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}
-        >
-          <div className="bg-panel border border-line rounded-2xl w-full max-w-md p-6 max-h-[88vh] overflow-y-auto">
-            <h2 className="font-display text-base font-semibold mb-4">
+      <Dialog.Root
+        open={modalOpen}
+        onOpenChange={(o) => {
+          setModalOpen(o);
+          if (!o) setDeleteOpen(false);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-ink/40 z-50" />
+          <Dialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-panel border border-line rounded-2xl w-[calc(100vw-2rem)] max-w-md p-6 max-h-[88vh] overflow-y-auto">
+            <Dialog.Title className="font-display text-base font-semibold mb-4">
               {editing ? "Edit account" : "Add account"}
-            </h2>
+            </Dialog.Title>
             {[
               { id: "name", label: "Hotel / property", ph: "e.g. Grand Hyatt Manila" },
               { id: "contact", label: "Contact person", ph: "e.g. Denise Ann Samson" },
             ].map((f) => (
               <div key={f.id} className="mb-3.5">
-                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">{f.label}</label>
-                <input
-                  className={inputCls}
+                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">
+                  {f.label}
+                </label>
+                <Input
                   placeholder={f.ph}
                   value={form[f.id as "name" | "contact"]}
                   onChange={(e) => setForm((p) => ({ ...p, [f.id]: e.target.value }))}
@@ -654,24 +667,32 @@ export default function PipelinePage() {
             ))}
             <div className="grid grid-cols-2 gap-3 mb-3.5">
               <div>
-                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">Segment</label>
-                <select className={inputCls} value={form.segment} onChange={(e) => setForm((p) => ({ ...p, segment: e.target.value as "A" | "B" }))}>
+                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">
+                  Segment
+                </label>
+                <Select value={form.segment} onChange={(e) => setForm((p) => ({ ...p, segment: e.target.value as "A" | "B" }))}>
                   <option value="A">A — owner-operated, rating-aspiring</option>
                   <option value="B">B — ESG-reporting conglomerate</option>
-                </select>
+                </Select>
               </div>
               <div>
-                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">Stage</label>
-                <select className={inputCls} value={form.stage} onChange={(e) => setForm((p) => ({ ...p, stage: e.target.value }))}>
-                  {[...STAGES, "Disqualified"].map((s) => <option key={s}>{s}</option>)}
-                </select>
+                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">
+                  Stage
+                </label>
+                <Select value={form.stage} onChange={(e) => setForm((p) => ({ ...p, stage: e.target.value }))}>
+                  {[...STAGES, "Disqualified"].map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </Select>
               </div>
             </div>
             {form.stage === "Disqualified" && (
               <div className="mb-3.5">
-                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">Why disqualified</label>
-                <textarea
-                  className={`${inputCls} min-h-16`}
+                <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">
+                  Why disqualified
+                </label>
+                <Textarea
+                  className="min-h-16"
                   placeholder="e.g. Centralized procurement, GM can't decide"
                   value={form.reason}
                   onChange={(e) => setForm((p) => ({ ...p, reason: e.target.value }))}
@@ -679,18 +700,21 @@ export default function PipelinePage() {
               </div>
             )}
             <div className="mb-3.5">
-              <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">Notes</label>
-              <textarea
-                className={`${inputCls} min-h-16`}
+              <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">
+                Notes
+              </label>
+              <Textarea
+                className="min-h-16"
                 placeholder="What's true right now, what's next"
                 value={form.notes}
                 onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               />
             </div>
             <div className="mb-3.5">
-              <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">Referred by (optional)</label>
-              <input
-                className={inputCls}
+              <label className="block text-[11px] uppercase tracking-wide text-ink-soft mb-1.5">
+                Referred by (optional)
+              </label>
+              <Input
                 placeholder="e.g. Grand Hyatt Manila"
                 value={form.referred_by}
                 onChange={(e) => setForm((p) => ({ ...p, referred_by: e.target.value }))}
@@ -706,22 +730,31 @@ export default function PipelinePage() {
             </label>
             <div className="flex justify-between gap-2.5">
               <div className="flex gap-2">
-                <button className="text-xs border border-line rounded-md px-3.5 py-2.5 hover:border-ink-soft" onClick={() => setModalOpen(false)}>
+                <Dialog.Close className="text-xs border border-line rounded-md px-3.5 py-2.5 hover:border-ink-soft font-semibold">
                   Cancel
-                </button>
+                </Dialog.Close>
                 {editing && (
-                  <button className="text-xs border border-[#E8C4B8] text-danger rounded-md px-3.5 py-2.5 hover:bg-[#FBEBE6]" onClick={deleteAccount}>
+                  <Button intent="danger" size="sm" onClick={() => setDeleteOpen(true)}>
                     Delete
-                  </button>
+                  </Button>
                 )}
               </div>
-              <button className="bg-coir hover:bg-coir-dark text-white font-semibold text-xs rounded-md px-4 py-2.5" onClick={saveAccount}>
+              <Button intent="primary" size="sm" onClick={saveAccount}>
                 Save
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
-      )}
+
+            <ConfirmDialog
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+              title="Delete account?"
+              description="This removes the account from the pipeline tracker."
+              confirmLabel="Delete"
+              onConfirm={deleteAccount}
+            />
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

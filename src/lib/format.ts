@@ -1,7 +1,7 @@
 export type OutputFormat = "currency" | "percentage" | "number" | "ratio" | "months";
 
-export function peso(n: number, decimals = 2): string {
-  if (!isFinite(n)) return "—";
+export function peso(n: number | null | undefined, decimals = 2): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "—";
   return (
     "₱" +
     n.toLocaleString("en-PH", {
@@ -11,14 +11,14 @@ export function peso(n: number, decimals = 2): string {
   );
 }
 
-export function pesoRound(n: number): string {
-  if (!isFinite(n)) return "—";
+export function pesoRound(n: number | null | undefined): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "—";
   const sign = n < 0 ? "-" : "";
   return sign + "₱" + Math.abs(Math.round(n)).toLocaleString("en-PH");
 }
 
-export function formatValue(format: OutputFormat, v: number): string {
-  if (!isFinite(v)) return "—";
+export function formatValue(format: OutputFormat, v: number | null | undefined): string {
+  if (typeof v !== "number" || !Number.isFinite(v)) return "—";
   switch (format) {
     case "currency":
       return pesoRound(v);

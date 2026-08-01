@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Dialog } from "@base-ui/react/dialog";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-
-const inputCls =
-  "w-full border border-line rounded-md px-2.5 py-2 text-[13px] focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20 bg-white";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export function NewProjectForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -28,7 +30,9 @@ export function NewProjectForm() {
       .single();
     setSaving(false);
     if (error || !data) {
-      setError(error?.message ?? "Could not create project.");
+      const msg = error?.message ?? "Could not create project.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
     setOpen(false);
@@ -36,61 +40,47 @@ export function NewProjectForm() {
     setDescription("");
     router.push(`/tasks/${data.id}`);
     router.refresh();
+    toast.success("Project created.");
   }
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="bg-coir text-white text-[13px] font-semibold rounded-md px-4 py-2 hover:bg-coir-dark"
-      >
+      <Button intent="primary" onClick={() => setOpen(true)}>
         + New Project
-      </button>
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-ink/30 flex items-center justify-center p-4"
-          onClick={() => setOpen(false)}
-        >
-          <form
-            onSubmit={submit}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-paper border border-line rounded-xl p-5 w-full max-w-md space-y-3"
-          >
-            <h2 className="font-display text-lg font-semibold text-ink">New Project</h2>
-            <input
-              className={inputCls}
-              placeholder="Project name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
-            <textarea
-              className={inputCls}
-              placeholder="Description (optional)"
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            {error && <p className="text-[12px] text-danger">{error}</p>}
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="text-[13px] border border-line rounded-md px-3 py-1.5 text-ink"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving || !name.trim()}
-                className="bg-coir text-white text-[13px] font-semibold rounded-md px-4 py-1.5 hover:bg-coir-dark disabled:opacity-50"
-              >
-                {saving ? "Creating…" : "Create"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      </Button>
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 z-40 bg-ink/30" />
+          <Dialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-paper border border-line rounded-xl w-[calc(100vw-2rem)] max-w-md p-5">
+            <form onSubmit={submit} className="space-y-3">
+              <Dialog.Title className="font-display text-lg font-semibold text-ink">
+                New Project
+              </Dialog.Title>
+              <Input
+                placeholder="Project name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+              />
+              <Textarea
+                placeholder="Description (optional)"
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              {error && <p className="text-[12px] text-danger">{error}</p>}
+              <div className="flex justify-end gap-2">
+                <Dialog.Close className="text-[12px] px-3 py-1.5 rounded-md font-semibold transition-colors border bg-white text-ink border-line hover:border-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 focus-visible:border-coir">
+                  Cancel
+                </Dialog.Close>
+                <Button intent="primary" size="sm" type="submit" disabled={saving || !name.trim()}>
+                  {saving ? "Creating…" : "Create"}
+                </Button>
+              </div>
+            </form>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }

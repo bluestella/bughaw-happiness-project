@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import {
   canAddContributor,
@@ -37,13 +38,12 @@ import {
   type TaskStatus,
 } from "@/lib/tasks";
 import { TaskPanel } from "./TaskPanel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type MiniProject = { id: string; project_id: string; name: string; description: string };
 type ScopedContributor = { user_email: string; added_by_email: string | null };
 type Columns = Record<TaskStatus, string[]>;
-
-const inputCls =
-  "w-full border border-line rounded-md px-2.5 py-2 text-[13px] focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20 bg-white";
 
 const PRIORITY_STYLE: Record<string, string> = {
   Low: "text-coir-dark border-coir/50",
@@ -159,28 +159,29 @@ function Column({
       </SortableContext>
       {adding ? (
         <form onSubmit={submit} className="mt-2 space-y-1.5">
-          <input
-            className={inputCls}
+          <Input
             placeholder="Task title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
           />
           <div className="flex gap-1.5">
-            <button
+            <Button
+              intent="primary"
+              size="sm"
               type="submit"
               disabled={!title.trim()}
-              className="bg-coir text-white text-[12px] font-semibold rounded-md px-3 py-1 hover:bg-coir-dark disabled:opacity-50"
             >
               Add
-            </button>
-            <button
+            </Button>
+            <Button
+              intent="secondary"
+              size="sm"
               type="button"
               onClick={() => setAdding(false)}
-              className="text-[12px] border border-line rounded-md px-3 py-1 text-ink"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -219,7 +220,6 @@ export function Board({
   const [columns, setColumns] = useState<Columns>(() => buildColumns(initialTasks));
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [openTask, setOpenTask] = useState<Task | null>(null);
-  const [status, setStatus] = useState("");
   const [scopedContributors, setScopedContributors] = useState(initialScopedContributors);
   const [newEmail, setNewEmail] = useState("");
   const dragSnapshot = useRef<{ columns: Columns; tasksById: Record<string, Task> } | null>(null);
@@ -236,11 +236,6 @@ export function Board({
     );
     return Array.from(set).sort();
   }, [inheritedContributorEmails, scopedContributors, userEmail]);
-
-  function flash(msg: string) {
-    setStatus(msg);
-    setTimeout(() => setStatus(""), 3000);
-  }
 
   function findContainer(id: UniqueIdentifier): TaskStatus | null {
     if (TASK_STATUSES.includes(id as TaskStatus)) return id as TaskStatus;
@@ -319,7 +314,7 @@ export function Board({
         setColumns(before.columns);
         setTasksById(before.tasksById);
       }
-      flash(error ? "Could not move task: " + error.message : "You can only move tasks you created.");
+      toast.error(error ? "Could not move task: " + error.message : "You can only move tasks you created.");
     }
     dragSnapshot.current = null;
   }
@@ -343,12 +338,13 @@ export function Board({
       .select("*")
       .single();
     if (error || !data) {
-      flash("Could not create task: " + (error?.message ?? "unknown error"));
+      toast.error("Could not create task: " + (error?.message ?? "unknown error"));
       return false;
     }
     const task = data as Task;
     setTasksById((prev) => ({ ...prev, [task.id]: task }));
     setColumns((prev) => ({ ...prev, [taskStatus]: [...prev[taskStatus], task.id] }));
+    toast.success("Task created.");
     return true;
   }
 
@@ -395,11 +391,12 @@ export function Board({
       .select("user_email, added_by_email")
       .single();
     if (error || !data) {
-      flash("Could not add contributor: " + (error?.message ?? "unknown error"));
+      toast.error("Could not add contributor: " + (error?.message ?? "unknown error"));
       return;
     }
     setScopedContributors((prev) => [...prev, data as ScopedContributor]);
     setNewEmail("");
+    toast.success("Contributor added.");
   }
 
   async function removeScopedContributor(email: string) {
@@ -412,7 +409,7 @@ export function Board({
       .eq("user_email", email);
     if (error) {
       setScopedContributors(prev);
-      flash("Could not remove contributor: " + error.message);
+      toast.error("Could not remove contributor: " + error.message);
     }
   }
 
@@ -432,12 +429,6 @@ export function Board({
           <p className="text-[13px] text-ink-soft mt-1">{miniProject.description}</p>
         )}
       </div>
-
-      {status && (
-        <p className="mb-4 text-[12px] text-clay border border-clay/40 bg-clay/5 rounded-md px-3 py-2">
-          {status}
-        </p>
-      )}
 
       <DndContext
         sensors={sensors}
@@ -500,20 +491,20 @@ export function Board({
         </ul>
         {canAddContributor(role) && (
           <form onSubmit={addScopedContributor} className="flex gap-2">
-            <input
-              className={inputCls}
+            <Input
               type="email"
               placeholder="email@example.com"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
             />
-            <button
+            <Button
+              intent="primary"
+              size="sm"
               type="submit"
               disabled={!newEmail.trim()}
-              className="bg-coir text-white text-[12px] font-semibold rounded-md px-3 hover:bg-coir-dark disabled:opacity-50 shrink-0"
             >
               Add
-            </button>
+            </Button>
           </form>
         )}
       </section>
