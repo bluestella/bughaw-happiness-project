@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { InfoTip } from "@/components/ui/tooltip";
+import { TabBar } from "@/components/ui/tab-bar";
 import { formatValue, peso, pesoRound } from "@/lib/format";
 import {
   amountNeeded,
@@ -33,18 +37,18 @@ function NumField({
   step?: number;
   help?: string;
 }) {
+  // Draft-string editing: keep the raw string while focused so clearing the
+  // field doesn't snap to 0 mid-edit; parse on commit.
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = (raw: string) => {
+    const n = parseFloat(raw);
+    onChange(isNaN(n) ? 0 : Math.max(0, n));
+  };
   return (
     <label className="block mb-4 last:mb-0">
-      <span className="flex items-baseline gap-1 text-[13px] text-ink-soft mb-1.5">
+      <span className="flex items-center gap-1 text-[13px] text-ink-soft mb-1.5">
         {label}
-        {help && (
-          <span
-            className="text-[10px] text-ink-soft/70 cursor-help border border-line rounded-full px-1"
-            title={help}
-          >
-            i
-          </span>
-        )}
+        {help && <InfoTip text={help} label={`About ${label}`} />}
       </span>
       <span className="relative block">
         {isPeso && (
@@ -53,12 +57,19 @@ function NumField({
           </span>
         )}
         <input
-          type="number"
-          value={value}
-          min={0}
-          step={step ?? 1}
-          onChange={(e) => onChange(Number(e.target.value) || 0)}
-          className={`w-full bg-paper border border-line rounded-md px-3 py-2 text-[14px] font-mono focus:outline-none focus:border-coir ${
+          type="text"
+          inputMode="decimal"
+          value={draft ?? String(value)}
+          onFocus={() => setDraft(String(value))}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={(e) => {
+            commit(e.target.value);
+            setDraft(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
+          }}
+          className={`w-full rounded-lg border border-line bg-white px-3 py-2 font-mono text-[14px] transition-colors focus:border-coir focus:outline-none focus:ring-2 focus:ring-coir/20 ${
             isPeso ? "pl-7" : ""
           } ${pct ? "pr-8" : ""}`}
         />
@@ -84,12 +95,12 @@ function Stat({
   emphasis?: boolean;
 }) {
   return (
-    <div className="bg-panel border border-line rounded-xl p-5">
+    <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
       <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">
         {label}
       </p>
       <p
-        className={`font-display font-semibold ${
+        className={`font-semibold tabular-nums ${
           emphasis ? "text-2xl text-coir-dark" : "text-xl text-ink"
         }`}
       >
@@ -103,10 +114,10 @@ function Stat({
 function VerdictBanner({ tone, text }: { tone: "ok" | "warn" | "danger"; text: string }) {
   const styles =
     tone === "ok"
-      ? "bg-coir-bg border-[#D6E4CE] text-coir-dark"
+      ? "bg-success-bg border-success-border text-success"
       : tone === "warn"
-        ? "bg-[#FBF3E6] border-[#E8D6B8] text-[#8A6420]"
-        : "bg-[#FBEBE6] border-[#E8C4B8] text-danger";
+        ? "bg-amber-bg border-amber-border text-amber"
+        : "bg-danger-bg border-danger-border text-danger";
   return (
     <div className={`border rounded-xl px-4 py-3 text-[13px] font-semibold ${styles}`}>
       {text}
@@ -123,15 +134,16 @@ const TABS: { id: FundingTab; label: string }[] = [
 ];
 
 export default function FundingPage() {
-  const [s, setS] = useState<FundingState>(DEFAULTS);
-  const [tab, setTab] = useState<FundingTab>("equity");
-
-  useEffect(() => {
+  const [s, setS] = useState<FundingState>(() => {
+    if (typeof window === "undefined") return DEFAULTS;
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) setS({ ...DEFAULTS, ...JSON.parse(raw) });
+      if (raw) return { ...DEFAULTS, ...JSON.parse(raw) };
     } catch {}
-  }, []);
+    return DEFAULTS;
+  });
+  const [tab, setTab] = useState<FundingTab>("equity");
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(s));
@@ -147,26 +159,13 @@ export default function FundingPage() {
   const loan = useMemo(() => computeLoan(amount, s), [amount, s]);
   const rows = useMemo(() => computeComparison(s), [s]);
 
-  const tabBtn = (id: FundingTab, label: string) => (
-    <button
-      key={id}
-      onClick={() => setTab(id)}
-      className={`font-semibold text-[13px] px-4 py-2 rounded-lg border ${
-        tab === id
-          ? "bg-coir-bg border-coir text-coir-dark"
-          : "bg-panel border-line text-ink-soft hover:text-ink"
-      }`}
-    >
-      {label}
-    </button>
-  );
-
   const modeBtn = (active: boolean, label: string, onClick: () => void) => (
     <button
       onClick={onClick}
-      className={`text-[12px] font-semibold px-3 py-1.5 rounded-md border ${
+      aria-pressed={active}
+      className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 ${
         active
-          ? "bg-coir-bg border-coir text-coir-dark"
+          ? "bg-coir-bg border-coir/50 text-coir-dark"
           : "bg-panel border-line text-ink-soft hover:text-ink"
       }`}
     >
@@ -212,26 +211,24 @@ export default function FundingPage() {
   return (
     <div>
       <header className="mb-6 border-b border-line pb-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir-dark mb-1">
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
           🤝 Internal — Bughaw Innovations
         </p>
-        <h1 className="font-display text-3xl font-semibold text-ink mb-1.5">
+        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
           Funding &amp; Investor Ask
         </h1>
         <p className="text-sm text-ink-soft max-w-2xl">
           Work out how much to ask a potential investor, what percentage to give, and how
           that compares to a SAFE, a joint venture, or a loan for the same capital need.
         </p>
-        <button
-          className="mt-3 text-xs border border-line rounded-md px-3 py-2 hover:border-ink-soft"
-          onClick={() => setS(DEFAULTS)}
-        >
-          ↺ Reset to defaults
-        </button>
+        <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
+          <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          Reset to defaults
+        </Button>
       </header>
 
       {/* Shared assumptions */}
-      <div className="bg-panel border border-line rounded-xl p-5 mb-5">
+      <div className="mb-5 rounded-xl border border-line bg-panel p-5 shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft">
             How much do we need?
@@ -277,18 +274,18 @@ export default function FundingPage() {
             <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-1">
               Amount needed
             </p>
-            <p className="font-display text-3xl font-semibold text-coir-dark">
+            <p className="text-3xl font-semibold tabular-nums text-coir-dark">
               {pesoRound(amount)}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-5 flex-wrap">{TABS.map((t) => tabBtn(t.id, t.label))}</div>
+      <TabBar className="mb-5" tabs={TABS} value={tab} onChange={setTab} />
 
       {tab === "equity" && (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <div className="bg-panel border border-line rounded-xl p-5">
+          <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <div className="flex gap-2 mb-4">
               {modeBtn(s.equityMode === "valuation", "I know my valuation", () =>
                 set({ equityMode: "valuation" })
@@ -378,7 +375,7 @@ export default function FundingPage() {
 
       {tab === "safe" && (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <div className="bg-panel border border-line rounded-xl p-5">
+          <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <NumField
               label="Valuation cap"
               value={s.valuationCap}
@@ -436,7 +433,7 @@ export default function FundingPage() {
 
       {tab === "jv" && (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <div className="bg-panel border border-line rounded-xl p-5">
+          <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <NumField
               label="Our capital contribution"
               value={s.ownCapital}
@@ -516,7 +513,7 @@ export default function FundingPage() {
 
       {tab === "loan" && (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <div className="bg-panel border border-line rounded-xl p-5">
+          <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <NumField
               label="Annual interest rate"
               value={s.annualInterestPct}
@@ -555,11 +552,11 @@ export default function FundingPage() {
       )}
 
       {tab === "compare" && (
-        <div className="bg-panel border border-line rounded-xl p-5">
+        <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
           <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
             Same {pesoRound(amount)} need, four ways to fund it
           </h2>
-          <div className="overflow-x-auto">
+          <div className="scroll-shadow-x overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="text-left text-ink-soft border-b border-line">

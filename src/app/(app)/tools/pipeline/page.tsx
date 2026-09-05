@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
+import { ChevronRight, Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppState } from "@/lib/useAppState";
 import { pesoRound } from "@/lib/format";
@@ -11,6 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { TabBar } from "@/components/ui/tab-bar";
+import { SkeletonCard } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPopup,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const STAGES = ["Warm Contact", "Meeting Secured", "Sample Delivered", "PO Signed", "Repeat Order"] as const;
 const SIM_STAGES = [...STAGES, "Dropped Out"];
@@ -213,27 +221,15 @@ export default function PipelinePage() {
 
   const graveyard = accounts.filter((a) => a.stage === "Disqualified");
 
-  const tabBtn = (id: typeof tab, label: string) => (
-    <button
-      onClick={() => setTab(id)}
-      className={`font-semibold text-[13px] px-4 py-2 rounded-lg border ${
-        tab === id
-          ? "bg-coir-bg border-coir text-coir-dark"
-          : "bg-panel border-line text-ink-soft hover:text-ink"
-      }`}
-    >
-      {label}
-    </button>
-  );
 
   return (
     <div>
       <header className="mb-5 border-b border-line pb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir-dark mb-1">
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
             🛤️ Internal — Bughaw Innovations
           </p>
-          <h1 className="font-display text-3xl font-semibold text-ink mb-1.5">
+          <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
             Pipeline Simulator
           </h1>
           <p className="text-sm text-ink-soft max-w-xl">
@@ -241,11 +237,11 @@ export default function PipelinePage() {
             get there. Shared live with the whole team.
           </p>
         </div>
-        <div className="bg-panel border border-line rounded-xl px-4 py-3 min-w-52">
+        <div className="rounded-xl border border-line bg-panel px-4 py-3 min-w-52 shadow-card">
           <p className="text-[10px] uppercase tracking-[0.1em] text-ink-soft">
             Joint decision checkpoint
           </p>
-          <p className="font-display font-semibold text-base">July 24, 2026</p>
+          <p className="text-base font-semibold">July 24, 2026</p>
           <p className="font-mono text-xs text-clay mt-0.5">
             {daysLeft > 0
               ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} away`
@@ -256,14 +252,22 @@ export default function PipelinePage() {
         </div>
       </header>
 
-      <div className="flex gap-2 mb-5 flex-wrap">
-        {tabBtn("sim", "Simulator")}
-        {tabBtn("econ", "Unit Economics")}
-        {tabBtn("track", "Real Pipeline (source data)")}
-      </div>
+      <TabBar
+        className="mb-5"
+        tabs={[
+          { id: "sim", label: "Simulator" },
+          { id: "econ", label: "Unit Economics" },
+          { id: "track", label: "Real Pipeline (source data)" },
+        ] as const}
+        value={tab}
+        onChange={setTab}
+      />
 
       {!accountsLoaded ? (
-        <p className="text-sm text-ink-soft">Loading team pipeline…</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SkeletonCard lines={4} />
+          <SkeletonCard lines={4} />
+        </div>
       ) : (
         <>
           {tab === "sim" && (
@@ -271,11 +275,11 @@ export default function PipelinePage() {
               <div
                 className={`rounded-xl border px-5 py-4 mb-4 ${
                   projPayers > 0
-                    ? "bg-coir-bg border-[#D6E4CE]"
-                    : "bg-[#FBEBE6] border-[#E8C4B8]"
+                    ? "bg-success-bg border-success-border"
+                    : "bg-danger-bg border-danger-border"
                 }`}
               >
-                <p className={`font-display font-semibold text-[15px] ${projPayers > 0 ? "text-coir-dark" : "text-danger"}`}>
+                <p className={`text-[15px] font-semibold ${projPayers > 0 ? "text-success" : "text-danger"}`}>
                   {projPayers > 0
                     ? `Primary bar met: ${projPayers} account${projPayers === 1 ? "" : "s"} projected to PO Signed or beyond`
                     : "Primary bar not met under this scenario — 0 accounts projected to PO Signed"}
@@ -290,11 +294,11 @@ export default function PipelinePage() {
 
               <div className="flex gap-2.5 flex-wrap mb-5">
                 {[...STAGES, "Dropped Out"].map((s) => (
-                  <div key={s} className="bg-panel border border-line rounded-lg px-3.5 py-2.5 min-w-28">
+                  <div key={s} className="rounded-lg border border-line bg-panel px-3.5 py-2.5 min-w-28 shadow-card">
                     <p className="text-[10px] uppercase tracking-wide text-ink-soft">{s}</p>
-                    <p className="font-display font-bold mt-0.5">
+                    <p className="mt-0.5 font-bold tabular-nums">
                       <span className="text-[15px] text-ink-soft">{todayCounts[s] || 0}</span>
-                      <span className="text-clay text-[13px] mx-1.5">→</span>
+                      <span className="mx-1.5 text-[13px] text-ink-soft">→</span>
                       <span className="text-[19px]">{projCounts[s] || 0}</span>
                     </p>
                   </div>
@@ -302,14 +306,14 @@ export default function PipelinePage() {
               </div>
 
               <div className="flex gap-2 mb-4 flex-wrap">
-                <button
-                  className="text-xs border border-line rounded-md px-3 py-2 hover:border-ink-soft"
+                <Button
+                  size="sm"
                   onClick={() => sim.update({ projections: {}, hypothetical: [] })}
                 >
                   Reset to current state
-                </button>
-                <button
-                  className="text-xs border border-line rounded-md px-3 py-2 hover:border-ink-soft"
+                </Button>
+                <Button
+                  size="sm"
                   onClick={() =>
                     sim.update((prev) => {
                       const projections = { ...prev.projections };
@@ -331,13 +335,13 @@ export default function PipelinePage() {
                   }
                 >
                   Everyone advances one stage
-                </button>
+                </Button>
               </div>
 
-              <div className="overflow-x-auto border border-line rounded-xl bg-panel">
+              <div className="scroll-shadow-x overflow-x-auto rounded-xl border border-line bg-panel shadow-card">
                 <table className="w-full min-w-[680px]">
                   <thead>
-                    <tr className="bg-[#FBF9F3]">
+                    <tr className="bg-paper">
                       {["Account", "Segment", "Current stage", "Projected by Jul 24", ""].map((h) => (
                         <th key={h} className="text-left font-mono text-[10.5px] uppercase tracking-wide text-ink-soft px-3.5 py-3 border-b border-line">
                           {h}
@@ -394,8 +398,8 @@ export default function PipelinePage() {
                         </td>
                         <td className="px-3.5 py-2.5">
                           <button
-                            className="text-danger text-sm px-1.5"
-                            title="Remove"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-danger transition-colors hover:bg-danger-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+                            aria-label={`Remove ${h.name}`}
                             onClick={() =>
                               sim.update((prev) => ({
                                 ...prev,
@@ -403,7 +407,7 @@ export default function PipelinePage() {
                               }))
                             }
                           >
-                            ✕
+                            <X className="h-4 w-4" aria-hidden />
                           </button>
                         </td>
                       </tr>
@@ -441,7 +445,8 @@ export default function PipelinePage() {
                     setHypName("");
                   }}
                 >
-                  + Add hypothetical
+                  <Plus className="mr-1 h-3.5 w-3.5" aria-hidden />
+                  Add hypothetical
                 </Button>
               </div>
               <p className="text-xs text-ink-soft mt-2">
@@ -454,42 +459,37 @@ export default function PipelinePage() {
           {tab === "econ" && (
             <div>
               <div className="flex justify-between items-center flex-wrap gap-3 mb-5">
+                <TabBar
+                  tabs={[
+                    { id: "today", label: "Today (real)" },
+                    { id: "projected", label: "Projected (Jul 24 scenario)" },
+                  ] as const}
+                  value={econ.value.mode}
+                  onChange={(mode) => {
+                    econ.update((p) => ({ ...p, mode }));
+                    setRevealStep(0);
+                  }}
+                />
                 <div className="flex gap-2">
-                  <button
-                    className={`text-[13px] font-semibold px-4 py-2 rounded-lg border ${econ.value.mode === "today" ? "bg-coir-bg border-coir text-coir-dark" : "bg-panel border-line text-ink-soft"}`}
-                    onClick={() => { econ.update((p) => ({ ...p, mode: "today" })); setRevealStep(0); }}
-                  >
-                    Today (real)
-                  </button>
-                  <button
-                    className={`text-[13px] font-semibold px-4 py-2 rounded-lg border ${econ.value.mode === "projected" ? "bg-coir-bg border-coir text-coir-dark" : "bg-panel border-line text-ink-soft"}`}
-                    onClick={() => { econ.update((p) => ({ ...p, mode: "projected" })); setRevealStep(0); }}
-                  >
-                    Projected (Jul 24 scenario)
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    className="bg-coir hover:bg-coir-dark disabled:opacity-50 text-white font-semibold text-xs rounded-md px-3.5 py-2.5"
+                  <Button
+                    intent="primary"
+                    size="sm"
                     disabled={revealStep >= 4}
                     onClick={() => setRevealStep((r) => Math.min(4, r + 1))}
                   >
                     {revealStep >= 4
                       ? "All revealed"
                       : "Reveal ▸ " + ["Accounts in play", "Payers", "Derived CAC", "LTV vs CAC"][revealStep]}
-                  </button>
-                  <button
-                    className="text-xs border border-line rounded-md px-3.5 py-2.5 hover:border-ink-soft"
-                    onClick={() => setRevealStep(4)}
-                  >
+                  </Button>
+                  <Button size="sm" onClick={() => setRevealStep(4)}>
                     Show all
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[300px,1fr] items-start">
-                <div className="bg-panel border border-line rounded-xl p-5">
-                  <h3 className="font-display text-sm font-semibold mb-4">Your inputs</h3>
+                <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
+                  <h3 className="mb-4 text-sm font-semibold">Your inputs</h3>
                   {[
                     { id: "spend", label: "Sales & BD spend this period (₱)", ph: "e.g. advisor fee + travel + samples" },
                     { id: "revenue", label: "Avg annual revenue per paying account (₱)", ph: "your best current estimate" },
@@ -502,6 +502,7 @@ export default function PipelinePage() {
                       </label>
                       <Input
                         type="number"
+                        onWheel={(e) => e.currentTarget.blur()}
                         className="font-mono"
                         placeholder={f.ph}
                         value={econ.value[f.id as keyof EconState] as string}
@@ -532,11 +533,11 @@ export default function PipelinePage() {
                       note: "annual revenue × margin × years",
                     },
                   ].map((card) => (
-                    <div key={card.idx} className="bg-panel border border-line rounded-xl p-5 min-h-28 flex flex-col justify-between">
+                    <div key={card.idx} className="flex min-h-28 flex-col justify-between rounded-xl border border-line bg-panel p-5 shadow-card">
                       <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft">
                         {card.label}
                       </p>
-                      <p className={`font-display text-[22px] font-semibold mt-2 ${revealStep > card.idx ? "text-ink" : "text-line"}`}>
+                      <p className={`mt-2 text-[22px] font-semibold tabular-nums transition-colors duration-200 ${revealStep > card.idx ? "text-ink" : "text-line"}`}>
                         {revealStep > card.idx ? card.value : "—"}
                       </p>
                       {card.note && <p className="text-[10.5px] text-ink-soft italic mt-1.5">{card.note}</p>}
@@ -550,12 +551,10 @@ export default function PipelinePage() {
           {tab === "track" && (
             <div>
               <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
-                <button
-                  className="bg-coir hover:bg-coir-dark text-white font-semibold text-xs rounded-md px-3.5 py-2.5"
-                  onClick={() => openModal(null)}
-                >
-                  + Add account
-                </button>
+                <Button intent="primary" size="sm" onClick={() => openModal(null)}>
+                  <Plus className="mr-1 h-3.5 w-3.5" aria-hidden />
+                  Add account
+                </Button>
                 <span className="text-xs text-ink-soft">
                   This is the real data the simulator and unit economics project from. Click
                   a card to edit it.
@@ -566,9 +565,9 @@ export default function PipelinePage() {
                 {STAGES.map((stage) => {
                   const items = accounts.filter((a) => a.stage === stage);
                   return (
-                    <div key={stage} className="bg-panel/60 border border-line rounded-xl p-3 min-h-24">
-                      <div className="flex justify-between items-baseline border-b-2 border-clay/40 pb-2 mb-2.5">
-                        <h3 className="font-display text-[13px] font-semibold">{stage}</h3>
+                    <div key={stage} className="min-h-24 rounded-xl border border-line bg-panel/60 p-3">
+                      <div className="mb-2.5 flex items-baseline justify-between border-b-2 border-coir/30 pb-2">
+                        <h3 className="text-[13px] font-semibold">{stage}</h3>
                         <span className="font-mono text-xs text-ink-soft">{items.length}</span>
                       </div>
                       {items.length === 0 && (
@@ -577,7 +576,7 @@ export default function PipelinePage() {
                       {items.map((a) => (
                         <button
                           key={a.id}
-                          className="w-full text-left bg-panel border border-line rounded-lg px-3 py-2.5 mb-2.5 hover:border-coir"
+                          className="mb-2.5 w-full rounded-lg border border-line bg-panel px-3 py-2.5 text-left shadow-card transition-colors [@media(hover:hover)]:hover:border-coir/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
                           onClick={() => openModal(a)}
                         >
                           <p className="font-semibold text-[13px]">{a.name}</p>
@@ -607,10 +606,14 @@ export default function PipelinePage() {
 
               <div className="mt-7">
                 <button
-                  className="font-display text-[14.5px] font-semibold text-danger flex items-center gap-2"
+                  className="flex items-center gap-1.5 text-[14.5px] font-semibold text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/30 rounded-md"
+                  aria-expanded={gyOpen}
                   onClick={() => setGyOpen(!gyOpen)}
                 >
-                  <span className={`text-[11px] transition-transform ${gyOpen ? "rotate-90" : ""}`}>▶</span>
+                  <ChevronRight
+                    className={`h-4 w-4 transition-transform duration-200 ease-out-strong ${gyOpen ? "rotate-90" : ""}`}
+                    aria-hidden
+                  />
                   Disqualified — do not re-chase ({graveyard.length})
                 </button>
                 {gyOpen && (
@@ -618,7 +621,7 @@ export default function PipelinePage() {
                     {graveyard.map((a) => (
                       <button
                         key={a.id}
-                        className="text-left bg-[#FBEBE6] border border-[#E8C4B8] rounded-lg px-3 py-2.5 hover:border-danger"
+                        className="rounded-lg border border-danger-border bg-danger-bg px-3 py-2.5 text-left transition-colors [@media(hover:hover)]:hover:border-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
                         onClick={() => openModal(a)}
                       >
                         <p className="font-semibold text-[13px]">{a.name}</p>
@@ -645,9 +648,9 @@ export default function PipelinePage() {
         }}
       >
         <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 bg-ink/40 z-50" />
-          <Dialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-panel border border-line rounded-2xl w-[calc(100vw-2rem)] max-w-md p-6 max-h-[88vh] overflow-y-auto">
-            <Dialog.Title className="font-display text-base font-semibold mb-4">
+          <DialogBackdrop />
+          <DialogPopup unpadded className="max-h-[88vh] overflow-y-auto p-6">
+            <Dialog.Title className="mb-4 text-base font-semibold">
               {editing ? "Edit account" : "Add account"}
             </Dialog.Title>
             {[
@@ -723,6 +726,7 @@ export default function PipelinePage() {
             <label className="flex items-center gap-2 text-[12.5px] mb-4">
               <input
                 type="checkbox"
+                className="h-4 w-4 rounded border-line accent-coir focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
                 checked={form.generated_referral}
                 onChange={(e) => setForm((p) => ({ ...p, generated_referral: e.target.checked }))}
               />
@@ -730,9 +734,7 @@ export default function PipelinePage() {
             </label>
             <div className="flex justify-between gap-2.5">
               <div className="flex gap-2">
-                <Dialog.Close className="text-xs border border-line rounded-md px-3.5 py-2.5 hover:border-ink-soft font-semibold">
-                  Cancel
-                </Dialog.Close>
+                <DialogClose>Cancel</DialogClose>
                 {editing && (
                   <Button intent="danger" size="sm" onClick={() => setDeleteOpen(true)}>
                     Delete
@@ -752,7 +754,7 @@ export default function PipelinePage() {
               confirmLabel="Delete"
               onConfirm={deleteAccount}
             />
-          </Dialog.Popup>
+          </DialogPopup>
         </Dialog.Portal>
       </Dialog.Root>
     </div>

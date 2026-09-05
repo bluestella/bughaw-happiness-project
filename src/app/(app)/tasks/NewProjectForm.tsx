@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dialog } from "@base-ui/react/dialog";
+import { Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPopup,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -46,16 +53,15 @@ export function NewProjectForm() {
   return (
     <>
       <Button intent="primary" onClick={() => setOpen(true)}>
-        + New Project
+        <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+        New Project
       </Button>
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 z-40 bg-ink/30" />
-          <Dialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-paper border border-line rounded-xl w-[calc(100vw-2rem)] max-w-md p-5">
+          <DialogBackdrop />
+          <DialogPopup>
             <form onSubmit={submit} className="space-y-3">
-              <Dialog.Title className="font-display text-lg font-semibold text-ink">
-                New Project
-              </Dialog.Title>
+              <DialogTitle>New Project</DialogTitle>
               <Input
                 placeholder="Project name"
                 value={name}
@@ -70,15 +76,13 @@ export function NewProjectForm() {
               />
               {error && <p className="text-[12px] text-danger">{error}</p>}
               <div className="flex justify-end gap-2">
-                <Dialog.Close className="text-[12px] px-3 py-1.5 rounded-md font-semibold transition-colors border bg-white text-ink border-line hover:border-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 focus-visible:border-coir">
-                  Cancel
-                </Dialog.Close>
+                <DialogClose>Cancel</DialogClose>
                 <Button intent="primary" size="sm" type="submit" disabled={saving || !name.trim()}>
                   {saving ? "Creating…" : "Create"}
                 </Button>
               </div>
             </form>
-          </Dialog.Popup>
+          </DialogPopup>
         </Dialog.Portal>
       </Dialog.Root>
     </>

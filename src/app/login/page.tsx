@@ -66,16 +66,16 @@ function LoginForm() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-paper px-4">
       <div className="w-full max-w-sm">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir-dark mb-1.5">
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1.5">
           Bughaw Innovations — Internal
         </p>
-        <h1 className="font-display text-3xl font-semibold text-ink mb-6">
+        <h1 className="mb-6 text-3xl font-semibold tracking-tight text-ink">
           Calculators Hub
         </h1>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-panel border border-line rounded-xl p-6 space-y-4"
+          className="space-y-4 rounded-xl border border-line bg-panel p-6 shadow-card"
         >
           <div>
             <label className="block text-xs text-ink-soft mb-1.5" htmlFor="email">
@@ -111,7 +111,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={busy}
-            className="w-full bg-coir hover:bg-coir-dark text-white font-semibold text-sm rounded-md py-2.5 disabled:opacity-60"
+            className="w-full rounded-lg bg-coir py-2.5 text-sm font-semibold text-white shadow-card transition-colors duration-150 hover:bg-coir-dark disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40"
           >
             {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
@@ -119,7 +119,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={handleGoogle}
-            className="w-full border border-line hover:border-ink-soft text-ink text-sm rounded-md py-2.5"
+            className="w-full rounded-lg border border-line py-2.5 text-sm font-medium text-ink shadow-card transition-colors duration-150 hover:border-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
           >
             Continue with Google
           </button>

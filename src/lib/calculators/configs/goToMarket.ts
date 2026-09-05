@@ -69,10 +69,11 @@ export const repeatOrderCalculator: CalculatorConfig = {
   ],
 };
 
+// Fixed categorical order from the validated chart palette (green, blue, clay)
 const CHANNELS = [
-  { key: "direct", label: "Direct", color: "#5C7A4F" },
-  { key: "partner", label: "Partnerships", color: "#B4703F" },
-  { key: "reseller", label: "Resellers", color: "#C68A2E" },
+  { key: "direct", label: "Direct", color: "#4F8534" },
+  { key: "partner", label: "Partnerships", color: "#3E7CB8" },
+  { key: "reseller", label: "Resellers", color: "#C06B2E" },
 ] as const;
 
 export const breakevenCalculator: CalculatorConfig = {
@@ -139,7 +140,7 @@ export const breakevenCalculator: CalculatorConfig = {
     series: [
       {
         name: "Breakeven pairs",
-        color: "#5C7A4F",
+        color: "#4F8534",
         values: [
           isFinite(o.directBreakeven) ? Math.ceil(o.directBreakeven) : 0,
           isFinite(o.partnerBreakeven) ? Math.ceil(o.partnerBreakeven) : 0,

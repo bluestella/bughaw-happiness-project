@@ -1,18 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { RotateCcw } from "lucide-react";
 import { computePnl, PNL_DEFAULTS as DEFAULTS, type PnlState } from "@/lib/pnl";
 import { pesoRound } from "@/lib/format";
 import { SliderField } from "@/components/ui/slider-field";
+import { Chart, specToOption } from "@/components/ui/chart";
+import { CHART } from "@/lib/chartTheme";
+import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/ui/stat-card";
 
 const FIELDS: {
   id: keyof PnlState;
@@ -39,14 +35,15 @@ const SECTIONS = ["Growth", "Unit economics per pair", "Monthly opex"];
 const KEY = "bughaw-pnl-machine";
 
 export default function PnlPage() {
-  const [s, setS] = useState<PnlState>(DEFAULTS);
-
-  useEffect(() => {
+  const [s, setS] = useState<PnlState>(() => {
+    if (typeof window === "undefined") return DEFAULTS;
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) setS({ ...DEFAULTS, ...JSON.parse(raw) });
+      if (raw) return { ...DEFAULTS, ...JSON.parse(raw) };
     } catch {}
-  }, []);
+    return DEFAULTS;
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(s));
@@ -58,32 +55,43 @@ export default function PnlPage() {
     [s]
   );
 
-  const chartData = profits.map((p, i) => ({ label: `M${i + 1}`, profit: Math.round(p) }));
+  const chartOption = useMemo(
+    () =>
+      specToOption(
+        {
+          title: "Operating profit by month",
+          type: "bar",
+          labels: profits.map((_, i) => `M${i + 1}`),
+          series: [{ name: "Operating profit", color: CHART.green, values: profits }],
+          format: "currency",
+        },
+        { polarity: true }
+      ),
+    [profits]
+  );
 
   return (
     <div>
       <header className="mb-6 border-b border-line pb-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir-dark mb-1">
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
           📊 Bughaw Innovations · BughawPack P2
         </p>
-        <h1 className="font-display text-3xl font-semibold text-ink mb-1.5">
+        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
           Coconut slipper — 12-month P&amp;L model
         </h1>
         <p className="text-sm text-ink-soft max-w-2xl">
           Stress-test breakeven timing and year-1 cash needs for the coir-cassava slipper
           line. Figures are modeling assumptions, not confirmed pilot-scale financials.
         </p>
-        <button
-          className="mt-3 text-xs border border-line rounded-md px-3 py-2 hover:border-ink-soft"
-          onClick={() => setS(DEFAULTS)}
-        >
-          ↺ Reset to defaults
-        </button>
+        <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
+          <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          Reset to defaults
+        </Button>
       </header>
 
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         {SECTIONS.map((section) => (
-          <div key={section} className="bg-panel border border-line rounded-xl p-5">
+          <div key={section} className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
               {section}
             </h2>
@@ -106,60 +114,34 @@ export default function PnlPage() {
         ))}
       </div>
 
-      <div className="bg-panel border border-line rounded-xl p-5 mb-5">
+      <div className="mb-5 rounded-xl border border-line bg-panel p-5 shadow-card">
         <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
           Operating profit by month
         </h2>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#6B6355" }} />
-              <YAxis
-                tickFormatter={(v: number) =>
-                  (v < 0 ? "-" : "") + "₱" + Math.abs(v / 1000).toFixed(0) + "k"
-                }
-                tick={{ fontSize: 11, fill: "#6B6355" }}
-                width={62}
-              />
-              <Tooltip formatter={(v) => pesoRound(Number(v))} />
-              <Bar dataKey="profit" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                {chartData.map((d, i) => (
-                  <Cell key={i} fill={d.profit < 0 ? "#B4703F" : "#5C7A4F"} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <Chart
+          option={chartOption}
+          className="h-80"
+          ariaLabel={`Operating profit by month, 12-month bar chart. ${
+            breakevenMonth ? `Breakeven at month ${breakevenMonth}.` : "No breakeven within 12 months."
+          } Year 1 cumulative ${pesoRound(cumulative)}.`}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="bg-panel border border-line rounded-xl p-5">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">
-            Breakeven month
-          </p>
-          <p className="font-display text-2xl font-semibold text-ink">
-            {breakevenMonth ? `M${breakevenMonth}` : "Not within 12 mo"}
-          </p>
-        </div>
-        <div className="bg-panel border border-line rounded-xl p-5">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">
-            Breakeven pairs / mo
-          </p>
-          <p className="font-display text-2xl font-semibold text-ink">
-            {breakevenUnits ? breakevenUnits.toLocaleString() + " pairs" : "—"}
-          </p>
-        </div>
-        <div className="bg-panel border border-line rounded-xl p-5">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">
-            Year 1 cumulative
-          </p>
-          <p className={`font-display text-2xl font-semibold ${cumulative < 0 ? "text-danger" : "text-coir-dark"}`}>
-            {pesoRound(cumulative)}
-          </p>
-          <p className="text-[11px] text-ink-soft mt-1">
-            The capital gap this model implies needs bridging (if negative).
-          </p>
-        </div>
+        <StatCard
+          label="Breakeven month"
+          value={breakevenMonth ? `M${breakevenMonth}` : "Not within 12 mo"}
+        />
+        <StatCard
+          label="Breakeven pairs / mo"
+          value={breakevenUnits ? breakevenUnits.toLocaleString() + " pairs" : "—"}
+        />
+        <StatCard
+          label="Year 1 cumulative"
+          value={pesoRound(cumulative)}
+          tone={cumulative < 0 ? "danger" : "success"}
+          note="The capital gap this model implies needs bridging (if negative)."
+        />
       </div>
     </div>
   );

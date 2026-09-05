@@ -32,10 +32,11 @@ export const inventoryTurnoverCalculator: CalculatorConfig = {
   ],
 };
 
+// Fixed categorical order from the validated chart palette (green, blue, clay)
 const LINES = [
-  { key: "slippers", label: "Slippers", color: "#5C7A4F" },
-  { key: "organizers", label: "Organizers", color: "#B4703F" },
-  { key: "utilities", label: "Utilities", color: "#C68A2E" },
+  { key: "slippers", label: "Slippers", color: "#4F8534" },
+  { key: "organizers", label: "Organizers", color: "#3E7CB8" },
+  { key: "utilities", label: "Utilities", color: "#C06B2E" },
 ] as const;
 
 export const mixMarginCalculator: CalculatorConfig = {
@@ -110,7 +111,7 @@ export const mixMarginCalculator: CalculatorConfig = {
     series: [
       {
         name: "Gross profit",
-        color: "#5C7A4F",
+        color: "#4F8534",
         values: [o.slippersProfit, o.organizersProfit, o.utilitiesProfit],
       },
     ],

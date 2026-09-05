@@ -49,7 +49,7 @@ export const ltvSegmentCalculator: CalculatorConfig = {
     title: "LTV per hotel by segment",
     type: "bar",
     labels: ["Segment A", "Segment B"],
-    series: [{ name: "LTV", color: "#5C7A4F", values: [o.aLtv, o.bLtv] }],
+    series: [{ name: "LTV", color: "#4F8534", values: [o.aLtv, o.bLtv] }],
     format: "currency",
   }),
 };
@@ -126,7 +126,7 @@ export const cashFlowCalculator: CalculatorConfig = {
       title: "Projected cash balance",
       type: "line",
       labels: MONTH_LABELS,
-      series: [{ name: "Cash balance", color: "#5C7A4F", values: balances }],
+      series: [{ name: "Cash balance", color: "#4F8534", values: balances }],
       format: "currency",
     };
   },
@@ -208,9 +208,11 @@ export const growthScenarioCalculator: CalculatorConfig = {
       type: "line",
       labels: MONTH_LABELS,
       series: [
-        { name: "Optimistic", color: "#5C7A4F", values: best.profits },
-        { name: "Base", color: "#C68A2E", values: base.profits },
-        { name: "Pessimistic", color: "#A6432F", values: worst.profits },
+        // Diverging: green ↔ plum poles with a neutral gray midpoint — the
+        // green/plum pair is CVD-safe (validated); pessimistic is also dashed.
+        { name: "Optimistic", color: "#4F8534", values: best.profits },
+        { name: "Base", color: "#8A8273", values: base.profits },
+        { name: "Pessimistic", color: "#9A5AA8", values: worst.profits, dash: true },
       ],
       format: "currency",
     };
@@ -280,7 +282,7 @@ export const runwayCalculator: CalculatorConfig = {
       title: "Projected cash balance",
       type: "line",
       labels: Array.from({ length: 24 }, (_, m) => `M${m + 1}`),
-      series: [{ name: "Cash balance", color: "#5C7A4F", values: balances.slice(0, 24) }],
+      series: [{ name: "Cash balance", color: "#4F8534", values: balances.slice(0, 24) }],
       format: "currency",
     };
   },
@@ -340,7 +342,7 @@ export const valuationCalculator: CalculatorConfig = {
     title: "Valuation range",
     type: "bar",
     labels: ["Low", "Midpoint", "High"],
-    series: [{ name: "Valuation", color: "#5C7A4F", values: [o.valuationLow, o.valuationMid, o.valuationHigh] }],
+    series: [{ name: "Valuation", color: "#4F8534", values: [o.valuationLow, o.valuationMid, o.valuationHigh] }],
     format: "currency",
   }),
 };

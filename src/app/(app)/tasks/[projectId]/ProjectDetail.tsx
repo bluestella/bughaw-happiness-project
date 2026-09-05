@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   canAddContributor,
@@ -139,7 +140,7 @@ export function ProjectDetail({
       </Link>
       <div className="flex items-end justify-between gap-4 mt-2 mb-6">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">{project.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">{project.name}</h1>
           {project.description && (
             <p className="text-[13px] text-ink-soft mt-1">{project.description}</p>
           )}
@@ -154,10 +155,11 @@ export function ProjectDetail({
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-lg font-semibold text-ink">Mini-projects</h2>
+            <h2 className="text-lg font-semibold text-ink">Mini-projects</h2>
             {canCreateMiniProject(role) && (
               <Button intent="primary" size="sm" onClick={() => setMpFormOpen((v) => !v)}>
-                + New Mini-Project
+                <Plus className="mr-1 h-3.5 w-3.5" aria-hidden />
+                New Mini-Project
               </Button>
             )}
           </div>
@@ -165,7 +167,7 @@ export function ProjectDetail({
           {mpFormOpen && (
             <form
               onSubmit={createMiniProject}
-              className="border border-line rounded-xl bg-white p-4 mb-4 space-y-2.5"
+              className="mb-4 space-y-2.5 rounded-xl border border-line bg-white p-4 shadow-card"
             >
               <Input
                 placeholder="Mini-project name"
@@ -200,7 +202,7 @@ export function ProjectDetail({
             {miniProjects.map((mp) => (
               <div
                 key={mp.id}
-                className="border border-line rounded-xl bg-white p-4 hover:border-coir transition-colors relative"
+                className="relative rounded-xl border border-line bg-white p-4 shadow-card transition-colors [@media(hover:hover)]:hover:border-coir/50"
               >
                 <Link href={`/tasks/${project.id}/${mp.id}`} className="block">
                   <h3 className="font-semibold text-[14px] text-ink">{mp.name}</h3>
@@ -214,10 +216,10 @@ export function ProjectDetail({
                 {canDeleteProjectOrMiniProject(role) && (
                   <button
                     onClick={() => setDeleteMiniId(mp.id)}
-                    className="absolute top-2.5 right-2.5 text-[11px] text-ink-soft hover:text-danger"
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-danger-bg hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
                     aria-label={`Delete ${mp.name}`}
                   >
-                    ✕
+                    <X className="h-3.5 w-3.5" aria-hidden />
                   </button>
                 )}
               </div>
@@ -225,8 +227,8 @@ export function ProjectDetail({
           </div>
         </section>
 
-        <aside className="border border-line rounded-xl bg-white p-4 h-fit">
-          <h2 className="font-display text-base font-semibold text-ink mb-1">Contributors</h2>
+        <aside className="h-fit rounded-xl border border-line bg-white p-4 shadow-card">
+          <h2 className="mb-1 text-base font-semibold text-ink">Contributors</h2>
           <p className="text-[11px] text-ink-soft mb-3">
             Project contributors can see every mini-project inside this project.
           </p>

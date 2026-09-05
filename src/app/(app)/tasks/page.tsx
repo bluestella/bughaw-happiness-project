@@ -17,12 +17,12 @@ export default async function TasksPage() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-coir-dark">
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-coir">
             Task Management
           </p>
-          <h1 className="font-display text-2xl font-semibold text-ink">Projects</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Projects</h1>
         </div>
         {canCreateProject(role) && <NewProjectForm />}
       </div>
@@ -40,9 +40,9 @@ export default async function TasksPage() {
           <Link
             key={p.id}
             href={`/tasks/${p.id}`}
-            className="block border border-line rounded-xl bg-white p-5 hover:border-coir transition-colors"
+            className="block rounded-xl border border-line bg-white p-5 shadow-card transition-all duration-200 ease-out-strong [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-coir/40 [@media(hover:hover)]:hover:shadow-card-hover motion-reduce:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
           >
-            <h2 className="font-display text-lg font-semibold text-ink">{p.name}</h2>
+            <h2 className="text-lg font-semibold text-ink">{p.name}</h2>
             {p.description && (
               <p className="text-[13px] text-ink-soft mt-1 line-clamp-2">{p.description}</p>
             )}

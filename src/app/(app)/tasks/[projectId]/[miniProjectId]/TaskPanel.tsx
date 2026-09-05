@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Dialog } from "@base-ui/react/dialog";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import { X } from "lucide-react";
+import { DialogBackdrop, DialogPopup } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 import { canEditOrDeleteTask, type Role } from "@/lib/permissions";
 import { TASK_PRIORITIES, TASK_STATUSES, type Task } from "@/lib/tasks";
@@ -127,25 +129,25 @@ export function TaskPanel({
   }
 
   return (
-    <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-ink/30" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-paper border border-line rounded-xl w-[calc(100vw-2rem)] max-w-lg max-h-[calc(100vh-4rem)] overflow-y-auto">
+    <BaseDialog.Root open onOpenChange={(o) => !o && onClose()}>
+      <BaseDialog.Portal>
+        <DialogBackdrop />
+        <DialogPopup unpadded className="max-h-[calc(100vh-4rem)] max-w-lg overflow-y-auto">
           <div className="p-5 border-b border-line flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <Dialog.Title className="font-display text-base font-semibold text-ink">
+              <BaseDialog.Title className="text-base font-semibold text-ink">
                 Task
-              </Dialog.Title>
-              <Dialog.Description className="text-[11px] text-ink-soft">
+              </BaseDialog.Title>
+              <BaseDialog.Description className="text-[11px] text-ink-soft">
                 Created by {task.created_by_email}
-              </Dialog.Description>
+              </BaseDialog.Description>
             </div>
-            <Dialog.Close
+            <BaseDialog.Close
               aria-label="Close"
-              className="text-ink-soft hover:text-ink text-lg leading-none"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-paper hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
             >
-              ✕
-            </Dialog.Close>
+              <X className="h-4 w-4" aria-hidden />
+            </BaseDialog.Close>
           </div>
 
           <form onSubmit={save} className="p-5 space-y-3">
@@ -243,7 +245,7 @@ export function TaskPanel({
           </form>
 
           <div className="border-t border-line p-5">
-            <h3 className="font-display text-sm font-semibold text-ink mb-3">Comments</h3>
+            <h3 className="mb-3 text-sm font-semibold text-ink">Comments</h3>
             {!commentsLoaded && <p className="text-[12px] text-ink-soft">Loading…</p>}
             {commentsLoaded && comments.length === 0 && (
               <p className="text-[12px] text-ink-soft mb-3">No comments yet.</p>
@@ -278,8 +280,8 @@ export function TaskPanel({
             confirmLabel="Delete"
             onConfirm={remove}
           />
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+        </DialogPopup>
+      </BaseDialog.Portal>
+    </BaseDialog.Root>
   );
 }

@@ -35,6 +35,8 @@ export interface ChartSeries {
   name: string;
   color: string;
   values: number[];
+  /** Render a line series dashed — a non-color cue for CVD-safe polarity. */
+  dash?: boolean;
 }
 
 export interface ChartSpec {

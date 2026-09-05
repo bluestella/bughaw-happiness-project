@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -8,10 +8,15 @@
   /* Strong custom easings — built-in CSS easings are too weak for UI motion */
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --accent: #2563eb;
 }
 
 body {
   @apply bg-paper text-ink font-sans antialiased;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.15);
 }
 
 .app-root {
@@ -24,7 +29,7 @@ input[type="range"] {
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: #ded6c4;
+  background: #e2e8f0;
   outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
@@ -33,9 +38,9 @@ input[type="range"]::-webkit-slider-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #5c7a4f;
+  background: var(--accent);
   border: 2px solid #fff;
-  box-shadow: 0 0 0 1px #5c7a4f;
+  box-shadow: 0 0 0 1px var(--accent);
   cursor: pointer;
   transition: transform 150ms var(--ease-out-strong);
 }
@@ -43,15 +48,15 @@ input[type="range"]::-webkit-slider-thumb:active {
   transform: scale(1.15);
 }
 input[type="range"]:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 1px #5c7a4f, 0 0 0 4px rgba(92, 122, 79, 0.25);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px rgba(37, 99, 235, 0.25);
 }
 input[type="range"]::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #5c7a4f;
+  background: var(--accent);
   border: 2px solid #fff;
-  box-shadow: 0 0 0 1px #5c7a4f;
+  box-shadow: 0 0 0 1px var(--accent);
   cursor: pointer;
   transition: transform 150ms var(--ease-out-strong);
 }
@@ -59,7 +64,7 @@ input[type="range"]::-moz-range-thumb:active {
   transform: scale(1.15);
 }
 input[type="range"]:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 1px #5c7a4f, 0 0 0 4px rgba(92, 122, 79, 0.25);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px rgba(37, 99, 235, 0.25);
 }
 
 /* Hide number-input spinners where a slider already provides stepping */
@@ -67,6 +72,22 @@ input[inputmode="decimal"]::-webkit-outer-spin-button,
 input[inputmode="decimal"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Horizontal-scroll affordance for wide tables on small screens */
+.scroll-shadow-x {
+  background:
+    linear-gradient(to right, #fff 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, #fff 30%, rgba(255, 255, 255, 0)) 100% 0,
+    linear-gradient(to right, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0)),
+    linear-gradient(to left, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0)) 100% 0;
+  background-repeat: no-repeat;
+  background-size:
+    40px 100%,
+    40px 100%,
+    14px 100%,
+    14px 100%;
+  background-attachment: local, local, scroll, scroll;
 }
 
 @media (prefers-reduced-motion: reduce) {

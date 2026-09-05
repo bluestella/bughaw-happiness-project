@@ -9,9 +9,10 @@ const buttonVariants = cva(
   {
     variants: {
       intent: {
-        primary: "bg-coir text-white border-coir hover:bg-coir-dark hover:border-coir-dark",
-        secondary: "bg-white text-ink border-line hover:border-ink-soft",
-        danger: "bg-[#FBEBE6] text-danger border-[#E8C4B8] hover:border-danger",
+        primary:
+          "bg-coir text-white border-coir shadow-card hover:bg-coir-dark hover:border-coir-dark",
+        secondary: "bg-white text-ink border-line shadow-card hover:border-ink-soft",
+        danger: "bg-danger-bg text-danger border-danger-border hover:border-danger",
         ghost: "bg-transparent text-ink border-transparent hover:bg-paper",
       },
       size: {

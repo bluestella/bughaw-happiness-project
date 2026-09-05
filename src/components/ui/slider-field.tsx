@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { InfoTip } from "@/components/ui/tooltip";
 
 /**
  * A labeled range slider paired with an editable text value. The number can be
@@ -41,14 +42,11 @@ export function SliderField({
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex justify-between items-center gap-3 mb-2">
-        <label className="text-[13px] text-ink-soft leading-snug" htmlFor={id} title={help}>
+        <label className="text-[13px] text-ink-soft leading-snug" htmlFor={id}>
           {label}
           {help && (
-            <span
-              className="ml-1 text-[10px] text-ink-soft/70 cursor-help border border-line rounded-full px-1"
-              title={help}
-            >
-              i
+            <span className="ml-1 inline-flex align-middle">
+              <InfoTip text={help} label={`About ${label}`} />
             </span>
           )}
         </label>

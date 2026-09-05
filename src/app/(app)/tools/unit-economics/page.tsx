@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RotateCcw } from "lucide-react";
 import { pesoRound } from "@/lib/format";
 import { SliderField } from "@/components/ui/slider-field";
+import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/ui/stat-card";
 
 interface SimState {
   price: number;
@@ -45,25 +48,26 @@ const SLIDERS: {
 ];
 
 const COST_SEGMENTS: { id: keyof SimState; label: string; color: string }[] = [
-  { id: "material", label: "Materials", color: "#B4703F" },
-  { id: "labor", label: "Labor", color: "#8A7A9C" },
-  { id: "freight", label: "Freight", color: "#6B7480" },
-  { id: "breakage", label: "Breakage", color: "#A6432F" },
-  { id: "duties", label: "Duties", color: "#6B6355" },
-  { id: "equipment", label: "Equipment", color: "#5A7D8C" },
+  { id: "material", label: "Materials", color: "#C2410C" },
+  { id: "labor", label: "Labor", color: "#6D28D9" },
+  { id: "freight", label: "Freight", color: "#475569" },
+  { id: "breakage", label: "Breakage", color: "#BE123C" },
+  { id: "duties", label: "Duties", color: "#57534E" },
+  { id: "equipment", label: "Equipment", color: "#0E7490" },
 ];
 
 const KEY = "bughaw-unit-econ-sim";
 
 export default function UnitEconomicsPage() {
-  const [s, setS] = useState<SimState>(DEFAULTS);
-
-  useEffect(() => {
+  const [s, setS] = useState<SimState>(() => {
+    if (typeof window === "undefined") return DEFAULTS;
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) setS({ ...DEFAULTS, ...JSON.parse(raw) });
+      if (raw) return { ...DEFAULTS, ...JSON.parse(raw) };
     } catch {}
-  }, []);
+    return DEFAULTS;
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(s));
@@ -97,26 +101,24 @@ export default function UnitEconomicsPage() {
   return (
     <div>
       <header className="mb-6 border-b border-line pb-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir-dark mb-1">
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
           🎚️ Live build · Coconut slippers (BughawPack™ P2)
         </p>
-        <h1 className="font-display text-3xl font-semibold text-ink mb-1.5">
+        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
           Unit Economics Simulator
         </h1>
         <p className="text-sm text-ink-soft max-w-2xl">
           Per-pair margin, hotel-account CAC, and payback — adjust the sliders to test
           scenarios. All figures are illustrative placeholders until COGS is confirmed.
         </p>
-        <button
-          className="mt-3 text-xs border border-line rounded-md px-3 py-2 hover:border-ink-soft"
-          onClick={() => setS(DEFAULTS)}
-        >
-          ↺ Reset to defaults
-        </button>
+        <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
+          <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          Reset to defaults
+        </Button>
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[400px,1fr] items-start">
-        <div className="bg-panel border border-line rounded-xl p-5">
+        <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
           <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
             The unit: one pair
           </h2>
@@ -128,15 +130,15 @@ export default function UnitEconomicsPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-panel border border-line rounded-xl p-5">
+          <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
               Where the ₱ goes — one pair
             </h2>
             <div className="space-y-3.5">
               <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
                 <span className="text-[13px] text-ink-soft text-right">Price</span>
-                <div className="h-8 rounded-md overflow-hidden flex bg-[#EFEBE1]">
-                  <div className="h-full w-full bg-[#4F9DBD] flex items-center justify-center text-xs font-bold text-white">
+                <div className="h-8 rounded-md overflow-hidden flex bg-[#F1F5F9]">
+                  <div className="h-full w-full bg-coir flex items-center justify-center text-xs font-bold text-white">
                     {pesoRound(s.price)}
                   </div>
                 </div>
@@ -144,7 +146,7 @@ export default function UnitEconomicsPage() {
               </div>
               <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
                 <span className="text-[13px] text-ink-soft text-right">Costs</span>
-                <div className="h-8 rounded-md overflow-hidden flex bg-[#EFEBE1]">
+                <div className="h-8 rounded-md overflow-hidden flex gap-[2px] bg-[#F1F5F9]">
                   {COST_SEGMENTS.map((seg) => {
                     const v = s[seg.id];
                     if (v <= 0) return null;
@@ -164,19 +166,19 @@ export default function UnitEconomicsPage() {
               </div>
               <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
                 <span className="text-[13px] text-ink-soft text-right">Left over</span>
-                <div className="h-8 rounded-md overflow-hidden flex bg-[#EFEBE1]">
+                <div className="h-8 rounded-md overflow-hidden flex bg-[#F1F5F9]">
                   <div
                     className="h-full flex items-center justify-center text-xs font-bold text-white"
                     style={{
                       width: `${Math.min(100, Math.max(0, (Math.abs(contribution) / s.price) * 100))}%`,
-                      background: contribution >= 0 ? "#5C7A4F" : "#A6432F",
+                      background: contribution >= 0 ? "#059669" : "#DC2626",
                     }}
                   >
                     {(contribution >= 0 ? "+" : "") + pesoRound(contribution)}
                   </div>
                 </div>
                 <span
-                  className={`font-mono text-sm font-semibold ${contribution >= 0 ? "text-coir-dark" : "text-danger"}`}
+                  className={`font-mono text-sm font-semibold ${contribution >= 0 ? "text-success" : "text-danger"}`}
                 >
                   {(contribution >= 0 ? "+" : "") + pesoRound(contribution)}
                 </span>
@@ -193,39 +195,36 @@ export default function UnitEconomicsPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="bg-panel border border-line rounded-xl p-5">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">Contribution</p>
-              <p className={`font-display text-2xl font-semibold ${contribution >= 0 ? "text-[#4F9DBD]" : "text-danger"}`}>
-                {(contribution >= 0 ? "+" : "") + pesoRound(contribution)}
-              </p>
-              <p className="text-[11px] text-ink-soft mt-1">margin {marginPct.toFixed(1)}% of price</p>
-            </div>
-            <div className="bg-panel border border-line rounded-xl p-5">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">LTV (per hotel)</p>
-              <p className="font-display text-2xl font-semibold text-ink">{pesoRound(ltv)}</p>
-              <p className="text-[11px] text-ink-soft mt-1">margin/pair × pairs/mo × lifetime</p>
-            </div>
-            <div className="bg-panel border border-line rounded-xl p-5">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">LTV : CAC</p>
-              <p className={`font-display text-2xl font-semibold ${ratio >= 3 ? "text-coir-dark" : "text-amber"}`}>
-                {ratio.toFixed(1)}×
-              </p>
-              <p className="text-[11px] text-ink-soft mt-1">a healthy account is ≥3×</p>
-            </div>
-            <div className="bg-panel border border-line rounded-xl p-5">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-soft mb-2">CAC payback</p>
-              <p className={`font-display text-2xl font-semibold ${isFinite(payback) && payback <= s.life ? "text-coir-dark" : "text-amber"}`}>
-                {isFinite(payback) ? payback.toFixed(1) + " mo" : "—"}
-              </p>
-              <p className="text-[11px] text-ink-soft mt-1">months to earn the CAC back</p>
-            </div>
+            <StatCard
+              label="Contribution"
+              value={(contribution >= 0 ? "+" : "") + pesoRound(contribution)}
+              tone={contribution >= 0 ? "success" : "danger"}
+              note={`margin ${marginPct.toFixed(1)}% of price`}
+            />
+            <StatCard
+              label="LTV (per hotel)"
+              value={pesoRound(ltv)}
+              note="margin/pair × pairs/mo × lifetime"
+            />
+            <StatCard
+              label="LTV : CAC"
+              value={`${ratio.toFixed(1)}×`}
+              tone={ratio >= 3 ? "success" : "amber"}
+              note="a healthy account is ≥3×"
+            />
+            <StatCard
+              label="CAC payback"
+              value={isFinite(payback) ? payback.toFixed(1) + " mo" : "—"}
+              tone={isFinite(payback) && payback <= s.life ? "success" : "amber"}
+              note="months to earn the CAC back"
+            />
           </div>
 
           <div
             className={`rounded-xl border px-5 py-3.5 text-sm flex justify-between items-center flex-wrap gap-2 ${
               gatePass
-                ? "bg-coir-bg border-[#D6E4CE] text-coir-dark"
-                : "bg-[#FDF6E7] border-[#EAD9AE] text-amber"
+                ? "bg-success-bg border-success-border text-success"
+                : "bg-amber-bg border-amber-border text-amber"
             }`}
           >
             <span className="text-ink-soft">Reference — Bughaw Go/No-Go gate: gross margin ≥30% at scale</span>

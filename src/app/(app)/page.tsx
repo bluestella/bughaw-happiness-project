@@ -17,11 +17,13 @@ function Card({
   return (
     <Link
       href={href}
-      className="block bg-panel border border-line rounded-xl p-5 hover:border-coir transition-colors"
+      className="group block rounded-xl border border-line bg-panel p-5 shadow-card transition-all duration-200 ease-out-strong [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-coir/40 [@media(hover:hover)]:hover:shadow-card-hover motion-reduce:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
     >
-      <p className="text-2xl mb-2">{icon}</p>
-      <p className="font-display text-[15px] font-semibold text-ink mb-1">{name}</p>
-      <p className="text-xs text-ink-soft leading-relaxed">{description}</p>
+      <p className="mb-2 text-2xl">{icon}</p>
+      <p className="mb-1 text-[15px] font-semibold text-ink group-hover:text-coir-dark transition-colors">
+        {name}
+      </p>
+      <p className="text-xs leading-relaxed text-ink-soft">{description}</p>
     </Link>
   );
 }
@@ -30,10 +32,10 @@ export default function Dashboard() {
   return (
     <div>
       <header className="mb-8 border-b border-line pb-6">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir-dark mb-1.5">
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1.5">
           Internal — founders, sales & BD, investors
         </p>
-        <h1 className="font-display text-3xl font-semibold text-ink mb-2">
+        <h1 className="mb-2 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
           Bughaw Calculators Hub
         </h1>
         <p className="text-sm text-ink-soft max-w-2xl">
@@ -43,7 +45,7 @@ export default function Dashboard() {
       </header>
 
       <section className="mb-10">
-        <h2 className="font-display text-lg font-semibold text-ink mb-1">Live tools</h2>
+        <h2 className="text-lg font-semibold text-ink mb-1">Live tools</h2>
         <p className="text-xs text-ink-soft mb-4">
           Migrated from the original artifacts — pipeline data now lives in the team database.
         </p>
@@ -56,7 +58,7 @@ export default function Dashboard() {
 
       {CATEGORIES.map((cat) => (
         <section key={cat.id} className="mb-10">
-          <h2 className="font-display text-lg font-semibold text-ink mb-1">{cat.name}</h2>
+          <h2 className="text-lg font-semibold text-ink mb-1">{cat.name}</h2>
           <p className="text-xs text-ink-soft mb-4">{cat.blurb}</p>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {calculatorsByCategory(cat.id).map((c) => (

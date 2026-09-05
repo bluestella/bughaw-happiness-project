@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { ALL_CALCULATORS, calculatorPath } from "@/lib/calculators/registry";
 import { formatValue } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SkeletonCard } from "@/components/ui/skeleton";
 
 interface SavedRow {
   id: string;
@@ -20,6 +24,7 @@ export default function SavedPage() {
   const supabase = useMemo(() => createClient(), []);
   const [rows, setRows] = useState<SavedRow[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<SavedRow | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -33,15 +38,20 @@ export default function SavedPage() {
     })();
   }, [supabase]);
 
-  async function remove(id: string) {
-    await supabase.from("saved_calculations").delete().eq("id", id);
-    setRows((prev) => prev.filter((r) => r.id !== id));
+  async function remove(row: SavedRow) {
+    const { error } = await supabase.from("saved_calculations").delete().eq("id", row.id);
+    if (error) {
+      toast.error(`Delete failed: ${error.message}`);
+      return;
+    }
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+    toast.success("Snapshot deleted.");
   }
 
   return (
     <div>
       <header className="mb-6 border-b border-line pb-5">
-        <h1 className="font-display text-3xl font-semibold text-ink mb-1.5">
+        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
           Saved calculations
         </h1>
         <p className="text-sm text-ink-soft">
@@ -50,24 +60,35 @@ export default function SavedPage() {
       </header>
 
       {!loaded ? (
-        <p className="text-sm text-ink-soft">Loading…</p>
+        <div className="space-y-3">
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+        </div>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-ink-soft">
-          Nothing saved yet — open a calculator and press “Save to team”.
-        </p>
+        <div className="rounded-xl border border-dashed border-line bg-panel px-6 py-10 text-center">
+          <p className="text-sm text-ink-soft">
+            Nothing saved yet — open a calculator and press “Save to team”.
+          </p>
+        </div>
       ) : (
         <div className="space-y-3">
           {rows.map((r) => {
             const config = ALL_CALCULATORS.find((c) => c.id === r.calculator_id);
             return (
-              <div key={r.id} className="bg-panel border border-line rounded-xl p-5">
-                <div className="flex justify-between items-start gap-3 flex-wrap">
+              <div
+                key={r.id}
+                className="rounded-xl border border-line bg-panel p-5 shadow-card"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-display text-[15px] font-semibold text-ink">
+                    <p className="text-[15px] font-semibold text-ink">
                       {config ? `${config.icon} ${config.name}` : r.calculator_id}
-                      {r.label && <span className="text-ink-soft font-normal"> — {r.label}</span>}
+                      {r.label && (
+                        <span className="font-normal text-ink-soft"> — {r.label}</span>
+                      )}
                     </p>
-                    <p className="text-[11px] text-ink-soft mt-0.5">
+                    <p className="mt-0.5 text-[11px] text-ink-soft">
                       {r.created_by_email ?? "unknown"} ·{" "}
                       {new Date(r.created_at).toLocaleString("en-PH")}
                     </p>
@@ -76,27 +97,24 @@ export default function SavedPage() {
                     {config && (
                       <Link
                         href={calculatorPath(config)}
-                        className="text-xs border border-line rounded-md px-3 py-1.5 hover:border-ink-soft"
+                        className="rounded-md border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-card transition-colors hover:border-ink-soft"
                       >
                         Open calculator
                       </Link>
                     )}
-                    <button
-                      onClick={() => remove(r.id)}
-                      className="text-xs border border-[#E8C4B8] text-danger rounded-md px-3 py-1.5 hover:bg-[#FBEBE6]"
-                    >
+                    <Button intent="danger" size="sm" onClick={() => setPendingDelete(r)}>
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 {config && (
-                  <div className="flex gap-4 flex-wrap mt-3 pt-3 border-t border-dashed border-line">
+                  <div className="mt-3 flex flex-wrap gap-4 border-t border-dashed border-line pt-3">
                     {config.outputs.map((o) => (
                       <div key={o.id}>
                         <p className="font-mono text-[10px] uppercase tracking-wide text-ink-soft">
                           {o.label}
                         </p>
-                        <p className="font-mono text-[13px] font-semibold">
+                        <p className="font-mono text-[13px] font-semibold tabular-nums">
                           {formatValue(o.format, r.outputs[o.id])}
                         </p>
                       </div>
@@ -108,6 +126,20 @@ export default function SavedPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete snapshot?"
+        description={
+          pendingDelete
+            ? `This removes “${pendingDelete.label || pendingDelete.calculator_id}” for the whole team. This can’t be undone.`
+            : undefined
+        }
+        onConfirm={async () => {
+          if (pendingDelete) await remove(pendingDelete);
+        }}
+      />
     </div>
   );
 }

@@ -23,7 +23,7 @@ Primitives to add (all Base UI): **Tooltip** (replaces every `title="…"` info 
 | M2 | ✅ Done — no custom easing tokens | `globals.css` | `--ease-out-strong`, `--ease-in-out-strong` |
 | M3 | ✅ Done — slider thumb static | `globals.css` | scale on active, focus-visible ring, reduced-motion guard |
 | M4 | Dialogs pop in with no enter/exit transition | `CalculatorShell`, `ConfirmDialog`, pipeline modal | Shared `ui/dialog.tsx` wrapper: backdrop opacity + popup `scale(0.96)→1` / opacity, 200ms `--ease-out-strong`, exit faster than enter. Modals keep `transform-origin: center` |
-| M5 | Recharts re-animates bars/lines on every slider tick — chart lags behind live input | `CalculatorShell`, P&L page | `isAnimationActive={false}` on `Bar`/`Line` for live-updating charts (animation has no purpose when values change 30×/sec) |
+| M5 | ✅ Done — Recharts re-animated from zero on every slider tick | `CalculatorShell`, P&L page | Migrated charting to Apache ECharts (canvas, interruptible 200ms merge-updates); Recharts removed |
 | M6 | Sidebar mobile slide uses default weak easing | `Sidebar.tsx` | `duration-300` + `ease-[var(--ease-out-strong)]` (iOS-drawer curve), backdrop fade |
 | M7 | Graveyard/adding sections toggle with no transition; `▶` rotates with bare `transition-transform` | pipeline, board columns | Grid-rows or height auto-animation; keep under 250ms |
 | M8 | Raw `<button>`s with hand-rolled classes miss the new press feedback | P&L reset, shell export row, pipeline tab/mode buttons, saved page | Consolidate onto `Button` variants (add a `tab` intent) |
@@ -50,7 +50,7 @@ Primitives to add (all Base UI): **Tooltip** (replaces every `title="…"` info 
 | # | Finding | Fix |
 |---|---------|-----|
 | C1 | Two slider UIs existed (P&L vs Unit Econ) — now unified via `SliderField`; CalculatorShell fields are a third input style | Extend calculator field config with optional `slider: {min,max,step}` so config-driven calculators can render `SliderField` too |
-| C2 | Recharts tooltip uses default white/grey style, off-brand | Custom tooltip content styled with panel/line/ink tokens |
+| C2 | ✅ Done — chart tooltips were default off-brand style | Themed tooltip/axis/legend in `ui/chart.tsx`; series palette re-validated for CVD safety (`src/lib/chartTheme.ts`) |
 | C3 | Verdict banners, stat cards, tab buttons re-implement the same styles in 4 files | Extract `ui/stat-card.tsx`, `ui/verdict-banner.tsx`, `ui/tab-bar.tsx` |
 | C4 | Hard-coded hex colors bypass the Tailwind palette (`#D6E4CE`, `#FBEBE6`, `#E8C4B8`, chart hexes) | Add semantic tokens (`success-bg`, `danger-bg`, etc.) to `tailwind.config.ts` |
 | C5 | Mobile: cost table and pipeline table rely on horizontal scroll with no affordance | Sticky first column or scroll-shadow hint |
@@ -62,7 +62,7 @@ Primitives to add (all Base UI): **Tooltip** (replaces every `title="…"` info 
 | A1 | Icon-only buttons (`✕`, `×`, `☰`) rely on `title` or nothing | `aria-label` everywhere; lucide icons with labels |
 | A2 | No `prefers-reduced-motion` handling (base fixed for new motion) | Audit all added transitions; movement off, opacity kept |
 | A3 | Unstyled native checkbox (pipeline referral flag) | Base UI Checkbox styled to theme |
-| A4 | Chart data unavailable to screen readers | `aria-label` summary on chart containers ("Operating profit by month, breakeven M4…") |
+| A4 | ✅ Done — chart data unavailable to screen readers | Chart containers carry `role="img"` + generated `aria-label` summaries |
 | A5 | Sidebar closes on any click inside (`onClick` on `<aside>`) — keyboard/AT users can't interact without dismissing | Close on link navigation + backdrop only |
 
 ## 3. Implementation plan
@@ -83,3 +83,14 @@ C1 slider support in calculator configs, M5 disable live-chart re-animation, C2 
 M6 sidebar motion + A5 close behavior, C5 table scroll affordances, M9 hover gating, A1/A3 labels and checkbox, M10 dashboard stagger.
 
 Each phase is independently shippable; run `npx tsc --noEmit && npm test` per phase.
+
+## 4. Redesign addendum — 2026-09-05
+
+Full visual rebrand to a modern clean SaaS theme (light-only) plus execution of the remaining phases:
+
+- **Theme**: Tailwind tokens remapped (legacy names kept) — slate surfaces (`#F8FAFC`/white), slate text, blue accent (`#2563EB`); Inter everywhere (Fraunces dropped), IBM Plex Mono for numbers. Semantic status tokens added (`success*`, `danger-bg/border`, `amber-bg/border`); chart palette re-hued to blue/emerald/orange/violet with the same CVD-safe interleave.
+- **Navigation**: mobile now uses a sticky top app bar + animated slide-in drawer (Escape closes, body scroll locked, closes on nav/backdrop only — A5, M6); account footer in the drawer; desktop keeps the sidebar + slim header.
+- **Components**: new `ui/dialog.tsx` (animated backdrop/popup — M4), `ui/tooltip.tsx` (`InfoTip`, replaces `title=""` — I2), `ui/tab-bar.tsx` (M8/C3), `ui/stat-card.tsx`, `ui/verdict-banner.tsx`, `ui/skeleton.tsx` (I6); lucide-react icons replace UI glyphs (A1).
+- **Interaction fixes shipped**: saved-page delete confirm + toast (I3), save-dialog form submit (I4), wheel-proof number inputs (I5), draft-string editing in funding NumField (I7), lazy localStorage init (I8), cost-row delete undo toast (I9), tuned dnd-kit dropAnimation (I10), styled pipeline checkbox (A3), table scroll-shadow affordance (C5), touch-gated card hovers (M9).
+
+Verified: `tsc --noEmit` clean, 55/55 unit tests pass, production build succeeds.

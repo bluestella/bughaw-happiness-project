@@ -78,7 +78,7 @@ function TaskCard({
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className={`border border-line rounded-lg bg-white p-3 cursor-pointer hover:border-coir ${
+      className={`rounded-lg border border-line bg-white p-3 shadow-card cursor-pointer transition-colors [@media(hover:hover)]:hover:border-coir/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 ${
         isDragging ? "opacity-40" : ""
       } ${draggable ? "" : "cursor-default"}`}
     >
@@ -136,7 +136,7 @@ function Column({
   }
 
   return (
-    <div className="bg-panel border border-line rounded-xl p-3 flex flex-col min-h-[200px]">
+    <div className="flex min-h-[200px] flex-col rounded-xl border border-line bg-paper p-3">
       <div className="flex items-center justify-between px-1 mb-2.5">
         <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-soft">{status}</p>
         <span className="font-mono text-[10px] text-ink-soft">{taskIds.length}</span>
@@ -187,7 +187,7 @@ function Column({
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="mt-2 text-[12px] text-ink-soft hover:text-ink text-left px-1"
+          className="mt-2 rounded-md px-1 py-1 text-left text-[12px] text-ink-soft transition-colors hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
         >
           + Add task
         </button>
@@ -424,7 +424,7 @@ export function Board({
         ← {projectName}
       </Link>
       <div className="mt-2 mb-5">
-        <h1 className="font-display text-2xl font-semibold text-ink">{miniProject.name}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{miniProject.name}</h1>
         {miniProject.description && (
           <p className="text-[13px] text-ink-soft mt-1">{miniProject.description}</p>
         )}
@@ -452,17 +452,19 @@ export function Board({
             />
           ))}
         </div>
-        <DragOverlay>
+        <DragOverlay
+          dropAnimation={{ duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" }}
+        >
           {activeTask ? (
-            <div className="border border-coir rounded-lg bg-white p-3 shadow-lg rotate-2">
+            <div className="rotate-2 rounded-lg border border-coir bg-white p-3 shadow-pop">
               <p className="text-[13px] font-medium text-ink leading-snug">{activeTask.title}</p>
             </div>
           ) : null}
         </DragOverlay>
       </DndContext>
 
-      <section className="mt-8 border border-line rounded-xl bg-white p-4 max-w-md">
-        <h2 className="font-display text-base font-semibold text-ink mb-1">Board contributors</h2>
+      <section className="mt-8 max-w-md rounded-xl border border-line bg-white p-4 shadow-card">
+        <h2 className="mb-1 text-base font-semibold text-ink">Board contributors</h2>
         <p className="text-[11px] text-ink-soft mb-3">
           Added here in addition to contributors inherited from {projectName}.
         </p>

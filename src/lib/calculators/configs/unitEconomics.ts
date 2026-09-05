@@ -163,7 +163,7 @@ export const pricingMarkupCalculator: CalculatorConfig = {
     title: "Cost to price ladder",
     type: "bar",
     labels: ["Unit cost", "Wholesale", "Retail"],
-    series: [{ name: "₱ per unit", color: "#5C7A4F", values: [i.unitCost || 0, o.wholesalePrice, o.retailPrice] }],
+    series: [{ name: "₱ per unit", color: "#4F8534", values: [i.unitCost || 0, o.wholesalePrice, o.retailPrice] }],
     format: "currency",
   }),
 };
