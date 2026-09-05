@@ -123,8 +123,54 @@ export const paybackCalculator: CalculatorConfig = {
   }),
 };
 
+export const pricingMarkupCalculator: CalculatorConfig = {
+  id: "pricing-markup",
+  category: "unit-economics",
+  name: "Pricing & Markup",
+  description: "Work backwards from a target margin to a recommended wholesale and retail price for any product.",
+  icon: "🏷️",
+  inputGroups: [
+    {
+      id: "pricing",
+      title: "Cost & targets",
+      fields: [
+        { id: "unitCost", label: "Cost per unit", type: "currency", defaultValue: 30, min: 0, step: 1, helpText: "Fully loaded cost to make and pack one unit." },
+        { id: "targetGrossMarginPct", label: "Target gross margin", type: "percentage", defaultValue: 60, min: 0, max: 95 },
+        { id: "channelDiscountPct", label: "Channel discount off retail", type: "percentage", defaultValue: 40, min: 0, max: 90, helpText: "Discount distributors or large buyers get off the retail price." },
+      ],
+    },
+  ],
+  compute: (i) => {
+    const cost = i.unitCost || 0;
+    const margin = i.targetGrossMarginPct || 0;
+    const discount = i.channelDiscountPct || 0;
+    const wholesalePrice = margin < 100 ? cost / (1 - margin / 100) : Infinity;
+    const retailPrice = discount < 100 ? wholesalePrice / (1 - discount / 100) : Infinity;
+    return {
+      wholesalePrice,
+      retailPrice,
+      markupPct: cost > 0 ? ((wholesalePrice - cost) / cost) * 100 : Infinity,
+      profitPerUnit: wholesalePrice - cost,
+    };
+  },
+  outputs: [
+    { id: "wholesalePrice", label: "Recommended wholesale price", format: "currency", emphasis: true },
+    { id: "retailPrice", label: "Recommended retail price", format: "currency", emphasis: true, note: "Wholesale price grossed up by the channel discount." },
+    { id: "markupPct", label: "Markup over cost", format: "percentage" },
+    { id: "profitPerUnit", label: "Gross profit per unit (wholesale)", format: "currency" },
+  ],
+  chart: (i, o) => ({
+    title: "Cost to price ladder",
+    type: "bar",
+    labels: ["Unit cost", "Wholesale", "Retail"],
+    series: [{ name: "₱ per unit", color: "#5C7A4F", values: [i.unitCost || 0, o.wholesalePrice, o.retailPrice] }],
+    format: "currency",
+  }),
+};
+
 export const unitEconomicsCalculators = [
   cogsCalculator,
   wholesaleMarginCalculator,
   paybackCalculator,
+  pricingMarkupCalculator,
 ];

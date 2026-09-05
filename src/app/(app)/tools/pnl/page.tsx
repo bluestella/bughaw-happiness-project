@@ -10,8 +10,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { pesoRound } from "@/lib/format";
 import { computePnl, PNL_DEFAULTS as DEFAULTS, type PnlState } from "@/lib/pnl";
+import { pesoRound } from "@/lib/format";
+import { SliderField } from "@/components/ui/slider-field";
 
 const FIELDS: {
   id: keyof PnlState;
@@ -87,27 +88,19 @@ export default function PnlPage() {
               {section}
             </h2>
             {FIELDS.filter((f) => f.section === section).map((f) => (
-              <div key={f.id} className="mb-4 last:mb-0">
-                <div className="flex justify-between items-baseline mb-2">
-                  <span className="text-[13px] text-ink-soft" title={f.help}>
-                    {f.label}
-                    <span className="ml-1 text-[10px] text-ink-soft/70 cursor-help border border-line rounded-full px-1" title={f.help}>
-                      i
-                    </span>
-                  </span>
-                  <span className="font-mono text-[13px] font-semibold">
-                    {f.peso ? pesoRound(s[f.id]) : f.pct ? s[f.id] + "%" : s[f.id].toLocaleString()}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={f.min}
-                  max={f.max}
-                  step={f.step}
-                  value={s[f.id]}
-                  onChange={(e) => setS((prev) => ({ ...prev, [f.id]: +e.target.value }))}
-                />
-              </div>
+              <SliderField
+                key={f.id}
+                id={`pnl-${f.id}`}
+                label={f.label}
+                help={f.help}
+                min={f.min}
+                max={f.max}
+                step={f.step}
+                prefix={f.peso ? "₱" : undefined}
+                suffix={f.pct ? "%" : undefined}
+                value={s[f.id]}
+                onChange={(v) => setS((prev) => ({ ...prev, [f.id]: v }))}
+              />
             ))}
           </div>
         ))}

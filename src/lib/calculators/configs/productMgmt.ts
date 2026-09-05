@@ -118,4 +118,58 @@ export const mixMarginCalculator: CalculatorConfig = {
   }),
 };
 
-export const productMgmtCalculators = [inventoryTurnoverCalculator, mixMarginCalculator];
+export const reorderPointCalculator: CalculatorConfig = {
+  id: "reorder-point",
+  category: "product-mgmt",
+  name: "Reorder Point Planner",
+  description: "When to reorder stock — and how much — so customers never hit a stockout.",
+  icon: "📦",
+  inputGroups: [
+    {
+      id: "demand",
+      title: "Demand & supply",
+      fields: [
+        { id: "dailyUnits", label: "Average units sold per day", type: "number", defaultValue: 40, min: 0, step: 5 },
+        { id: "leadTimeDays", label: "Supplier lead time (days)", type: "number", defaultValue: 21, min: 0, helpText: "Days from placing an order to stock arriving." },
+        { id: "safetyStockDays", label: "Safety stock (days)", type: "number", defaultValue: 7, min: 0, helpText: "Extra days of cover for demand spikes or supplier delays." },
+      ],
+    },
+    {
+      id: "stock",
+      title: "Stock position",
+      fields: [
+        { id: "currentStock", label: "Units in stock now", type: "number", defaultValue: 1500, min: 0, step: 50 },
+        { id: "orderCoverDays", label: "Days one order should cover", type: "number", defaultValue: 30, min: 1, helpText: "How many days of sales a single replenishment order should cover." },
+      ],
+    },
+  ],
+  compute: (i) => {
+    const daily = i.dailyUnits || 0;
+    const reorderPoint = daily * ((i.leadTimeDays || 0) + (i.safetyStockDays || 0));
+    return {
+      reorderPoint,
+      daysUntilReorder: daily > 0 ? Math.max(0, ((i.currentStock || 0) - reorderPoint) / daily) : Infinity,
+      suggestedOrderQty: daily * (i.orderCoverDays || 0),
+    };
+  },
+  outputs: [
+    { id: "reorderPoint", label: "Reorder point", format: "number", emphasis: true, note: "Place an order when stock drops to this many units." },
+    { id: "daysUntilReorder", label: "Days until reorder", format: "number", note: "At current sales pace. 0 means you're at or below the reorder point." },
+    { id: "suggestedOrderQty", label: "Suggested order quantity", format: "number", emphasis: true },
+  ],
+  verdict: (i, o) => {
+    const atOrBelow = (i.currentStock || 0) <= o.reorderPoint;
+    return {
+      ok: !atOrBelow,
+      text: atOrBelow
+        ? "Below the reorder point — place an order now to avoid a stockout."
+        : "Stock is above the reorder point at the current sales pace.",
+    };
+  },
+};
+
+export const productMgmtCalculators = [
+  inventoryTurnoverCalculator,
+  mixMarginCalculator,
+  reorderPointCalculator,
+];

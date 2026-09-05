@@ -35,4 +35,11 @@ export const TOOLS: ToolDef[] = [
     icon: "📊",
     path: "/tools/pnl",
   },
+  {
+    id: "funding",
+    name: "Funding & Investor Ask",
+    description: "Compare equity, SAFE, JV, and loan paths for the same capital need.",
+    icon: "🤝",
+    path: "/tools/funding",
+  },
 ];

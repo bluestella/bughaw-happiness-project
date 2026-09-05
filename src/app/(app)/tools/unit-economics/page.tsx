@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { pesoRound } from "@/lib/format";
+import { SliderField } from "@/components/ui/slider-field";
 
 interface SimState {
   price: number;
@@ -79,23 +80,18 @@ export default function UnitEconomicsPage() {
   const gatePass = marginPct >= 30;
 
   const slider = (def: (typeof SLIDERS)[number]) => (
-    <div key={def.id} className="mb-5">
-      <div className="flex justify-between items-baseline mb-2 text-sm">
-        <span>{def.label}</span>
-        <span className="font-semibold font-mono text-[13px]">
-          {def.peso ? pesoRound(s[def.id]) : s[def.id].toLocaleString()}
-          {def.suffix ?? ""}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={def.min}
-        max={def.max}
-        step={def.step}
-        value={s[def.id]}
-        onChange={(e) => setS((prev) => ({ ...prev, [def.id]: +e.target.value }))}
-      />
-    </div>
+    <SliderField
+      key={def.id}
+      id={`ue-${def.id}`}
+      label={def.label}
+      min={def.min}
+      max={def.max}
+      step={def.step}
+      prefix={def.peso ? "₱" : undefined}
+      suffix={def.suffix?.trim() || undefined}
+      value={s[def.id]}
+      onChange={(v) => setS((prev) => ({ ...prev, [def.id]: v }))}
+    />
   );
 
   return (

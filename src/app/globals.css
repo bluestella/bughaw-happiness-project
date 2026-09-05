@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Strong custom easings — built-in CSS easings are too weak for UI motion */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
 body {
   @apply bg-paper text-ink font-sans antialiased;
 }
@@ -31,6 +37,13 @@ input[type="range"]::-webkit-slider-thumb {
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px #5c7a4f;
   cursor: pointer;
+  transition: transform 150ms var(--ease-out-strong);
+}
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px #5c7a4f, 0 0 0 4px rgba(92, 122, 79, 0.25);
 }
 input[type="range"]::-moz-range-thumb {
   width: 16px;
@@ -40,4 +53,25 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px #5c7a4f;
   cursor: pointer;
+  transition: transform 150ms var(--ease-out-strong);
+}
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.15);
+}
+input[type="range"]:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 1px #5c7a4f, 0 0 0 4px rgba(92, 122, 79, 0.25);
+}
+
+/* Hide number-input spinners where a slider already provides stepping */
+input[inputmode="decimal"]::-webkit-outer-spin-button,
+input[inputmode="decimal"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  input[type="range"]::-webkit-slider-thumb,
+  input[type="range"]::-moz-range-thumb {
+    transition: none;
+  }
 }

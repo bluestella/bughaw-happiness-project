@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { cogsCalculator, paybackCalculator, wholesaleMarginCalculator } from "@/lib/calculators/configs/unitEconomics";
+import { cogsCalculator, paybackCalculator, pricingMarkupCalculator, wholesaleMarginCalculator } from "@/lib/calculators/configs/unitEconomics";
 import { breakevenCalculator, penetrationCalculator, repeatOrderCalculator } from "@/lib/calculators/configs/goToMarket";
-import { inventoryTurnoverCalculator, mixMarginCalculator } from "@/lib/calculators/configs/productMgmt";
-import { cashFlowCalculator, growthScenarioCalculator, ltvSegmentCalculator } from "@/lib/calculators/configs/financial";
+import { inventoryTurnoverCalculator, mixMarginCalculator, reorderPointCalculator } from "@/lib/calculators/configs/productMgmt";
+import { cashFlowCalculator, growthScenarioCalculator, ltvSegmentCalculator, runwayCalculator, valuationCalculator } from "@/lib/calculators/configs/financial";
 import { computePnl, PNL_DEFAULTS } from "@/lib/pnl";
 import { ALL_CALCULATORS } from "@/lib/calculators/registry";
 
@@ -166,11 +166,94 @@ describe("P&L machine (migrated)", () => {
   });
 });
 
+describe("Runway & burn", () => {
+  it("computes net burn and runway with flat revenue", () => {
+    const o = runwayCalculator.compute({
+      cashOnHand: 300000, monthlyOpex: 150000, monthlyRevenue: 50000, revenueGrowthPct: 0,
+    });
+    expect(o.netBurn).toBe(100000);
+    expect(o.runwayMonths).toBeCloseTo(3); // 300k / 100k per month
+    // Shortfall through month 18: 18*100k - 300k = 1.5M
+    expect(o.raiseFor18mo).toBeCloseTo(1500000);
+  });
+
+  it("returns Infinity runway when cash-flow positive", () => {
+    const o = runwayCalculator.compute({
+      cashOnHand: 100000, monthlyOpex: 50000, monthlyRevenue: 80000, revenueGrowthPct: 0,
+    });
+    expect(o.runwayMonths).toBe(Infinity);
+    expect(o.raiseFor18mo).toBe(0);
+  });
+
+  it("flags short runway in the verdict", () => {
+    const o = runwayCalculator.compute({
+      cashOnHand: 300000, monthlyOpex: 150000, monthlyRevenue: 50000, revenueGrowthPct: 0,
+    });
+    expect(runwayCalculator.verdict!({}, o).ok).toBe(false);
+  });
+});
+
+describe("Pricing & markup", () => {
+  it("derives wholesale and retail from target margin and discount", () => {
+    const o = pricingMarkupCalculator.compute({
+      unitCost: 30, targetGrossMarginPct: 60, channelDiscountPct: 40,
+    });
+    expect(o.wholesalePrice).toBeCloseTo(75); // 30 / 0.4
+    expect(o.retailPrice).toBeCloseTo(125); // 75 / 0.6
+    expect(o.markupPct).toBeCloseTo(150);
+    expect(o.profitPerUnit).toBeCloseTo(45);
+  });
+
+  it("returns Infinity at a 100% margin target", () => {
+    const o = pricingMarkupCalculator.compute({
+      unitCost: 30, targetGrossMarginPct: 100, channelDiscountPct: 40,
+    });
+    expect(o.wholesalePrice).toBe(Infinity);
+  });
+});
+
+describe("Valuation estimator", () => {
+  it("computes the revenue-multiple range and profit-based estimate", () => {
+    const o = valuationCalculator.compute({
+      monthlyRevenue: 100000, multipleLow: 2, multipleHigh: 5, annualProfit: 500000, profitMultiple: 8,
+    });
+    expect(o.annualRevenue).toBe(1200000);
+    expect(o.valuationLow).toBe(2400000);
+    expect(o.valuationHigh).toBe(6000000);
+    expect(o.valuationMid).toBe(4200000);
+    expect(o.profitValuation).toBe(4000000);
+  });
+});
+
+describe("Reorder point", () => {
+  it("computes reorder point, days until reorder, and order quantity", () => {
+    const o = reorderPointCalculator.compute({
+      dailyUnits: 40, leadTimeDays: 21, safetyStockDays: 7, currentStock: 1500, orderCoverDays: 30,
+    });
+    expect(o.reorderPoint).toBe(1120); // 40 * 28
+    expect(o.daysUntilReorder).toBeCloseTo(9.5); // (1500 - 1120) / 40
+    expect(o.suggestedOrderQty).toBe(1200);
+    expect(reorderPointCalculator.verdict!({ currentStock: 1500 }, o).ok).toBe(true);
+  });
+
+  it("handles zero daily sales and low stock", () => {
+    const o = reorderPointCalculator.compute({
+      dailyUnits: 0, leadTimeDays: 21, safetyStockDays: 7, currentStock: 100, orderCoverDays: 30,
+    });
+    expect(o.daysUntilReorder).toBe(Infinity);
+    const low = reorderPointCalculator.compute({
+      dailyUnits: 40, leadTimeDays: 21, safetyStockDays: 7, currentStock: 500, orderCoverDays: 30,
+    });
+    expect(low.daysUntilReorder).toBe(0);
+    expect(reorderPointCalculator.verdict!({ currentStock: 500 }, low).ok).toBe(false);
+  });
+});
+
 describe("registry", () => {
-  it("has 11 calculators with unique category/id pairs", () => {
-    expect(ALL_CALCULATORS).toHaveLength(11);
+  it("has 15 calculators with unique category/id pairs", () => {
+    expect(ALL_CALCULATORS).toHaveLength(15);
     const keys = new Set(ALL_CALCULATORS.map((c) => `${c.category}/${c.id}`));
-    expect(keys.size).toBe(11);
+    expect(keys.size).toBe(15);
   });
 
   it("every calculator computes finite defaults", () => {

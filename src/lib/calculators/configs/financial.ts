@@ -217,8 +217,138 @@ export const growthScenarioCalculator: CalculatorConfig = {
   },
 };
 
+export function projectRunway(i: Record<string, number>) {
+  const balances: number[] = [];
+  let cash = i.cashOnHand || 0;
+  let revenue = i.monthlyRevenue || 0;
+  let runwayMonths = Infinity;
+  let worstShortfall18 = 0;
+  for (let m = 1; m <= 60; m++) {
+    if (m > 1) revenue *= 1 + (i.revenueGrowthPct || 0) / 100;
+    const prev = cash;
+    cash += revenue - (i.monthlyOpex || 0);
+    balances.push(cash);
+    if (runwayMonths === Infinity && cash < 0) {
+      const burn = prev - cash;
+      runwayMonths = m - 1 + (burn > 0 ? prev / burn : 0);
+    }
+    if (m <= 18 && cash < worstShortfall18) worstShortfall18 = cash;
+  }
+  return { balances, runwayMonths, raiseFor18mo: Math.max(0, -worstShortfall18) };
+}
+
+export const runwayCalculator: CalculatorConfig = {
+  id: "runway-burn",
+  category: "financial",
+  name: "Runway & Burn Rate",
+  description: "How long the cash lasts, and what to raise for 18 months of runway.",
+  icon: "⏳",
+  inputGroups: [
+    {
+      id: "cash",
+      title: "Cash position",
+      fields: [
+        { id: "cashOnHand", label: "Cash on hand today", type: "currency", defaultValue: 1500000, min: 0, step: 50000 },
+        { id: "monthlyOpex", label: "Monthly expenses", type: "currency", defaultValue: 250000, min: 0, step: 10000, helpText: "Everything spent per month — salaries, production, logistics, overhead." },
+      ],
+    },
+    {
+      id: "revenue",
+      title: "Revenue",
+      fields: [
+        { id: "monthlyRevenue", label: "Monthly revenue today", type: "currency", defaultValue: 150000, min: 0, step: 10000 },
+        { id: "revenueGrowthPct", label: "Monthly revenue growth", type: "percentage", defaultValue: 5, min: -50, max: 50 },
+      ],
+    },
+  ],
+  compute: (i) => {
+    const { runwayMonths, raiseFor18mo } = projectRunway(i);
+    return {
+      netBurn: (i.monthlyOpex || 0) - (i.monthlyRevenue || 0),
+      runwayMonths,
+      raiseFor18mo,
+    };
+  },
+  outputs: [
+    { id: "netBurn", label: "Net burn, month 1", format: "currency", emphasis: true, note: "Expenses minus revenue. Negative means cash-flow positive." },
+    { id: "runwayMonths", label: "Runway", format: "months", emphasis: true, note: "When cash runs out (— if it never does within 5 years)." },
+    { id: "raiseFor18mo", label: "Raise needed for 18-month runway", format: "currency", note: "The cash shortfall to keep the balance above zero through month 18." },
+  ],
+  chart: (i) => {
+    const { balances } = projectRunway(i);
+    return {
+      title: "Projected cash balance",
+      type: "line",
+      labels: Array.from({ length: 24 }, (_, m) => `M${m + 1}`),
+      series: [{ name: "Cash balance", color: "#5C7A4F", values: balances.slice(0, 24) }],
+      format: "currency",
+    };
+  },
+  verdict: (_i, o) => {
+    if (o.runwayMonths < 6)
+      return { ok: false, text: "Danger: under 6 months of runway — start fundraising or cut burn now." };
+    if (o.runwayMonths < 12)
+      return { ok: false, text: "Caution: 6–12 months of runway — fundraising takes 3–6 months, so begin soon." };
+    return { ok: true, text: "Healthy: 12+ months of runway at these assumptions." };
+  },
+};
+
+export const valuationCalculator: CalculatorConfig = {
+  id: "valuation-estimator",
+  category: "financial",
+  name: "Valuation Estimator",
+  description: "Revenue-multiple valuation range to sanity-check the number you bring to investors.",
+  icon: "💎",
+  inputGroups: [
+    {
+      id: "revenue",
+      title: "Revenue basis",
+      fields: [
+        { id: "monthlyRevenue", label: "Monthly revenue", type: "currency", defaultValue: 150000, min: 0, step: 10000 },
+        { id: "multipleLow", label: "Revenue multiple — low", type: "number", defaultValue: 2, min: 0, step: 0.5, helpText: "Conservative multiple on annual revenue." },
+        { id: "multipleHigh", label: "Revenue multiple — high", type: "number", defaultValue: 5, min: 0, step: 0.5, helpText: "Optimistic multiple for strong growth or strategic buyers." },
+      ],
+    },
+    {
+      id: "profit",
+      title: "Profit basis (optional)",
+      fields: [
+        { id: "annualProfit", label: "Annual profit", type: "currency", defaultValue: 0, min: 0, step: 50000, helpText: "Leave at 0 to skip the profit-based estimate." },
+        { id: "profitMultiple", label: "Profit multiple", type: "number", defaultValue: 8, min: 0, step: 0.5 },
+      ],
+    },
+  ],
+  compute: (i) => {
+    const annualRevenue = (i.monthlyRevenue || 0) * 12;
+    const valuationLow = annualRevenue * (i.multipleLow || 0);
+    const valuationHigh = annualRevenue * (i.multipleHigh || 0);
+    return {
+      annualRevenue,
+      valuationLow,
+      valuationMid: (valuationLow + valuationHigh) / 2,
+      valuationHigh,
+      profitValuation: (i.annualProfit || 0) * (i.profitMultiple || 0),
+    };
+  },
+  outputs: [
+    { id: "valuationMid", label: "Valuation — midpoint", format: "currency", emphasis: true },
+    { id: "valuationLow", label: "Valuation — low", format: "currency" },
+    { id: "valuationHigh", label: "Valuation — high", format: "currency" },
+    { id: "profitValuation", label: "Profit-based valuation", format: "currency", note: "Annual profit × profit multiple. 0 means no profit entered." },
+  ],
+  chart: (_i, o) => ({
+    title: "Valuation range",
+    type: "bar",
+    labels: ["Low", "Midpoint", "High"],
+    series: [{ name: "Valuation", color: "#5C7A4F", values: [o.valuationLow, o.valuationMid, o.valuationHigh] }],
+    format: "currency",
+  }),
+};
+
 export const financialCalculators = [
   ltvSegmentCalculator,
   cashFlowCalculator,
   growthScenarioCalculator,
+  runwayCalculator,
+  valuationCalculator,
 ];
