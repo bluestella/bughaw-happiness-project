@@ -553,7 +553,7 @@ export default function FundingPage() {
           <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
             Same {pesoRound(amount)} need, four ways to fund it
           </h2>
-          <div className="scroll-shadow-x overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="text-left text-ink-soft border-b border-line">

@@ -78,16 +78,55 @@ Recurring patterns:
   confirmations and errors — no toast library.
 - **Priority chips:** outlined text chips — Low `coir-dark`, Medium `amber`,
   High `danger`.
+- **Icons:** `lucide-react` only — no emoji anywhere in the app (nav, cards, page
+  chrome). Icon keys are stored as plain strings in data (`ToolDef.icon`,
+  `CalculatorConfig.icon`, e.g. `"flask-conical"`) and resolved to a component via
+  `getIcon()` in [`src/lib/icons.ts`](../src/lib/icons.ts) — add a new key there
+  before referencing it. Render at `strokeWidth={1.75}`, sized 16px in nav rows,
+  ~18–24px in page/section headers; never at emoji-casual scale.
+- **Page header:** `CalculatorHeader` ([`src/components/CalculatorHeader.tsx`](../src/components/CalculatorHeader.tsx))
+  is the one header used across calculators, tools, CRM, and Tasks — icon in a
+  `coir-bg` chip, mono eyebrow, `font-display` title, optional description, and
+  optional `action` (below the description) or `aside` (beside the whole block,
+  e.g. a "Reset to defaults" button or a page-specific summary card) slots.
+- **Section intro:** `SectionIntro` ([`src/components/SectionIntro.tsx`](../src/components/SectionIntro.tsx))
+  is the "editorial pull quote" section header for a handful of high-traffic
+  spots (dashboard, catalog) — bigger `font-display` presence than a plain h2.
+  Don't reach for it on every section; it's meant to be used sparingly.
+- **Featured vs. catalog cards** ([`src/components/ui/card.tsx`](../src/components/ui/card.tsx)):
+  uniform card grids are only correct for genuinely homogeneous data where
+  position/status carries the signal (CRM board, task board, project list). When
+  items differ in importance — e.g. the 5 hand-built Tools vs. the long tail of
+  generated calculators — don't give them the same visual weight. Use
+  `FeaturedCard` (roomy, icon + name + description, sized `md`/`lg`) for the
+  small, high-value set, and `CatalogRow` (dense, single-line, inside a
+  `divide-y` list) for the long tail. See the dashboard and `/calculators` for
+  the reference implementation.
+- **Command palette:** `CommandPalette` ([`src/components/CommandPalette.tsx`](../src/components/CommandPalette.tsx)),
+  opened via `⌘K`/`Ctrl+K` or the search button at the top of the sidebar, is
+  the fast path to any calculator/tool/page. It's built on the existing
+  `@base-ui/react` Dialog — no `cmdk` dependency.
 
 ## 5. Layout
 
 - App frame: fixed 256 px sidebar (`bg-panel`, sticky, own scroll) + sticky
   translucent header (`bg-paper/90 backdrop-blur`) with user email + sign-out +
   `max-w-6xl` centered main content (`px-6 py-8`).
+- **Sidebar nav is primary destinations only** — Dashboard, Calculators (the
+  catalog, not individual calculators), Saved, CRM, Tasks, plus the 5 flagship
+  Tools. The 15 generated calculators live in the `/calculators` catalog page,
+  not as sidebar leaves — reach any of them via that page's filter or the
+  command palette, not by scrolling the sidebar.
+- **Dashboard (`/`)** is a slim orientation page: an editorial masthead, an
+  asymmetric "Featured tools" section (`FeaturedCard`), a link into the full
+  catalog, and a couple of quick links (CRM, Tasks). It does not enumerate every
+  calculator — that's what `/calculators` (`CalculatorCatalog`) is for.
 - Calculator pages: two-column `lg:grid-cols-[380px,1fr]` — inputs left,
-  outputs/verdict/chart right; stacks on mobile.
-- **Mobile:** sidebar becomes an off-canvas drawer with a floating `☰` FAB
-  (bottom-right) and scrim. Test every new page at 375 px.
+  outputs/verdict/chart right; stacks on mobile. This split stays uniform by
+  design (dense data-entry UI) — don't editorialize it; the header above it uses
+  `CalculatorHeader` per §4.
+- **Mobile:** sidebar becomes an off-canvas drawer with a hamburger button in a
+  sticky top bar and scrim. Test every new page at 375 px.
 
 ## 6. Data display rules
 

@@ -89,96 +89,118 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-paper px-4">
-      <div className="w-full max-w-sm">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1.5">
-          Bughaw Innovations — Internal
+    <main className="min-h-screen bg-paper lg:grid lg:grid-cols-2">
+      <div className="hidden flex-col justify-between bg-deep px-12 py-14 lg:flex">
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-bgreen">
+          Bughaw Innovations
         </p>
-        <h1 className="mb-6 font-display text-3xl font-semibold tracking-tight text-ink">
-          Bughaw Suite
-        </h1>
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4 rounded-xl border border-line bg-panel p-6 shadow-card"
-        >
-          <div>
-            <label className="block text-xs text-ink-soft mb-1.5" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-ink-soft mb-1.5" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20"
-            />
-          </div>
-
-          {error && <p className="text-sm text-danger">{error}</p>}
-          {notice && <p className="text-sm text-coir-dark">{notice}</p>}
-
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-lg bg-coir py-2.5 text-sm font-semibold text-white shadow-card transition-colors duration-150 hover:bg-coir-dark disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40"
-          >
-            {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="w-full rounded-lg border border-line py-2.5 text-sm font-medium text-ink shadow-card transition-colors duration-150 hover:border-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
-          >
-            Continue with Google
-          </button>
-
-          <p className="text-xs text-ink-soft text-center">
-            {mode === "signin" ? (
-              <>
-                Invited but no account yet?{" "}
-                <button
-                  type="button"
-                  className="text-coir-dark underline"
-                  onClick={() => setMode("signup")}
-                >
-                  Create one
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  className="text-coir-dark underline"
-                  onClick={() => setMode("signin")}
-                >
-                  Sign in
-                </button>
-              </>
-            )}
+        <div>
+          <h1 className="mb-4 font-display text-5xl xl:text-6xl font-semibold tracking-tight text-sky">
+            Bughaw Suite
+          </h1>
+          <p className="max-w-sm text-sm text-white/70">
+            Calculators, CRM, and task management for running Bughaw operations — all in
+            one internal platform.
           </p>
-        </form>
-
-        <p className="text-[11px] text-ink-soft mt-4 text-center">
-          Access is invite-only. Your email must be on the team allowlist.
+        </div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/40">
+          Internal — invite only
         </p>
+      </div>
+
+      <div className="flex min-h-screen items-center justify-center px-4 py-12 lg:min-h-0">
+        <div className="w-full max-w-sm">
+          <div className="lg:hidden">
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1.5">
+              Bughaw Innovations — Internal
+            </p>
+            <h1 className="mb-6 font-display text-3xl font-semibold tracking-tight text-ink">
+              Bughaw Suite
+            </h1>
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 rounded-xl border border-line bg-panel p-6 shadow-card"
+          >
+            <div>
+              <label className="block text-xs text-ink-soft mb-1.5" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-ink-soft mb-1.5" htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20"
+              />
+            </div>
+
+            {error && <p className="text-sm text-danger">{error}</p>}
+            {notice && <p className="text-sm text-coir-dark">{notice}</p>}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-lg bg-coir py-2.5 text-sm font-semibold text-white shadow-card transition-colors duration-150 hover:bg-coir-dark disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40"
+            >
+              {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGoogle}
+              className="w-full rounded-lg border border-line py-2.5 text-sm font-medium text-ink shadow-card transition-colors duration-150 hover:border-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
+            >
+              Continue with Google
+            </button>
+
+            <p className="text-xs text-ink-soft text-center">
+              {mode === "signin" ? (
+                <>
+                  Invited but no account yet?{" "}
+                  <button
+                    type="button"
+                    className="text-coir-dark underline"
+                    onClick={() => setMode("signup")}
+                  >
+                    Create one
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="text-coir-dark underline"
+                    onClick={() => setMode("signin")}
+                  >
+                    Sign in
+                  </button>
+                </>
+              )}
+            </p>
+          </form>
+
+          <p className="text-[11px] text-ink-soft mt-4 text-center">
+            Access is invite-only. Your email must be on the team allowlist.
+          </p>
+        </div>
       </div>
     </main>
   );

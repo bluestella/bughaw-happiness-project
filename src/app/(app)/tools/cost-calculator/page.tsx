@@ -95,7 +95,7 @@ export default function CostCalculatorPage() {
         </div>
       ) : (
         <>
-          <div className="scroll-shadow-x overflow-x-auto rounded-xl border border-line bg-panel shadow-card">
+          <div className="overflow-x-auto rounded-xl border border-line bg-panel shadow-card">
             <table className="w-full min-w-[920px] border-collapse">
               <thead>
                 <tr className="bg-paper">

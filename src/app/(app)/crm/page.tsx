@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
+import { Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserRole } from "@/utils/supabase/role";
 import { canAccessCrm } from "@/lib/permissions";
 import type { CrmLeadRow } from "@/lib/crm";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { CrmBoard } from "./CrmBoard";
 import { LEAD_ROW_SELECT } from "./leadSelect";
 
@@ -25,15 +27,12 @@ export default async function CrmPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-coir">CRM</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Lead funnel</h1>
-          <p className="mt-1 text-[13px] text-ink-soft">
-            Every submission from bughawinnovations.ph, plus anything added by hand.
-          </p>
-        </div>
-      </div>
+      <CalculatorHeader
+        icon={Target}
+        eyebrow="CRM"
+        title="Lead funnel"
+        description="Every submission from bughawinnovations.ph, plus anything added by hand."
+      />
 
       {error && (
         <p className="mb-4 rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-[13px] text-danger">

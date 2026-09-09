@@ -19,7 +19,7 @@ export function CalculatorHeader({
   icon: LucideIcon;
   eyebrow: string;
   title: string;
-  description: React.ReactNode;
+  description?: React.ReactNode;
   action?: React.ReactNode;
   aside?: React.ReactNode;
   className?: string;
@@ -44,7 +44,7 @@ export function CalculatorHeader({
         <h1 className="mb-1.5 font-display text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
           {title}
         </h1>
-        <p className="max-w-2xl text-sm text-ink-soft">{description}</p>
+        {description && <p className="max-w-2xl text-sm text-ink-soft">{description}</p>}
         {action}
       </div>
       {aside}

@@ -138,7 +138,9 @@ export function ProjectDetail({
       </Link>
       <div className="flex items-end justify-between gap-4 mt-2 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">{project.name}</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+            {project.name}
+          </h1>
           {project.description && (
             <p className="text-[13px] text-ink-soft mt-1">{project.description}</p>
           )}

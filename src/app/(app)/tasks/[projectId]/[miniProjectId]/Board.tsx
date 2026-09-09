@@ -422,7 +422,9 @@ export function Board({
         ← {projectName}
       </Link>
       <div className="mt-2 mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{miniProject.name}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+          {miniProject.name}
+        </h1>
         {miniProject.description && (
           <p className="text-[13px] text-ink-soft mt-1">{miniProject.description}</p>
         )}

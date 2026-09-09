@@ -334,7 +334,7 @@ export default function PipelinePage() {
                 </Button>
               </div>
 
-              <div className="scroll-shadow-x overflow-x-auto rounded-xl border border-line bg-panel shadow-card">
+              <div className="overflow-x-auto rounded-xl border border-line bg-panel shadow-card">
                 <table className="w-full min-w-[680px]">
                   <thead>
                     <tr className="bg-paper">

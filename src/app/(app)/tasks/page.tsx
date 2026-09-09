@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { FolderKanban } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserRole } from "@/utils/supabase/role";
 import { canCreateProject } from "@/lib/permissions";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { NewProjectForm } from "./NewProjectForm";
 
 export const dynamic = "force-dynamic";
@@ -17,15 +19,12 @@ export default async function TasksPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-coir">
-            Task Management
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Projects</h1>
-        </div>
-        {canCreateProject(role) && <NewProjectForm />}
-      </div>
+      <CalculatorHeader
+        icon={FolderKanban}
+        eyebrow="Task Management"
+        title="Projects"
+        aside={canCreateProject(role) && <NewProjectForm />}
+      />
 
       {(!projects || projects.length === 0) && (
         <div className="border border-dashed border-line rounded-xl p-10 text-center text-sm text-ink-soft">
