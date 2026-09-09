@@ -267,4 +267,134 @@ describe("registry", () => {
       }
     }
   });
+
+  it("every calculator produces non-NaN outputs for zeroed inputs", () => {
+    for (const c of ALL_CALCULATORS) {
+      const inputs: Record<string, number> = {};
+      c.inputGroups.forEach((g) => g.fields.forEach((f) => (inputs[f.id] = 0)));
+      const outputs = c.compute(inputs);
+      for (const o of c.outputs) {
+        expect(Number.isNaN(outputs[o.id]), `${c.id}.${o.id} NaN on zero inputs`).toBe(false);
+      }
+    }
+  });
+
+  it("every calculator produces non-NaN outputs for extreme large inputs", () => {
+    for (const c of ALL_CALCULATORS) {
+      const inputs: Record<string, number> = {};
+      c.inputGroups.forEach((g) => g.fields.forEach((f) => (inputs[f.id] = 1e9)));
+      const outputs = c.compute(inputs);
+      for (const o of c.outputs) {
+        expect(Number.isNaN(outputs[o.id]), `${c.id}.${o.id} NaN on large inputs`).toBe(false);
+      }
+    }
+  });
+
+  it("every calculator produces finite-or-Infinity outputs (never NaN) for negative inputs", () => {
+    for (const c of ALL_CALCULATORS) {
+      const inputs: Record<string, number> = {};
+      c.inputGroups.forEach((g) => g.fields.forEach((f) => (inputs[f.id] = -1e6)));
+      const outputs = c.compute(inputs);
+      for (const o of c.outputs) {
+        expect(Number.isNaN(outputs[o.id]), `${c.id}.${o.id} NaN on negative inputs`).toBe(false);
+      }
+    }
+  });
+
+  it("every calculator verdict returns ok + text on defaults", () => {
+    for (const c of ALL_CALCULATORS) {
+      if (!c.verdict) continue;
+      const inputs: Record<string, number> = {};
+      c.inputGroups.forEach((g) => g.fields.forEach((f) => (inputs[f.id] = f.defaultValue)));
+      const outputs = c.compute(inputs);
+      const verdict = c.verdict(inputs, outputs);
+      expect(verdict, `${c.id} verdict`).toBeDefined();
+      expect(typeof verdict.ok).toBe("boolean");
+      expect(typeof verdict.text).toBe("string");
+      expect(verdict.text.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("computePnl edge cases", () => {
+  it("handles all-zero input state with no NaN or Infinity in profit array", () => {
+    const { profits, cumulative, breakevenMonth, breakevenUnits } = computePnl({
+      unitsM1: 0,
+      growthPct: 0,
+      price: 0,
+      cogs: 0,
+      cac: 0,
+      opexMachines: 0,
+      opexSalaries: 0,
+      opexLogistics: 0,
+    });
+    expect(profits).toHaveLength(12);
+    for (const p of profits) {
+      expect(Number.isNaN(p)).toBe(false);
+      expect(Number.isFinite(p)).toBe(true);
+    }
+    expect(cumulative).toBe(0);
+    expect(breakevenMonth).toBe(1);
+    expect(breakevenUnits).toBe(0);
+  });
+
+  it("produces exactly 12 profit entries even at enormous growth", () => {
+    const { profits, cumulative } = computePnl({
+      ...PNL_DEFAULTS,
+      growthPct: 100,
+    });
+    expect(profits).toHaveLength(12);
+    expect(Number.isNaN(cumulative)).toBe(false);
+    for (const p of profits) {
+      expect(Number.isNaN(p)).toBe(false);
+    }
+  });
+
+  it("handles zero units with high opex without NaN", () => {
+    const { profits, breakevenMonth } = computePnl({
+      ...PNL_DEFAULTS,
+      unitsM1: 0,
+      growthPct: 0,
+      opexSalaries: 1_000_000,
+    });
+    expect(breakevenMonth).toBeNull();
+    for (const p of profits) {
+      expect(Number.isNaN(p)).toBe(false);
+      expect(p).toBeLessThan(0);
+    }
+  });
+
+  it("keeps cumulative equal to sum of profits", () => {
+    const cases = [
+      PNL_DEFAULTS,
+      { ...PNL_DEFAULTS, unitsM1: 0, growthPct: 0 },
+      { ...PNL_DEFAULTS, growthPct: 50, price: 500 },
+      { ...PNL_DEFAULTS, cogs: 0, cac: 0 },
+      { ...PNL_DEFAULTS, unitsM1: 10000, opexSalaries: 0 },
+    ];
+    for (const s of cases) {
+      const { profits, cumulative } = computePnl(s);
+      const sum = profits.reduce((a, b) => a + b, 0);
+      expect(cumulative, `sum for ${JSON.stringify(s)}`).toBeCloseTo(sum);
+    }
+  });
+
+  it("monotonically non-decreasing unit counts with non-negative growth", () => {
+    const s = { ...PNL_DEFAULTS, growthPct: 5 };
+    const { profits } = computePnl(s);
+    expect(profits).toHaveLength(12);
+  });
+
+  it("does not produce NaN profits with negative growth rate (contraction)", () => {
+    const { profits, cumulative } = computePnl({
+      ...PNL_DEFAULTS,
+      unitsM1: 1000,
+      growthPct: -50,
+    });
+    expect(Number.isNaN(cumulative)).toBe(false);
+    for (const p of profits) {
+      expect(Number.isNaN(p)).toBe(false);
+      expect(Number.isFinite(p)).toBe(true);
+    }
+  });
 });

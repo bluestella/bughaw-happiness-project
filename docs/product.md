@@ -20,7 +20,7 @@ no public/marketing surface and none is planned without an explicit decision.
 |---|---|---|
 | Founder/owner (currently the sole super_admin) | `super_admin` | Everything: pipeline, economics modeling, project setup, roles, deletions |
 | Core team | `member` | Run calculators, update pipeline, manage boards & contributors |
-| External contractors | `contractor` | Task boards only — locked out of business/financial data routes |
+| External contractors | `contractor` | Task boards only — locked out of business/financial data routes and of the CRM (enforced by RLS, not just routing) |
 
 The contractor role exists specifically so outside help can collaborate on execution
 without seeing margins, CAC/LTV, or the hotel pipeline. (Note: today this is
@@ -37,6 +37,14 @@ route-level; see [security.md](security.md) §5.1 for the enforcement caveat.)
 - Unit Cost Calculator — R&D costing (shared team document).
 - Unit Economics Simulator — slider model with a 30% margin go/no-go gate.
 - P&L Machine — 12-month breakeven model.
+
+**Revenue**
+- CRM (`/crm`) — every submission from the three bughawinnovations.ph forms
+  (contact, hotel pilot, product inquiry), deduped into accounts and contacts, on a
+  six-stage funnel board (New → Acknowledged → Qualified → Pilot Scoping → Closed
+  Won/Lost) with an append-only activity log, notes, CSV export, manual entry, CSV
+  import, and one-click promotion into the Pipeline Simulator. Intake is a
+  secret-authenticated endpoint the marketing site mirrors submissions to.
 
 **Execution**
 - Projects → mini-projects → kanban boards (To Do / In Progress / Done), priorities,

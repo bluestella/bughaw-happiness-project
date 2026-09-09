@@ -4,10 +4,28 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+function safeRedirectPath(raw: string | null): string {
+  if (!raw || typeof raw !== "string") return "/";
+  if (!raw.startsWith("/")) return "/";
+  if (raw.startsWith("//")) return "/";
+  if (raw.startsWith("/\\")) return "/";
+  if (raw.includes("://")) return "/";
+  if (raw.includes("\n") || raw.includes("\r")) return "/";
+  try {
+    const decoded = decodeURIComponent(raw);
+    if (decoded.startsWith("//") || decoded.startsWith("/\\") || decoded.includes("://")) {
+      return "/";
+    }
+  } catch {
+    return "/";
+  }
+  return raw;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
+  const next = safeRedirectPath(searchParams.get("next"));
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -28,7 +46,8 @@ function LoginForm() {
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setError(error.message);
+        console.warn("[auth] signin failed", error.status);
+        setError("Invalid email or password.");
       } else {
         router.replace(next);
         router.refresh();
@@ -36,10 +55,13 @@ function LoginForm() {
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
+        console.warn("[auth] signup failed", error.status);
+        const isInviteOnly =
+          error.message.includes("invite-only") || error.message.includes("Database error");
         setError(
-          error.message.includes("invite-only") || error.message.includes("Database error")
+          isInviteOnly
             ? "Signups are invite-only. Ask a Bughaw admin to add your email to the allowlist."
-            : error.message
+            : "Could not create account. Please check your details and try again."
         );
       } else if (data.session) {
         router.replace(next);
@@ -60,7 +82,10 @@ function LoginForm() {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
-    if (error) setError(error.message);
+    if (error) {
+      console.warn("[auth] google oauth failed", error.status);
+      setError("Could not start Google sign-in. Please try again.");
+    }
   }
 
   return (

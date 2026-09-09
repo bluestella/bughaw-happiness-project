@@ -3,23 +3,24 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { CATEGORIES } from "@/lib/calculators/types";
 import { calculatorsByCategory, calculatorPath } from "@/lib/calculators/registry";
 import { TOOLS } from "@/lib/tools";
-import { canAccessCalculators, type Role } from "@/lib/permissions";
+import { canAccessCalculators, canAccessCrm, type Role } from "@/lib/permissions";
 
 function NavLink({
   href,
   children,
   onNavigate,
+  pathname,
 }: {
   href: string;
   children: React.ReactNode;
   onNavigate?: () => void;
+  pathname: string;
 }) {
-  const pathname = usePathname();
   const active = pathname === href;
   return (
     <Link
@@ -71,6 +72,8 @@ function Logo() {
 export function Sidebar({ role, email }: { role: Role | null; email?: string | null }) {
   const [open, setOpen] = useState(false);
   const showCalculators = canAccessCalculators(role);
+  const showCrm = canAccessCrm(role);
+  const pathname = usePathname();
   const close = () => setOpen(false);
 
   useEffect(() => {
@@ -84,47 +87,80 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
     };
   }, [open]);
 
-  const nav = (onNavigate?: () => void) => (
-    <nav className="pb-8">
-      {showCalculators && (
-        <>
-          <NavLink href="/" onNavigate={onNavigate}>
-            Dashboard
-          </NavLink>
-          <NavLink href="/saved" onNavigate={onNavigate}>
-            Saved calculations
-          </NavLink>
-        </>
-      )}
+  const nav = useMemo(() => {
+    const linkItems: Array<{ href: string; label: React.ReactNode }> = [];
+    if (showCalculators) {
+      linkItems.push({ href: "/", label: "Dashboard" });
+      linkItems.push({ href: "/saved", label: "Saved calculations" });
+    }
 
-      <SectionLabel>Task Management</SectionLabel>
-      <NavLink href="/tasks" onNavigate={onNavigate}>
-        🗂️ Projects &amp; boards
-      </NavLink>
+    const toolsList = showCalculators
+      ? TOOLS.map((t) => ({ href: t.path, label: `${t.icon} ${t.name}` }))
+      : [];
 
-      {showCalculators && (
-        <>
-          <SectionLabel>Tools</SectionLabel>
-          {TOOLS.map((t) => (
-            <NavLink key={t.id} href={t.path} onNavigate={onNavigate}>
-              {t.icon} {t.name}
+    const categoryGroups = showCalculators
+      ? CATEGORIES.map((cat) => ({
+          id: cat.id,
+          label: cat.name,
+          items: calculatorsByCategory(cat.id).map((c) => ({
+            href: calculatorPath(c),
+            label: `${c.icon} ${c.name}`,
+          })),
+        }))
+      : [];
+
+    function renderNav(onNavigate?: () => void) {
+      return (
+        <nav className="pb-8">
+          {linkItems.map((item) => (
+            <NavLink key={item.href} href={item.href} onNavigate={onNavigate} pathname={pathname}>
+              {item.label}
             </NavLink>
           ))}
 
-          {CATEGORIES.map((cat) => (
-            <div key={cat.id}>
-              <SectionLabel>{cat.name}</SectionLabel>
-              {calculatorsByCategory(cat.id).map((c) => (
-                <NavLink key={c.id} href={calculatorPath(c)} onNavigate={onNavigate}>
-                  {c.icon} {c.name}
+          {showCrm && (
+            <>
+              <SectionLabel>CRM</SectionLabel>
+              <NavLink href="/crm" onNavigate={onNavigate} pathname={pathname}>
+                🎯 Lead funnel
+              </NavLink>
+              <NavLink href="/crm/import" onNavigate={onNavigate} pathname={pathname}>
+                📥 Import leads
+              </NavLink>
+            </>
+          )}
+
+          <SectionLabel>Task Management</SectionLabel>
+          <NavLink href="/tasks" onNavigate={onNavigate} pathname={pathname}>
+            🗂️ Projects &amp; boards
+          </NavLink>
+
+          {showCalculators && (
+            <>
+              <SectionLabel>Tools</SectionLabel>
+              {toolsList.map((t, i) => (
+                <NavLink key={i} href={t.href} onNavigate={onNavigate} pathname={pathname}>
+                  {t.label}
                 </NavLink>
               ))}
-            </div>
-          ))}
-        </>
-      )}
-    </nav>
-  );
+
+              {categoryGroups.map((group) => (
+                <div key={group.id}>
+                  <SectionLabel>{group.label}</SectionLabel>
+                  {group.items.map((item, i) => (
+                    <NavLink key={i} href={item.href} onNavigate={onNavigate} pathname={pathname}>
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
+              ))}
+            </>
+          )}
+        </nav>
+      );
+    }
+    return renderNav;
+  }, [showCalculators, showCrm, pathname]);
 
   return (
     <>

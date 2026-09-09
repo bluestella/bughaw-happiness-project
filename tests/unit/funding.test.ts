@@ -38,9 +38,10 @@ describe("computeEquity", () => {
     expect(o.impliedPreMoney).toBe(8_000_000);
   });
 
-  it("returns NaN implied valuation at zero target %", () => {
+  it("returns Infinity (not NaN) implied valuation at zero target %", () => {
     const o = computeEquity(2_000_000, { ...base, targetInvestorPct: 0 });
-    expect(Number.isNaN(o.impliedPreMoney)).toBe(true);
+    expect(Number.isNaN(o.impliedPreMoney)).toBe(false);
+    expect(o.impliedPreMoney).toBe(Infinity);
   });
 });
 
@@ -128,5 +129,66 @@ describe("computeComparison", () => {
     const loan = rows[3];
     expect(loan.dilutionPct).toBeNull();
     expect(loan.monthlyObligation).toBeGreaterThan(0);
+  });
+});
+
+describe("NaN & edge input guards", () => {
+  it("computeEquity: zero pre-money and zero amount → 0% investor (not NaN)", () => {
+    const o = computeEquity(0, { ...base, preMoney: 0 });
+    expect(Number.isNaN(o.investorPct)).toBe(false);
+    expect(o.investorPct).toBe(0);
+    expect(Number.isNaN(o.founderPctAfter)).toBe(false);
+  });
+
+  it("computeEquity: zero target → Infinity implied valuation (not NaN)", () => {
+    const o = computeEquity(1_000_000, { ...base, targetInvestorPct: 0 });
+    expect(Number.isNaN(o.impliedPostMoney)).toBe(false);
+    expect(o.impliedPostMoney).toBe(Infinity);
+  });
+
+  it("computeEquity: 100% target → non-NaN values", () => {
+    const o = computeEquity(1_000_000, { ...base, targetInvestorPct: 100 });
+    for (const k of Object.keys(o) as Array<keyof typeof o>) {
+      expect(Number.isNaN(o[k]), `o.${k} is NaN`).toBe(false);
+    }
+  });
+
+  it("computeSafe: zero inputs → zero conversion (not NaN)", () => {
+    const o = computeSafe(0, {
+      ...base,
+      nextRoundPreMoney: 0,
+      discountPct: 0,
+      valuationCap: 0,
+    });
+    expect(Number.isNaN(o.conversionPct)).toBe(false);
+    expect(o.conversionPct).toBe(0);
+    expect(Number.isNaN(o.founderPctAfter)).toBe(false);
+  });
+
+  it("computeJv: zero capital and zero profit → non-NaN and zero partner payback = Infinity", () => {
+    const o = computeJv({
+      ...base,
+      ownCapital: 0,
+      partnerCapital: 0,
+      projectedAnnualProfit: 0,
+    });
+    expect(Number.isNaN(o.ownershipOwnPct)).toBe(false);
+    expect(o.partnerPaybackYears).toBe(Infinity);
+  });
+
+  it("computeLoan: zero interest → straight-line (no NaN)", () => {
+    const o = computeLoan(1_200_000, { ...base, annualInterestPct: 0, termMonths: 24 });
+    expect(Number.isNaN(o.monthlyPayment)).toBe(false);
+    expect(o.totalInterest).toBe(0);
+  });
+
+  it("computeLoan: zero term month defaults to 1 → finite payment", () => {
+    const o = computeLoan(100_000, { ...base, termMonths: 0 });
+    expect(Number.isNaN(o.monthlyPayment)).toBe(false);
+    expect(Number.isFinite(o.monthlyPayment)).toBe(true);
+  });
+
+  it("amountNeeded: burn mode with zeros → 0 (not NaN)", () => {
+    expect(amountNeeded({ ...base, amountMode: "burn", monthlyBurn: 0, runwayTargetMonths: 0 })).toBe(0);
   });
 });

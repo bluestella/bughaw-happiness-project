@@ -61,16 +61,17 @@ export interface EquityResult {
 }
 
 export function computeEquity(amount: number, s: FundingState): EquityResult {
-  const pre = s.preMoney || 0;
-  const postMoney = pre + amount;
-  const investorPct = postMoney > 0 ? (amount / postMoney) * 100 : NaN;
-  const pct = s.targetInvestorPct || 0;
-  const impliedPostMoney = pct > 0 ? amount / (pct / 100) : NaN;
-  const impliedPreMoney = pct > 0 ? impliedPostMoney - amount : NaN;
+  const pre = Number.isFinite(s.preMoney) ? s.preMoney : 0;
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const postMoney = pre + safeAmount;
+  const investorPct = postMoney > 0 ? (safeAmount / postMoney) * 100 : 0;
+  const pct = Number.isFinite(s.targetInvestorPct) ? s.targetInvestorPct : 0;
+  const impliedPostMoney = pct > 0 && pct < 100 ? safeAmount / (pct / 100) : pct <= 0 ? Infinity : safeAmount;
+  const impliedPreMoney = pct > 0 && pct < 100 ? impliedPostMoney - safeAmount : pct <= 0 ? Infinity : 0;
   return {
     postMoney,
     investorPct,
-    founderPctAfter: Number.isFinite(investorPct) ? 100 - investorPct : NaN,
+    founderPctAfter: Number.isFinite(investorPct) ? Math.max(0, 100 - investorPct) : 0,
     impliedPreMoney,
     impliedPostMoney,
   };
@@ -84,16 +85,19 @@ export interface SafeResult {
 }
 
 export function computeSafe(amount: number, s: FundingState): SafeResult {
-  const discountBasis = (s.nextRoundPreMoney || 0) * (1 - (s.discountPct || 0) / 100);
-  const cap = s.valuationCap || 0;
-  // The SAFE converts at whichever basis gives the investor more ownership (the lower one).
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const nextRound = Number.isFinite(s.nextRoundPreMoney) ? s.nextRoundPreMoney : 0;
+  const discount = Number.isFinite(s.discountPct) ? s.discountPct : 0;
+  const discountBasis = nextRound * Math.max(0, 1 - discount / 100);
+  const cap = Number.isFinite(s.valuationCap) ? s.valuationCap : 0;
   const capBasis = cap > 0 ? Math.min(cap, discountBasis) : discountBasis;
-  const conversionPct = capBasis + amount > 0 ? (amount / (capBasis + amount)) * 100 : NaN;
+  const denominator = capBasis + safeAmount;
+  const conversionPct = denominator > 0 ? (safeAmount / denominator) * 100 : 0;
   return {
     discountBasis,
     capBasis,
     conversionPct,
-    founderPctAfter: Number.isFinite(conversionPct) ? 100 - conversionPct : NaN,
+    founderPctAfter: Number.isFinite(conversionPct) ? Math.max(0, 100 - conversionPct) : 0,
   };
 }
 
@@ -107,16 +111,17 @@ export interface JvResult {
 }
 
 export function computeJv(s: FundingState): JvResult {
-  const own = s.ownCapital || 0;
-  const partner = s.partnerCapital || 0;
+  const own = Number.isFinite(s.ownCapital) ? s.ownCapital : 0;
+  const partner = Number.isFinite(s.partnerCapital) ? s.partnerCapital : 0;
   const totalCapital = own + partner;
   const capitalOwnPct = totalCapital > 0 ? (own / totalCapital) * 100 : 50;
-  // Sweat equity shifts ownership toward Bughaw beyond the pure capital split.
-  const ownershipOwnPct = Math.min(100, Math.max(0, capitalOwnPct + (s.sweatEquityPct || 0)));
+  const sweat = Number.isFinite(s.sweatEquityPct) ? s.sweatEquityPct : 0;
+  const ownershipOwnPct = Math.min(100, Math.max(0, capitalOwnPct + sweat));
   const ownershipPartnerPct = 100 - ownershipOwnPct;
-  const profit = s.projectedAnnualProfit || 0;
-  const ownProfitShare = profit * ((s.profitSplitOwnPct || 0) / 100);
-  const partnerProfitShare = profit - ownProfitShare;
+  const profit = Number.isFinite(s.projectedAnnualProfit) ? s.projectedAnnualProfit : 0;
+  const split = Number.isFinite(s.profitSplitOwnPct) ? Math.min(100, Math.max(0, s.profitSplitOwnPct)) : 0;
+  const ownProfitShare = profit * (split / 100);
+  const partnerProfitShare = Math.max(0, profit - ownProfitShare);
   return {
     totalCapital,
     ownershipOwnPct,
@@ -135,15 +140,19 @@ export interface LoanResult {
 }
 
 export function computeLoan(amount: number, s: FundingState): LoanResult {
-  const n = Math.max(1, Math.round(s.termMonths || 0));
-  const r = (s.annualInterestPct || 0) / 100 / 12;
-  const monthlyPayment = r === 0 ? amount / n : (amount * r) / (1 - Math.pow(1 + r, -n));
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const n = Math.max(1, Math.round(Number.isFinite(s.termMonths) ? s.termMonths : 0));
+  const annualRate = Number.isFinite(s.annualInterestPct) ? s.annualInterestPct : 0;
+  const r = Math.max(0, annualRate) / 100 / 12;
+  const compoundFactor = r > 0 ? 1 - Math.pow(1 + r, -n) : 0;
+  const monthlyPayment = compoundFactor > 0 ? (safeAmount * r) / compoundFactor : safeAmount / n;
   const totalRepaid = monthlyPayment * n;
+  const cashFlow = Number.isFinite(s.monthlyCashFlow) ? s.monthlyCashFlow : 0;
   return {
     monthlyPayment,
     totalRepaid,
-    totalInterest: totalRepaid - amount,
-    coverageRatio: monthlyPayment > 0 ? (s.monthlyCashFlow || 0) / monthlyPayment : Infinity,
+    totalInterest: Math.max(0, totalRepaid - safeAmount),
+    coverageRatio: monthlyPayment > 0 ? cashFlow / monthlyPayment : Infinity,
   };
 }
 

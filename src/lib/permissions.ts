@@ -51,3 +51,21 @@ export function canDeleteProjectOrMiniProject(role: Role | null): boolean {
 export function canAccessCalculators(role: Role | null): boolean {
   return role !== "contractor";
 }
+
+// CRM policies from supabase/migrations/0003_crm.sql — the crm_* tables are
+// readable/writable by super_admin and member only.
+
+// crm_* select policies
+export function canAccessCrm(role: Role | null): boolean {
+  return role === "super_admin" || role === "member";
+}
+
+// crm_* insert/update policies
+export function canEditLead(role: Role | null): boolean {
+  return role === "super_admin" || role === "member";
+}
+
+// crm_* delete policies
+export function canDeleteLead(role: Role | null): boolean {
+  return role === "super_admin";
+}

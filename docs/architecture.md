@@ -125,6 +125,29 @@ downward via `has_mini_project_access`).
 UI capability gating uses `src/lib/permissions.ts`; enforcement is RLS
 (see [security.md](security.md) §3).
 
+## 6b. CRM (`/crm`)
+
+Model: **Account → Contact → Lead → activity**, transcribed from `FORMS_AUDIT.md`
+(the audit of the bughawinnovations.ph forms). One lead row per submission;
+contacts dedupe on normalized email, accounts on normalized name.
+
+Three intake paths, one set of rules:
+
+| Path | Entry point | Auth |
+|---|---|---|
+| Marketing site mirror | `POST /api/crm/ingest` → RPC `ingest_form_submission` | shared secret verified in Postgres (`crm_ingest_secrets`) |
+| Manual entry | `NewLeadForm.tsx` → `src/lib/crmClient.ts` | the user's own session + RLS |
+| CSV / JSON import | `/crm/import` → same helper | the user's own session + RLS |
+
+All three share `validateSubmission` / `normalizeSubmission` in `src/lib/crm.ts`, so
+a rule changes in exactly one place. The ingest route is the only entry in
+`PUBLIC_PATHS` besides auth, and the only DB write path that runs without a session.
+
+`CrmBoard.tsx` is a dnd-kit funnel over the six lead statuses reusing
+`computeNewPosition` from `src/lib/tasks.ts`; `LeadPanel.tsx` is the detail drawer
+(activity timeline, notes, and **promote to pipeline account**, which writes a
+`pipeline_accounts` row so the Pipeline Simulator keeps its inputs).
+
 ## 7. Established patterns (follow these)
 
 - **Server fetch → client interact.** Initial data loads in server components,

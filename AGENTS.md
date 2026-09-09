@@ -24,6 +24,9 @@ selling sustainable coconut-coir slippers/amenities to hotels). Two halves:
    Simulator, P&L Machine). All money is **₱ PHP, `en-PH` locale**.
 2. **Task management** — projects → mini-projects → kanban task boards, with a
    three-tier role system (`super_admin` / `member` / `contractor`).
+3. **CRM** — leads from the public marketing site (bughawinnovations.ph), deduped
+   into accounts/contacts and worked on a funnel board. Field-level provenance for
+   every CRM column lives in [`FORMS_AUDIT.md`](FORMS_AUDIT.md).
 
 **Login is required for the entire app.** Signups are invite-only via a DB allowlist.
 There is no public surface beyond `/login` and `/auth/*`.
@@ -58,6 +61,14 @@ src/
         NewProjectForm.tsx
         [projectId]/            # Project detail (mini-projects + contributors)
         [projectId]/[miniProjectId]/   # Kanban Board.tsx + TaskPanel.tsx
+      crm/                      # CRM
+        page.tsx                # Funnel board + all-leads table
+        CrmBoard.tsx            # dnd-kit funnel, filters, CSV export
+        LeadPanel.tsx           # Lead detail: activity log, notes, promote-to-pipeline
+        NewLeadForm.tsx         # Manual entry (same rules as the website forms)
+        leadSelect.ts           # Shared column list behind CrmLeadRow
+        import/                 # CSV / JSON import with a dry-run preview
+    api/crm/ingest/route.ts     # Lead intake from the marketing site (secret-authed)
   components/
     Sidebar.tsx                 # Role-aware nav (hides calculators from contractors)
     CalculatorShell.tsx         # Renders ANY calculator config (form/outputs/chart/export)
@@ -68,6 +79,8 @@ src/
     calculators/configs/*.ts    # 11 calculator definitions (pure, declarative)
     permissions.ts              # Pure role helpers — MIRRORS RLS, UI-gating only
     tasks.ts                    # Task types + fractional-position ordering math
+    crm.ts                      # CRM vocabulary, validation, normalization, CSV (pure)
+    crmClient.ts                # Browser write path for manual entry + import (dedupe)
     pnl.ts                      # P&L Machine formula (pure)
     format.ts                   # ₱ / % / ratio / months formatters
     useAppState.ts              # Shared team JSONB state hook (debounced upsert)
@@ -79,7 +92,8 @@ src/
 supabase/migrations/
   0001_init.sql                 # Allowlist, signup trigger, workspace tables, RLS
   0002_task_management.sql      # Roles, task tables, security-definer fns, RLS
-tests/unit/                     # calculators.test.ts, permissions.test.ts
+  0003_crm.sql                  # CRM tables, RLS, ingest_form_submission()
+tests/unit/                     # calculators.test.ts, permissions.test.ts, crm.test.ts
 .github/workflows/ci.yml        # lint → test → build
 *.html (repo root)              # Original artifacts, kept for reference ONLY — do not edit
 implementation.md               # Historical plan (partially superseded; this doc wins)
@@ -104,6 +118,8 @@ service role can touch it):
 | Capability | super_admin | member | contractor |
 |---|---|---|---|
 | See calculators/tools/saved | ✅ | ✅ | ❌ (redirected to `/tasks`) |
+| See / work the CRM | ✅ | ✅ | ❌ (route **and** RLS) |
+| Delete CRM records | ✅ | ❌ | ❌ |
 | Create/delete projects | ✅ | ❌ | ❌ |
 | Create mini-projects | ✅ | ✅ (with project access) | ❌ |
 | Add contributors | ✅ | ✅ | ❌ |
@@ -130,7 +146,7 @@ picks it up), add formula tests. No new pages, no new components.
 |---|---|---|---|
 | localStorage | browser | calculator inputs, unit-econ + P&L tools | per-person scratch |
 | `app_state` JSONB | Supabase | cost calculator, pipeline sim state (via `useAppState`) | shared team doc, debounced (700 ms) last-write-wins upsert |
-| First-class tables | Supabase | pipeline accounts, saved calcs, projects/tasks | real rows, RLS-governed |
+| First-class tables | Supabase | pipeline accounts, saved calcs, projects/tasks, CRM leads | real rows, RLS-governed |
 
 `useAppState` is **last-write-wins with no conflict resolution** — fine for a tiny
 team, do not build multi-writer features on it; promote to a real table instead
@@ -188,8 +204,10 @@ npm run lint
 npm run build      # works with placeholder env vars (CI does this)
 ```
 
-Supabase setup: run `supabase/migrations/0001_init.sql` then
-`0002_task_management.sql` in the SQL editor. **Edit the `allowed_emails` inserts and
+Supabase setup: run `supabase/migrations/0001_init.sql`, then
+`0002_task_management.sql`, then `0003_crm.sql` in the SQL editor (0003 has an
+ACTION REQUIRED header: insert an ingest secret before the marketing site can post
+leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is accepted as a fallback name for the anon key.
 
@@ -202,7 +220,13 @@ Deploy: Vercel, auto from `main`. CI must be green.
   authenticated users (including contractors) full access — a contractor with the
   anon key and their JWT could query business data directly. Accepted for now
   (trusted small team); tightening it means new RLS policies using
-  `current_user_role()`.
+  `current_user_role()`. The `crm_*` tables added in 0003 already do this and are
+  the pattern to copy.
+- **The CRM ingest secret is stored in plaintext** in `crm_ingest_secrets` (a table
+  with RLS and no policies, so service-role only — same posture as
+  `allowed_emails`). Rotating it means updating that row and the marketing site's
+  env var together. `ingest_form_submission()` is the only function granted to
+  `anon`; keep it that way.
 - **Contributor emails are free text** — adding a contributor does not validate the
   email against `allowed_emails`; a typo'd grant silently does nothing until that
   email is invited.

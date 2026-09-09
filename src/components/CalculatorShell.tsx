@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
 import type { CalculatorConfig, Inputs } from "@/lib/calculators/types";
@@ -22,11 +22,12 @@ import {
 
 function defaultsFor(config: CalculatorConfig): Inputs {
   const out: Inputs = {};
-  config.inputGroups.forEach((g) =>
-    g.fields.forEach((f) => {
-      out[f.id] = f.defaultValue;
-    })
-  );
+  for (let i = 0; i < config.inputGroups.length; i++) {
+    const g = config.inputGroups[i];
+    for (let j = 0; j < g.fields.length; j++) {
+      out[g.fields[j].id] = g.fields[j].defaultValue;
+    }
+  }
   return out;
 }
 
@@ -40,14 +41,29 @@ function download(filename: string, content: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Reads persisted inputs synchronously so the first paint shows real values. */
 function initialInputs(config: CalculatorConfig, storageKey: string): Inputs {
   const defaults = defaultsFor(config);
   if (typeof window === "undefined") return defaults;
   try {
     const raw = localStorage.getItem(storageKey);
-    if (raw) return { ...defaults, ...JSON.parse(raw) };
-  } catch {}
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Inputs>;
+      const merged: Inputs = { ...defaults };
+      const keys = Object.keys(parsed) as Array<keyof Inputs>;
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const v = parsed[key];
+        if (typeof v === "number" && Number.isFinite(v)) {
+          merged[key] = v;
+        }
+      }
+      return merged;
+    }
+  } catch (err) {
+    if (typeof console !== "undefined") {
+      console.warn(`[calculator] Failed to read localStorage for ${storageKey}:`, err);
+    }
+  }
   return defaults;
 }
 
@@ -57,43 +73,73 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveLabel, setSaveLabel] = useState("");
   const [savingToTeam, setSavingToTeam] = useState(false);
+  const persistTimer = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(inputs));
-    } catch {}
-  }, [inputs, storageKey]);
+    return () => {
+      if (persistTimer.current) clearTimeout(persistTimer.current);
+    };
+  }, []);
+
+  const persistInputs = useCallback(
+    (next: Inputs) => {
+      if (persistTimer.current) clearTimeout(persistTimer.current);
+      persistTimer.current = setTimeout(() => {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch (err) {
+          if (typeof console !== "undefined") {
+            console.warn(`[calculator] Failed to write localStorage for ${storageKey}:`, err);
+          }
+        }
+      }, 200);
+    },
+    [storageKey]
+  );
+
+  useEffect(() => {
+    persistInputs(inputs);
+  }, [inputs, persistInputs]);
 
   const outputs = useMemo(() => config.compute(inputs), [config, inputs]);
   const chart = config.chart?.(inputs, outputs);
   const verdict = config.verdict?.(inputs, outputs);
 
-  function setField(id: string, value: string) {
+  const setField = useCallback((id: string, value: string) => {
     const n = value === "" ? 0 : parseFloat(value);
-    setInputs((prev) => ({ ...prev, [id]: isNaN(n) ? 0 : n }));
-  }
+    setInputs((prev) => ({ ...prev, [id]: Number.isNaN(n) ? 0 : n }));
+  }, []);
 
-  function exportCsv() {
+  const exportCsv = useCallback(() => {
     const rows: string[][] = [["Field", "Value"]];
-    config.inputGroups.forEach((g) =>
-      g.fields.forEach((f) => rows.push([f.label, String(inputs[f.id] ?? "")]))
-    );
-    config.outputs.forEach((o) =>
-      rows.push([o.label, formatValue(o.format, outputs[o.id])])
-    );
+    for (let i = 0; i < config.inputGroups.length; i++) {
+      const g = config.inputGroups[i];
+      for (let j = 0; j < g.fields.length; j++) {
+        const f = g.fields[j];
+        rows.push([f.label, String(inputs[f.id] ?? "")]);
+      }
+    }
+    for (let i = 0; i < config.outputs.length; i++) {
+      const o = config.outputs[i];
+      rows.push([o.label, formatValue(o.format, outputs[o.id])]);
+    }
     const csv = rows
       .map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))
       .join("\n");
     download(`bughaw-${config.id}.csv`, csv, "text/csv");
-  }
+  }, [config, inputs, outputs]);
 
-  function exportJson() {
+  const exportJson = useCallback(() => {
     download(
       `bughaw-${config.id}.json`,
-      JSON.stringify({ calculator: config.id, inputs, outputs, exportedAt: new Date().toISOString() }, null, 2),
+      JSON.stringify(
+        { calculator: config.id, inputs, outputs, exportedAt: new Date().toISOString() },
+        null,
+        2
+      ),
       "application/json"
     );
-  }
+  }, [config, inputs, outputs]);
 
   async function saveToTeam(label: string) {
     setSavingToTeam(true);

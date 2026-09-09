@@ -62,6 +62,35 @@ task_comments            (task_id FK cascade, body, author_email) — append-onl
 All `created_by_email` / `added_by_email` / `author_email` columns default to
 `auth.jwt() ->> 'email'` — set by the DB, not the client.
 
+### CRM (0003)
+
+```
+crm_accounts   (name, name_key GENERATED lower(btrim(name)) UNIQUE  ← dedupe key,
+                kind 'hotel'|'company', industry,
+                hotel_star_rating ''|3-Star|4-Star|5-Star|Unrated,
+                hotel_room_count_band ''|<50|50–100|101–200|200+)
+crm_contacts   (account_id FK set null, full_name, email,
+                email_key GENERATED lower(btrim(email)) UNIQUE  ← primary dedupe key,
+                job_title)
+crm_leads      (contact_id FK, account_id FK,
+                origin_form contact|for_hotels|inquiry_api|manual|import,
+                lead_type general|hotel_pilot|inquiry,
+                status New|Acknowledged|Qualified|Pilot Scoping|Closed Won|Closed Lost,
+                position float  ← fractional funnel ordering,
+                source, product_interests text[], product_of_interest,
+                estimated_volume, description, engagement_tier, ga_client_id,
+                attribution/engagement/geo/raw jsonb,
+                pipeline_account_id FK → pipeline_accounts  ← "promote" link,
+                owner_email  ← reserved, no UI reads it yet,
+                submitted_at)
+crm_lead_activities (lead_id FK cascade, kind note|status_change|system, body,
+                     from_status, to_status, author_email) — append-only
+crm_ingest_secrets  (name PK, secret) — RLS enabled, NO policies (service role only)
+```
+
+One **lead row per submission**; contacts and accounts are deduped (FORMS_AUDIT
+§10.2). Field-for-field provenance for every column is in `FORMS_AUDIT.md`.
+
 ## 3. SQL functions (all `security definer`, `set search_path = public`, granted to `authenticated`)
 
 | Function | Returns | Purpose |
@@ -70,9 +99,42 @@ All `created_by_email` / `added_by_email` / `author_email` columns default to
 | `has_project_access(uuid)` | bool | Caller is a `project_contributors` row (email, case-insensitive) |
 | `has_mini_project_access(uuid)` | bool | Direct mini-project contributor OR contributor on the parent project |
 
+| `ingest_form_submission(text, jsonb)` | `jsonb` | Lead intake from the marketing site — **granted to `anon` too**; authorises on a shared secret, drops honeypot hits, upserts account+contact, inserts lead+activity |
+
 `security definer` is required because these read tables the caller cannot see;
 `set search_path = public` prevents search-path hijacking. Keep both on any new
 helper.
+
+### Lead ingest contract
+
+`POST /api/crm/ingest` on this app, header `x-bughaw-ingest-secret: <the secret row
+in crm_ingest_secrets>`, JSON body = the marketing site's own submission payload
+plus a `form` discriminator (`contact` | `for_hotels` | `inquiry`). Responses match
+FORMS_AUDIT §8.1: 200 `{message, status}`, 400 `{message:"Validation failed.",
+details}`, 401 on a bad/missing secret, 500 sanitised.
+
+Drop-in mirror for the marketing site's `formSubmissions.js`, after its own email
+send succeeds (never let a CRM failure break the visitor's submission):
+
+```js
+try {
+  await fetch(`${process.env.CRM_URL}/api/crm/ingest`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-bughaw-ingest-secret": process.env.CRM_INGEST_SECRET,
+    },
+    body: JSON.stringify({ form: "for_hotels", ...formData, _attribution, _analytics, _engagement }),
+  });
+} catch (err) {
+  console.error("CRM mirror failed", err);  // non-fatal
+}
+```
+
+The app holds no secret of its own: the caller presents it and Postgres verifies it.
+
+A paste-ready brief for whoever wires up the marketing site is in
+[crm-ingest-integration-prompt.md](crm-ingest-integration-prompt.md).
 
 ## 4. RLS policy matrix
 
@@ -103,6 +165,21 @@ Legend: SA = super_admin, M = member, C = contractor; "access" = the relevant
 | task_comments | SA, or access via parent task | same | **none** | **none** |
 
 "Own" for contractors = `lower(created_by_email) = lower(auth.jwt()->>'email')`.
+
+### CRM tables (0003) — role-gated, unlike the 0001 workspace tables
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| crm_accounts | SA, M | SA, M | SA, M | SA |
+| crm_contacts | SA, M | SA, M | SA, M | SA |
+| crm_leads | SA, M | SA, M | SA, M | SA |
+| crm_lead_activities | SA, M | SA, M | **none** | **none** |
+| crm_ingest_secrets | **none** | **none** | **none** | **none** |
+
+Contractors get nothing here — at the database level, not just the route. Writes
+from the marketing site bypass these policies through
+`ingest_form_submission()` (security definer), which is why that function is the
+only thing granted to `anon`.
 
 These policies are mirrored (UI-only) by `src/lib/permissions.ts` and asserted in
 `tests/unit/permissions.test.ts`. **Change all three together.**
