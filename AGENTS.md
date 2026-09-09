@@ -1,4 +1,4 @@
-# AGENTS.md — Bughaw Calculators Hub
+# AGENTS.md — Bughaw Suite
 
 **The main guide for AI agents and developers working on this codebase.** Read this
 first. Deeper detail lives in the child docs under [`docs/`](docs/):

@@ -8,7 +8,7 @@
 
 ## Task
 
-Bughaw now runs an internal CRM (the Calculators Hub app). Every submission to the
+Bughaw now runs an internal CRM (the Bughaw Suite app). Every submission to the
 three public forms on this site must be mirrored into it, in addition to the emails
 that already go out. Nothing about the visitor's experience may change.
 
@@ -48,7 +48,7 @@ in the site's Vercel project):
 
 | Variable | Value |
 |---|---|
-| `CRM_URL` | Base URL of the Calculators Hub deployment, no trailing slash |
+| `CRM_URL` | Base URL of the Bughaw Suite deployment, no trailing slash |
 | `CRM_INGEST_SECRET` | The shared secret. Ask the owner — it is stored in the CRM's `crm_ingest_secrets` table and is not in either repo. |
 
 If either variable is missing, skip the mirror silently. The site must still deploy

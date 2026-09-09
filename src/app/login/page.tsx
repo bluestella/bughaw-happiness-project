@@ -94,8 +94,8 @@ function LoginForm() {
         <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1.5">
           Bughaw Innovations — Internal
         </p>
-        <h1 className="mb-6 text-3xl font-semibold tracking-tight text-ink">
-          Calculators Hub
+        <h1 className="mb-6 font-display text-3xl font-semibold tracking-tight text-ink">
+          Bughaw Suite
         </h1>
 
         <form

@@ -3,9 +3,9 @@ import "./globals.css";
 import { AppToaster } from "@/components/AppToaster";
 
 export const metadata: Metadata = {
-  title: "Bughaw Calculators Hub",
+  title: "Bughaw Suite",
   description:
-    "Internal unit-economics, go-to-market, and forecasting tools for Bughaw Innovations.",
+    "Internal operations platform for Bughaw Innovations — calculators, CRM, and task management in one place.",
   manifest: "/site.webmanifest",
   icons: {
     icon: [

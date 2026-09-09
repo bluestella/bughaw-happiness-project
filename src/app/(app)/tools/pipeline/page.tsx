@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronRight, Plus, X } from "lucide-react";
+import { ChevronRight, Plus, Route, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppState } from "@/lib/useAppState";
 import { pesoRound } from "@/lib/format";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -224,33 +225,28 @@ export default function PipelinePage() {
 
   return (
     <div>
-      <header className="mb-5 border-b border-line pb-5 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
-            🛤️ Internal — Bughaw Innovations
-          </p>
-          <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-            Pipeline Simulator
-          </h1>
-          <p className="text-sm text-ink-soft max-w-xl">
-            Model what has to happen by the checkpoint, then see what it actually costs to
-            get there. Shared live with the whole team.
-          </p>
-        </div>
-        <div className="rounded-xl border border-line bg-panel px-4 py-3 min-w-52 shadow-card">
-          <p className="text-[10px] uppercase tracking-[0.1em] text-ink-soft">
-            Joint decision checkpoint
-          </p>
-          <p className="text-base font-semibold">July 24, 2026</p>
-          <p className="font-mono text-xs text-clay mt-0.5">
-            {daysLeft > 0
-              ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} away`
-              : daysLeft === 0
-                ? "today"
-                : `${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? "" : "s"} past`}
-          </p>
-        </div>
-      </header>
+      <CalculatorHeader
+        className="mb-5"
+        icon={Route}
+        eyebrow="Internal — Bughaw Innovations"
+        title="Pipeline Simulator"
+        description="Model what has to happen by the checkpoint, then see what it actually costs to get there. Shared live with the whole team."
+        aside={
+          <div className="rounded-xl border border-line bg-panel px-4 py-3 min-w-52 shadow-card">
+            <p className="text-[10px] uppercase tracking-[0.1em] text-ink-soft">
+              Joint decision checkpoint
+            </p>
+            <p className="text-base font-semibold">July 24, 2026</p>
+            <p className="font-mono text-xs text-clay mt-0.5">
+              {daysLeft > 0
+                ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} away`
+                : daysLeft === 0
+                  ? "today"
+                  : `${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? "" : "s"} past`}
+            </p>
+          </div>
+        }
+      />
 
       <TabBar
         className="mb-5"

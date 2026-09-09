@@ -3,7 +3,7 @@ import { CATEGORICAL, CHART, compactPeso } from "@/lib/chartTheme";
 
 describe("chart palette", () => {
   it("exposes a fixed 4-color categorical order", () => {
-    expect(CATEGORICAL).toEqual([CHART.green, CHART.blue, CHART.clay, CHART.plum]);
+    expect(CATEGORICAL).toEqual([CHART.green, CHART.blue, CHART.clay, CHART.gold]);
   });
 
   it("defines the neutral/grid/ink tokens", () => {

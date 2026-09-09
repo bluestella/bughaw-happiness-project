@@ -1,39 +1,47 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Design tokens — modern clean SaaS theme (light only).
+ * Design tokens — Bughaw corporate design system (docs/index.html v1.0).
  * Legacy token names (paper/ink/coir/line…) are kept so existing classnames
- * keep working; only their values changed in the rebrand.
+ * keep working; values are mapped onto the real brand palette instead of the
+ * generic blue-on-slate theme that had drifted from it.
  */
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        paper: "#F8FAFC", // app background (slate-50)
+        paper: "#F5F0DE", // cream — the paper, primary light ground
         panel: "#FFFFFF", // cards / surfaces
-        ink: "#0F172A", // primary text (slate-900)
-        "ink-soft": "#64748B", // secondary text (slate-500)
-        coir: "#2563EB", // accent (blue-600)
-        "coir-dark": "#1D4ED8", // accent hover (blue-700)
-        "coir-bg": "#EFF6FF", // accent tint surface (blue-50)
-        clay: "#EA580C", // secondary/negative accent (orange-600)
-        line: "#E2E8F0", // borders (slate-200)
-        danger: "#DC2626", // red-600
-        amber: "#D97706", // amber-600
-        // Semantic status tokens (replace previously hard-coded hexes)
-        success: "#059669",
-        "success-bg": "#ECFDF5",
-        "success-border": "#A7F3D0",
-        "danger-bg": "#FEF2F2",
-        "danger-border": "#FECACA",
-        "amber-bg": "#FFFBEB",
-        "amber-border": "#FDE68A",
+        ink: "#241F1A", // primary text — 14.3:1 on cream
+        "ink-soft": "#6B6355", // secondary text, labels, help text
+        coir: "#20699F", // Bughaw Blue — primary actions, focus rings, links (5.1:1)
+        "coir-dark": "#17517D", // accent hover
+        "coir-bg": "#DCE8F4", // accent tint surface
+        clay: "#6E5A42", // Warm Brown — material/secondary accent (5.7:1)
+        line: "#DDD6C0", // borders, dividers (brand rule color)
+        danger: "#A8412A",
+        amber: "#8A6215", // readable dark-gold for caution text; gold itself never sits on cream/white
+        // Semantic status tokens
+        success: "#2C6B38",
+        "success-bg": "#EEF6EA",
+        "success-border": "#C4DDB8",
+        "danger-bg": "#FBF0EC",
+        "danger-border": "#E8C4B8",
+        "amber-bg": "#FBF1DC",
+        "amber-border": "#E5B95F",
+        // Raw brand tokens, for hero/dark-band treatments (login, marketing headers)
+        deep: "#1D5C13", // dark brand field
+        gold: "#E5B95F", // rules and marks only — never body text on light
+        brown: "#6E5A42",
+        sky: "#3DAEE0", // headings on dark, display sizes only
+        bgreen: "#6EA92F", // markers/icons on dark — never text on Deep Green
       },
       fontFamily: {
-        // Single modern sans for UI and headings; mono for numbers.
-        display: ["Inter", "system-ui", "sans-serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
+        // Fraunces (variable, optical-size aware) for headings and big numbers;
+        // DM Sans carries operational UI copy.
+        display: ["Fraunces", "Georgia", "serif"],
+        sans: ["'DM Sans'", "Helvetica", "Arial", "sans-serif"],
         mono: ["'IBM Plex Mono'", "ui-monospace", "monospace"],
       },
       boxShadow: {

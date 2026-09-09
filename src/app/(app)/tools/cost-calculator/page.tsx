@@ -1,9 +1,10 @@
 "use client";
 
 import { toast } from "sonner";
-import { Plus, X } from "lucide-react";
+import { FlaskConical, Plus, X } from "lucide-react";
 import { useAppState } from "@/lib/useAppState";
 import { peso } from "@/lib/format";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { Button } from "@/components/ui/button";
 import { SkeletonCard } from "@/components/ui/skeleton";
 
@@ -77,18 +78,12 @@ export default function CostCalculatorPage() {
 
   return (
     <div>
-      <header className="mb-6 border-b border-line pb-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
-          🧪 Internal R&amp;D costing
-        </p>
-        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-          Unit Cost Calculator
-        </h1>
-        <p className="text-sm text-ink-soft max-w-2xl">
-          Enter each ingredient or equipment item&apos;s purchase size, price, and quantity
-          used per run. Costs recalculate automatically. Shared with the whole team.
-        </p>
-      </header>
+      <CalculatorHeader
+        icon={FlaskConical}
+        eyebrow="Internal R&D costing"
+        title="Unit Cost Calculator"
+        description="Enter each ingredient or equipment item's purchase size, price, and quantity used per run. Costs recalculate automatically. Shared with the whole team."
+      />
 
       {!loaded ? (
         <div className="space-y-3">

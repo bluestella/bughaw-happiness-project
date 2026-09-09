@@ -5,7 +5,7 @@ export const ltvSegmentCalculator: CalculatorConfig = {
   category: "financial",
   name: "Customer LTV by Hotel Segment",
   description: "Lifetime value and LTV:CAC for Segment A (owner-operated) vs Segment B (conglomerate).",
-  icon: "🏆",
+  icon: "trophy",
   inputGroups: [
     {
       id: "segA",
@@ -80,7 +80,7 @@ export const cashFlowCalculator: CalculatorConfig = {
   category: "financial",
   name: "Cash Flow Projection",
   description: "12-month cash balance from revenue growth, margin, and operating spend.",
-  icon: "💧",
+  icon: "droplet",
   inputGroups: [
     {
       id: "cash",
@@ -164,7 +164,7 @@ export const growthScenarioCalculator: CalculatorConfig = {
   category: "financial",
   name: "Growth Scenario Modeling",
   description: "Year-1 operating profit under base, optimistic, and pessimistic growth.",
-  icon: "📈",
+  icon: "trending-up",
   inputGroups: [
     {
       id: "base",
@@ -244,7 +244,7 @@ export const runwayCalculator: CalculatorConfig = {
   category: "financial",
   name: "Runway & Burn Rate",
   description: "How long the cash lasts, and what to raise for 18 months of runway.",
-  icon: "⏳",
+  icon: "hourglass",
   inputGroups: [
     {
       id: "cash",
@@ -300,7 +300,7 @@ export const valuationCalculator: CalculatorConfig = {
   category: "financial",
   name: "Valuation Estimator",
   description: "Revenue-multiple valuation range to sanity-check the number you bring to investors.",
-  icon: "💎",
+  icon: "gem",
   inputGroups: [
     {
       id: "revenue",

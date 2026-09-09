@@ -1,6 +1,6 @@
 {
-  "name": "Bughaw Calculators Hub",
-  "short_name": "Bughaw Hub",
+  "name": "Bughaw Suite",
+  "short_name": "Bughaw",
   "icons": [
     {
       "src": "/icons/android-chrome-192x192.png",
@@ -13,7 +13,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#234B3F",
-  "background_color": "#FBF7F0",
+  "theme_color": "#1D5C13",
+  "background_color": "#F5F0DE",
   "display": "standalone"
 }

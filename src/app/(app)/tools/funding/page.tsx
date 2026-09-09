@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { Handshake, RotateCcw } from "lucide-react";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { Button } from "@/components/ui/button";
 import { InfoTip } from "@/components/ui/tooltip";
 import { TabBar } from "@/components/ui/tab-bar";
@@ -126,11 +127,11 @@ function VerdictBanner({ tone, text }: { tone: "ok" | "warn" | "danger"; text: s
 }
 
 const TABS: { id: FundingTab; label: string }[] = [
-  { id: "equity", label: "💼 Equity" },
-  { id: "safe", label: "📜 SAFE / Convertible" },
-  { id: "jv", label: "🤝 Joint Venture" },
-  { id: "loan", label: "🏦 Loan" },
-  { id: "compare", label: "⚖️ Compare" },
+  { id: "equity", label: "Equity" },
+  { id: "safe", label: "SAFE / Convertible" },
+  { id: "jv", label: "Joint Venture" },
+  { id: "loan", label: "Loan" },
+  { id: "compare", label: "Compare" },
 ];
 
 export default function FundingPage() {
@@ -210,22 +211,18 @@ export default function FundingPage() {
 
   return (
     <div>
-      <header className="mb-6 border-b border-line pb-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
-          🤝 Internal — Bughaw Innovations
-        </p>
-        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-          Funding &amp; Investor Ask
-        </h1>
-        <p className="text-sm text-ink-soft max-w-2xl">
-          Work out how much to ask a potential investor, what percentage to give, and how
-          that compares to a SAFE, a joint venture, or a loan for the same capital need.
-        </p>
-        <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
-          <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          Reset to defaults
-        </Button>
-      </header>
+      <CalculatorHeader
+        icon={Handshake}
+        eyebrow="Internal — Bughaw Innovations"
+        title="Funding & Investor Ask"
+        description="Work out how much to ask a potential investor, what percentage to give, and how that compares to a SAFE, a joint venture, or a loan for the same capital need."
+        action={
+          <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Reset to defaults
+          </Button>
+        }
+      />
 
       {/* Shared assumptions */}
       <div className="mb-5 rounded-xl border border-line bg-panel p-5 shadow-card">

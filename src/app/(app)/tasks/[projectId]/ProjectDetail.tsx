@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { UserPicker } from "@/components/ui/user-picker";
+import { useTeamDirectory } from "@/lib/useTeamDirectory";
 
 type Project = { id: string; name: string; description: string; created_by_email: string | null };
 type MiniProject = {
@@ -45,11 +47,11 @@ export function ProjectDetail({
   const router = useRouter();
   const [miniProjects, setMiniProjects] = useState(initialMiniProjects);
   const [contributors, setContributors] = useState(initialContributors);
+  const { directory } = useTeamDirectory();
 
   const [mpFormOpen, setMpFormOpen] = useState(false);
   const [mpName, setMpName] = useState("");
   const [mpDescription, setMpDescription] = useState("");
-  const [newEmail, setNewEmail] = useState("");
   const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
   const [deleteMiniId, setDeleteMiniId] = useState<string | null>(null);
 
@@ -72,11 +74,8 @@ export function ProjectDetail({
     toast.success("Mini-project created.");
   }
 
-  async function addContributor(e: React.FormEvent) {
-    e.preventDefault();
-    const email = newEmail.trim().toLowerCase();
-    if (!email) return;
-    if (contributors.some((c) => c.user_email.toLowerCase() === email)) {
+  async function addContributor(email: string) {
+    if (contributors.some((c) => c.user_email.toLowerCase() === email.toLowerCase())) {
       toast.message("Already a contributor.");
       return;
     }
@@ -90,7 +89,6 @@ export function ProjectDetail({
       return;
     }
     setContributors((prev) => [...prev, data as Contributor]);
-    setNewEmail("");
     toast.success("Contributor added.");
   }
 
@@ -261,17 +259,13 @@ export function ProjectDetail({
             ))}
           </ul>
           {canAddContributor(role) && (
-            <form onSubmit={addContributor} className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="email@example.com"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-              />
-              <Button intent="primary" size="sm" type="submit" disabled={!newEmail.trim()}>
-                Add
-              </Button>
-            </form>
+            <UserPicker
+              options={directory.filter(
+                (d) => !contributors.some((c) => c.user_email.toLowerCase() === d.email.toLowerCase())
+              )}
+              onSelect={addContributor}
+              placeholder="Add a teammate…"
+            />
           )}
         </aside>
       </div>

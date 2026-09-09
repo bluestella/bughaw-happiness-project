@@ -83,7 +83,7 @@ export default function SavedPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-[15px] font-semibold text-ink">
-                      {config ? `${config.icon} ${config.name}` : r.calculator_id}
+                      {config ? config.name : r.calculator_id}
                       {r.label && (
                         <span className="font-normal text-ink-soft"> — {r.label}</span>
                       )}

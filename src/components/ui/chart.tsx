@@ -13,7 +13,7 @@ import { CHART, compactPeso } from "@/lib/chartTheme";
 echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
 const MONO = "'IBM Plex Mono', ui-monospace, monospace";
-const SANS = "Inter, system-ui, sans-serif";
+const SANS = "'DM Sans', Helvetica, Arial, sans-serif";
 
 function fmt(format: OutputFormat | undefined, v: number): string {
   if (format === "currency") return pesoRound(v);

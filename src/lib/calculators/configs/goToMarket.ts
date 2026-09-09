@@ -5,7 +5,7 @@ export const penetrationCalculator: CalculatorConfig = {
   category: "go-to-market",
   name: "Hotel Penetration Rate",
   description: "Share of your target hotel market already won, and where the pipeline takes it.",
-  icon: "🏨",
+  icon: "hotel",
   inputGroups: [
     {
       id: "market",
@@ -39,7 +39,7 @@ export const repeatOrderCalculator: CalculatorConfig = {
   category: "go-to-market",
   name: "Repeat Order Rate",
   description: "How reliably hotels reorder, and how often orders land.",
-  icon: "🔁",
+  icon: "repeat",
   inputGroups: [
     {
       id: "orders",
@@ -81,7 +81,7 @@ export const breakevenCalculator: CalculatorConfig = {
   category: "go-to-market",
   name: "Break-Even by Channel",
   description: "Monthly pairs needed to break even in each sales channel.",
-  icon: "⚖️",
+  icon: "scale",
   inputGroups: [
     {
       id: "direct",

@@ -5,7 +5,7 @@ export const inventoryTurnoverCalculator: CalculatorConfig = {
   category: "product-mgmt",
   name: "Inventory Turnover Ratio",
   description: "How fast product moves through inventory, and how many days it sits.",
-  icon: "📦",
+  icon: "package",
   inputGroups: [
     {
       id: "inventory",
@@ -44,7 +44,7 @@ export const mixMarginCalculator: CalculatorConfig = {
   category: "product-mgmt",
   name: "Product Mix Margin Analysis",
   description: "Margin by product line — slippers, organizers, utilities — and the blended result.",
-  icon: "🧮",
+  icon: "calculator",
   inputGroups: [
     {
       id: "slippers",
@@ -124,7 +124,7 @@ export const reorderPointCalculator: CalculatorConfig = {
   category: "product-mgmt",
   name: "Reorder Point Planner",
   description: "When to reorder stock — and how much — so customers never hit a stockout.",
-  icon: "📦",
+  icon: "package",
   inputGroups: [
     {
       id: "demand",

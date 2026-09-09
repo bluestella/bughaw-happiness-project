@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Bughaw Design System",
+  "schemaVersion": 1,
+  "description": "Bughaw Design System v1.0 showcase — light and dark palettes with measured contrast, the three forbidden pairings, type specimens and substitution ladders, component primitives (claim pills, payload bar, statistic, panels), and all twelve slide layouts as rendered miniatures.",
+  "mcpTools": [],
+  "mcpServerNames": []
+}
+</script>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bughaw — Design System Showcase</title>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+--cream:#F5F0DE; --white:#fff; --grey:#E8E8E8; --deep:#1D5C13; --ink:#241F1A;
+--blue:#20699F; --green:#4C8B32; --gold:#E5B95F; --brown:#6E5A42;
+--sky:#3DAEE0; --bgreen:#6EA92F; --rule:#DDD6C0;
+--display:'Gloock',Georgia,serif; --sans:'DM Sans',Helvetica,Arial,sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.62}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+h2{font-size:33px;line-height:1.18;color:var(--deep);font-weight:700;letter-spacing:-.015em;margin-bottom:8px}
+h3{font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:34px 0 14px}
+p{max-width:68ch;margin-bottom:14px}
+.lead{font-size:21px;line-height:1.5;max-width:60ch}
+section{padding:60px 0;border-bottom:1px solid var(--rule)}
+.num{font-family:var(--display);font-size:15px;color:var(--brown)}
+.soft{color:var(--brown)}
+code{font-family:var(--mono);font-size:.88em;background:var(--grey);padding:2px 6px;border-radius:3px}
+
+/* hero */
+header{background:var(--deep);color:var(--grey);padding:92px 0 76px;position:relative;overflow:hidden}
+header::after{content:"";position:absolute;right:-140px;top:-180px;width:520px;height:520px;border-radius:50%;
+background:radial-gradient(circle at 40% 40%, rgba(229,185,95,.30), rgba(110,169,47,.16) 55%, transparent 72%)}
+.eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:var(--grey)}
+h1{font-family:var(--display);font-size:clamp(46px,7.4vw,92px);line-height:1.02;color:#fff;margin:16px 0 10px}
+header .sub{font-size:19px;opacity:.85;max-width:46ch}
+.brandline{margin-top:42px;border-left:3px solid var(--gold);padding-left:22px}
+.brandline .f{font-family:var(--display);font-size:clamp(26px,4vw,42px);color:#fff;line-height:1.15}
+.brandline .e{font-style:italic;opacity:.8;margin-top:6px}
+
+/* swatches */
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.sw{background:#fff;border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.sw .c{height:96px;display:flex;align-items:flex-end;padding:10px 12px;font-size:12px;font-family:var(--mono)}
+.sw .i{padding:12px 14px}
+.sw .n{font-weight:700;font-size:14px}
+.sw .r{font-size:12.5px;color:var(--brown);margin-top:4px;line-height:1.45}
+
+/* type specimens */
+.spec{background:#fff;border:1px solid var(--rule);border-radius:3px;padding:24px 26px;margin-bottom:14px}
+.spec .l{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:10px}
+.spec .n{font-size:13px;color:var(--brown);border-top:1px solid var(--rule);padding-top:10px;margin-top:12px}
+
+/* claim pills */
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+.pub{background:#DCE8F4;color:#1A5580}.mod{background:#F7EBD2;color:#7A5F1E}.pri{background:#DCEFE2;color:#2C6B38}
+
+/* layout miniatures */
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.mini{border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:#fff}
+.mini .canvas{aspect-ratio:16/9;position:relative;overflow:hidden}
+.mini .cap{padding:12px 14px;font-size:13px;border-top:1px solid var(--rule)}
+.mini .cap b{display:block;font-size:14px;margin-bottom:3px}
+.dk{background:var(--deep)}.lt{background:var(--cream)}
+.m-pad{position:absolute;inset:9%}
+.mt-d{font-family:var(--display);color:#fff;font-size:20px;line-height:1.05}
+.mt-dg{font-family:var(--display);color:var(--deep);font-size:19px;line-height:1.1}
+.mt-s{font-size:9px;color:#fff;opacity:.8}
+.gbar{background:var(--green);color:#fff;font-size:10px;font-weight:700;text-align:center;padding:7px 4px;border-radius:2px}
+.dbar{background:var(--deep);color:#fff;font-size:10px;font-weight:700;text-align:center;padding:7px 4px;border-radius:2px}
+.col{background:#fff;border:1px solid var(--rule);border-radius:2px;padding:8px;font-size:8.5px;line-height:1.35;color:var(--ink)}
+.col b{display:block;color:var(--blue);font-size:9px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.card4{background:#fff;border:1px solid var(--rule);border-radius:2px;padding:7px;font-size:8px;line-height:1.3}
+.card4 .sn{color:var(--green);font-weight:700;font-size:11px}
+.card4 .nm{color:var(--blue);font-weight:700;font-size:8.5px;text-transform:uppercase;margin:2px 0}
+.tile{background:#fff;border:1px solid var(--rule);border-radius:2px;padding:7px;font-size:8px}
+.tile .dot{width:11px;height:11px;border:1.6px solid var(--blue);border-radius:2px;margin-bottom:5px}
+.goldmark{color:var(--gold);font-family:var(--display);font-size:34px;line-height:.7}
+.grule{height:2px;width:34px;background:var(--gold);border:0}
+
+/* do/dont */
+.dd{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:18px 0}
+.do{background:#EEF6EA;border:1px solid #C4DDB8;border-radius:3px;padding:20px 22px}
+.dont{background:#FBF0EC;border:1px solid #E8C4B8;border-radius:3px;padding:20px 22px}
+.do .h,.dont .h{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;margin-bottom:10px}
+.do .h{color:#2C6B38}.dont .h{color:#A8412A}
+
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--rule);font-size:14.5px;margin:16px 0}
+th{background:var(--deep);color:#fff;text-align:left;padding:10px 13px;font-size:11.5px;letter-spacing:.11em;text-transform:uppercase}
+td{padding:10px 13px;border-top:1px solid var(--rule);vertical-align:top}
+tr:nth-child(even) td{background:#FCFAF3}
+.fail{color:#A8412A;font-weight:700}
+
+.panel{background:#fff;border:1px solid var(--rule);border-left:4px solid var(--blue);border-radius:3px;padding:22px 24px;margin-bottom:14px}
+.panel.g{border-left-color:var(--green)}.panel.gd{border-left-color:var(--gold)}.panel.br{border-left-color:var(--brown)}
+.bar{background:var(--green);color:#fff;font-size:27px;font-weight:700;text-align:center;padding:24px;border-radius:3px;margin:22px 0}
+.quote{font-family:var(--display);font-size:34px;line-height:1.3;color:var(--deep);border-left:3px solid var(--gold);padding-left:22px;margin:22px 0;max-width:26ch}
+.stat{font-size:58px;font-weight:700;color:var(--brown);line-height:1;letter-spacing:-.02em}
+.statl{font-size:14px;color:var(--brown);margin-top:8px;max-width:26ch}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
+footer{background:var(--deep);color:var(--grey);text-align:center;padding:64px 0}
+footer .f{font-family:var(--display);font-size:clamp(28px,4.4vw,44px);color:#fff}
+footer .e{font-style:italic;opacity:.8;margin-top:8px}
+footer .c{margin-top:30px;font-size:12px;opacity:.62}
+@media print{section{page-break-inside:avoid}}
+</style></head><body>
+
+<header><div class="wrap">
+<div class="eyebrow">Theme Preset · Bughaw Innovations Corporation</div>
+<h1>Bughaw</h1>
+<p class="sub">The house design system. Cream paper, deep field green, and a gold that behaves like the sun in the logo.</p>
+<div class="brandline"><div class="f">Bawat hibla, may pag-asa.</div><div class="e">In every fibre, a future.</div></div>
+</div></header>
+
+<div class="wrap">
+
+<section>
+<div class="num">01</div><h2>The governing line</h2>
+<p class="lead"><strong>Warm about people. Cold about claims.</strong></p>
+<p>Visually: photography and the display face carry the warmth; numbers, panels and tables stay clinical. A layout that makes a statistic look emotional is off-brand. So is a layout that makes a person look like data.</p>
+<div class="panel gd"><strong>Mode rule — auto by artefact type.</strong> Decks open dark, run light, close dark. Documents stay light throughout, appendices plain. HTML artifacts take a light ground with a dark hero band. Posters and social run dark. Never mix a light-mode accent into a dark-mode layout.</div>
+</section>
+
+<section>
+<div class="num">02</div><h2>Palette</h2>
+<h3>Light mode — the default</h3>
+<div class="sw-grid">
+<div class="sw"><div class="c" style="background:#F5F0DE;color:#241F1A;border-bottom:1px solid #E2DDCB">#F5F0DE</div><div class="i"><div class="n">Cream</div><div class="r">The paper. Primary light ground.</div></div></div>
+<div class="sw"><div class="c" style="background:#241F1A;color:#fff">#241F1A</div><div class="i"><div class="n">Ink</div><div class="r">Body text on light. 14.3:1 AAA.</div></div></div>
+<div class="sw"><div class="c" style="background:#20699F;color:#fff">#20699F</div><div class="i"><div class="n">Bughaw Blue</div><div class="r">Primary. Headings, labels, rules. 5.1:1.</div></div></div>
+<div class="sw"><div class="c" style="background:#4C8B32;color:#fff">#4C8B32</div><div class="i"><div class="n">Bughaw Green</div><div class="r">Outcome only. Large text on cream — 3.7:1.</div></div></div>
+<div class="sw"><div class="c" style="background:#E5B95F;color:#241F1A">#E5B95F</div><div class="i"><div class="n">Bughaw Gold</div><div class="r">Rules and marks. <strong>Never body text on light.</strong></div></div></div>
+<div class="sw"><div class="c" style="background:#6E5A42;color:#fff">#6E5A42</div><div class="i"><div class="n">Warm Brown</div><div class="r">Statistics, numerals, material. 5.7:1.</div></div></div>
+<div class="sw"><div class="c" style="background:#E8E8E8;color:#241F1A;border-bottom:1px solid #d5d5d5">#E8E8E8</div><div class="i"><div class="n">Light Grey</div><div class="r">Panels, dividers.</div></div></div>
+</div>
+<h3>Dark mode</h3>
+<div class="sw-grid">
+<div class="sw"><div class="c" style="background:#1D5C13;color:#fff">#1D5C13</div><div class="i"><div class="n">Deep Green</div><div class="r">The dark brand field. The ground the material returns to.</div></div></div>
+<div class="sw"><div class="c" style="background:#3DAEE0;color:#241F1A">#3DAEE0</div><div class="i"><div class="n">Sky Blue</div><div class="r">Headings on dark. Display sizes only — 3.2:1.</div></div></div>
+<div class="sw"><div class="c" style="background:#6EA92F;color:#241F1A">#6EA92F</div><div class="i"><div class="n">Bright Green</div><div class="r">Markers and icons. <strong>Never text on Deep Green.</strong></div></div></div>
+<div class="sw"><div class="c" style="background:#E5B95F;color:#241F1A">#E5B95F</div><div class="i"><div class="n">Bughaw Gold</div><div class="r">The constant. Shared by both modes.</div></div></div>
+</div>
+
+<h3>The three pairings that will bite you</h3>
+<table>
+<tr><th>Pairing</th><th>Ratio</th><th>Verdict</th></tr>
+<tr><td class="fail">Gold on Cream</td><td>1.6:1</td><td>Effectively invisible. The most likely error in the palette, because gold <em>looks</em> like a text colour.</td></tr>
+<tr><td class="fail">Bright Green on Deep Green</td><td>2.9:1</td><td>Fails even at display size. Use Light Grey or white on that field.</td></tr>
+<tr><td class="fail">Sky Blue on Bughaw Blue</td><td>2.3:1</td><td>The two blues do not stack. Ever.</td></tr>
+</table>
+</section>
+
+<section>
+<div class="num">03</div><h2>Typography</h2>
+<div class="spec"><div class="l">Display — Maragsa → Gloock → Playfair Display</div>
+<div style="font-family:var(--display);font-size:52px;line-height:1.05;color:var(--deep)">Hindi po basura ang problema.</div>
+<div class="n">Filipino copy, the brand line, pull quotes. Maragsa is Canva-only — in a generation environment you land on <strong>Gloock</strong>, and that is correct, not a compromise. Never below 24pt. Never italic. Never more than two lines.</div></div>
+<div class="spec"><div class="l">Sans — Proxima Nova → DM Sans → Instrument Sans</div>
+<div style="font-size:33px;font-weight:700;color:var(--blue)">Five vendors documented, Q2 2026.</div>
+<div style="margin-top:10px">Headings, body, captions, labels. Body copy at 17px in documents, 20pt floor in decks — nothing smaller, anywhere, including footnotes.</div>
+<div class="n">Proxima Nova is licensed; DM Sans is the free substitute that carries the web, Word and anything handed to an outside party.</div></div>
+<div class="spec"><div class="l">Mono — IBM Plex Mono</div>
+<div style="font-family:var(--mono);font-size:21px;color:var(--brown)">PHP 20.00 / sack · 4.1M MT · 98.5% / 23d</div>
+<div class="n">Figures in tables and data annotations, where alignment matters more than warmth.</div></div>
+<div class="panel"><strong>The language split is the system.</strong> Filipino display copy is set in the serif; English operational copy is set in the sans. It codes the emotional register against the operational one, so a reader can tell at a glance which one they are in.</div>
+</section>
+
+<section>
+<div class="num">04</div><h2>Components</h2>
+<h3>Claim labels — every number carries one</h3>
+<p>An unlabelled figure does not ship. Published literature is never styled as a Bughaw result.</p>
+<p><span class="pill pub">published</span> named literature or official data &nbsp;·&nbsp; <span class="pill mod">modelled</span> an internal estimate, declared &nbsp;·&nbsp; <span class="pill pri">primary</span> Bughaw's own documented research</p>
+
+<h3>Statistic</h3>
+<div class="grid3">
+<div class="panel br"><div class="stat">4.1M</div><div class="statl">metric tons of coconut husk generated annually, most burned or dumped</div><div style="margin-top:8px"><span class="pill pub">published</span></div></div>
+<div class="panel br"><div class="stat">₱20</div><div class="statl">per sack — what a Quezon City vendor pays to have husk hauled away</div><div style="margin-top:8px"><span class="pill pri">primary</span></div></div>
+<div class="panel br"><div class="stat">0</div><div class="statl">active paying hotel customers, as of August 2026</div><div style="margin-top:8px"><span class="pill pri">primary</span></div></div>
+</div>
+<p class="soft" style="margin-top:14px">That third tile is deliberate. A zero stated plainly costs less than a zero discovered later.</p>
+
+<h3>The payload bar</h3>
+<p>The single heaviest element on a slide. White on green is 4.2:1 — it needs the size to pass, so bar type never drops below 27px.</p>
+<div class="bar">Both of these are inside your municipality.</div>
+
+<h3>Pull quote</h3>
+<div class="quote">The husk never leaves the island. Neither does the money.</div>
+
+<h3>Panels</h3>
+<div class="panel"><strong>Blue</strong> — argument, definition, the operational register.</div>
+<div class="panel g"><strong>Green</strong> — outcomes. Income, diversion, a closed loop. Earned, not decorative.</div>
+<div class="panel gd"><strong>Gold</strong> — the human moments. Story, quote, the person.</div>
+<div class="panel br"><strong>Brown</strong> — material and figures. Husk, coir, soil, statistics.</div>
+</section>
+
+<section>
+<div class="num">05</div><h2>The twelve layouts</h2>
+<p class="lead">Every deck is assembled from these. Do not invent a thirteenth without a reason you can say out loud.</p>
+<div class="mini-grid">
+
+<div class="mini"><div class="canvas dk"><div class="m-pad" style="display:flex;flex-direction:column;justify-content:flex-end">
+<div class="mt-d">Hibla ng Pag-asa</div><div style="color:var(--gold);font-size:10px;margin-top:5px;font-weight:700">Del Carmen, Siargao</div>
+<div style="border-left:2px solid var(--gold);padding-left:7px;margin-top:12px"><div class="mt-s">Presented to<br>Bughaw Innovations Corporation</div></div>
+</div></div><div class="cap"><b>L1 · Title (dark)</b>Full-bleed photo, scrim from the left. Filipino title in the display face. Attribution is the corporation only — no individual names.</div></div>
+
+<div class="mini"><div class="canvas dk"><div class="m-pad">
+<div class="goldmark">"</div>
+<div style="color:#fff;font-size:10px;margin-top:2px">Hindi po basura ang problema.</div>
+<div class="mt-d" style="margin-top:6px">Ang problema po ay walang bumibili.</div>
+</div></div><div class="cap"><b>L2 · The Ache (dark)</b>The emotional opening. Setup in sans, payoff in the display face at double the size. Nothing else on the slide.</div></div>
+
+<div class="mini"><div class="canvas lt"><div class="m-pad" style="display:flex;flex-direction:column;gap:7px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:1">
+<div class="col"><b>The farm</b>Husk burned daily. No buyer. A cost, not a crop.</div>
+<div class="col"><b>The resort</b>Amenity spend, imported. An audit line nobody can skip.</div></div>
+<div class="gbar">Both of these are inside your municipality.</div>
+</div></div><div class="cap"><b>L3 · Two Columns, One Bar</b>The most important layout in the system. The bar is the payload — visually the heaviest element on the page.</div></div>
+
+<div class="mini"><div class="canvas lt"><div class="m-pad" style="display:flex;align-items:center;gap:12px">
+<div style="flex:2;background:var(--grey);border-radius:3px;height:72%;display:flex;align-items:center;justify-content:center;color:var(--brown);font-size:9px">product</div>
+<div style="flex:1;font-size:8px;line-height:1.6;color:var(--brown)"><hr class="grule" style="margin-bottom:5px">coir + cassava<hr class="grule" style="margin:7px 0 5px">returns to soil<hr class="grule" style="margin:7px 0 5px">documented origin</div>
+</div></div><div class="cap"><b>L4 · Hero Object</b>80% image, 20% type. The presenter is handing over a physical object. If it looks empty, it is correct.</div></div>
+
+<div class="mini"><div class="canvas lt"><div class="m-pad" style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;align-items:center">
+<div class="card4"><div class="sn">1</div><div class="nm">Collect</div>Pagkolekta</div>
+<div class="card4"><div class="sn">2</div><div class="nm">Process</div>Paggawa</div>
+<div class="card4"><div class="sn">3</div><div class="nm">Make</div>Paglikha</div>
+<div class="card4"><div class="sn">4</div><div class="nm">Sell</div>Pagbenta</div>
+</div></div><div class="cap"><b>L5 · Four Steps</b>Four equal cards joined by green arrows. Filipino term beneath each English step name.</div></div>
+
+<div class="mini"><div class="canvas lt"><div class="m-pad" style="display:flex;align-items:center;gap:10px">
+<div style="flex:0 0 84px;height:84px;border:2.5px dashed var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--green);text-align:center;line-height:1.3">farm → mill<br>→ room<br>→ soil</div>
+<div class="mt-dg" style="font-size:13px">The husk never leaves the island. Neither does the money.</div>
+</div></div><div class="cap"><b>L6 · The Loop</b>Must read instantly as a circle from across a table. If in doubt, drop the map and keep the circle.</div></div>
+
+<div class="mini"><div class="canvas" style="background:var(--grey)"><div class="m-pad" style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:5px">
+<div class="tile"><div class="dot"></div>Income</div><div class="tile"><div class="dot"></div>Diversion</div><div class="tile"><div class="dot"></div>Jobs</div>
+<div class="tile"><div class="dot"></div>Data</div><div class="tile"><div class="dot"></div>Provenance</div>
+</div></div><div class="cap"><b>L7 · Gains Grid</b>Five or six tiles, 3-over-2, on light grey. Single-weight line icons, 2px, no fills.</div></div>
+
+<div class="mini"><div class="canvas lt"><div class="m-pad" style="display:flex;flex-direction:column;justify-content:center">
+<div style="font-size:44px;font-weight:700;color:var(--brown);line-height:1">₱20</div>
+<div style="font-size:9px;color:var(--brown);margin-top:5px">per sack, to make husk go away</div>
+<div style="margin-top:7px"><span class="pill pri" style="font-size:7px;padding:2px 6px">primary</span></div>
+</div></div><div class="cap"><b>L8 · Statistic</b>One number, enormous, Warm Brown on light or Gold on dark. Never without its label and claim pill.</div></div>
+
+<div class="mini"><div class="canvas lt"><div class="m-pad" style="display:flex;flex-direction:column;gap:7px">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;flex:1">
+<div class="col"><b>UNDP</b>Equipment</div><div class="col"><b>LGU</b>Site, ordinance</div><div class="col"><b>Bughaw</b>Method, offtake</div></div>
+<div class="dbar">No municipal capital outlay is being requested.</div>
+</div></div><div class="cap"><b>L9 · Who Puts In What</b>Three columns, then the single most persuasive sentence in the deck as a full-width bar.</div></div>
+
+<div class="mini"><div class="canvas lt"><div class="m-pad" style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+<div style="font-size:8.5px;line-height:2.2"><span style="display:inline-block;width:9px;height:9px;border:1.5px solid var(--blue);border-radius:2px;margin-right:5px;vertical-align:-1px"></span>Endorsement letter<br><span style="display:inline-block;width:9px;height:9px;border:1.5px solid var(--blue);border-radius:2px;margin-right:5px;vertical-align:-1px"></span>Site identification<br><span style="display:inline-block;width:9px;height:9px;border:1.5px solid var(--blue);border-radius:2px;margin-right:5px;vertical-align:-1px"></span>Focal person</div>
+<div style="font-size:7.5px;line-height:1.9;color:var(--brown);border-left:1px solid var(--rule);padding-left:8px"><b style="color:var(--blue);font-size:8px">NEXT 30 DAYS</b><br>▪ Baseline<br>▪ Vendor map<br>▪ Annex to UNDP</div>
+</div></div><div class="cap"><b>L10 · The Ask</b>Three numbered items with outlined checkboxes. Never pre-ticked, never emoji.</div></div>
+
+<div class="mini"><div class="canvas dk"><div class="m-pad" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+<div class="mt-d" style="font-size:22px">Bawat hibla,<br>may pag-asa.</div>
+<div style="color:#fff;opacity:.65;font-style:italic;font-size:8px;margin-top:7px">In every fibre, a future.</div>
+</div></div><div class="cap"><b>L11 · Close (dark)</b>Mirrors L1 for symmetry. Filipino line in the display face, English translation small and italic beneath.</div></div>
+
+<div class="mini"><div class="canvas" style="background:#fff"><div class="m-pad">
+<div style="font-size:7px;letter-spacing:.12em;color:#888;font-weight:700">APPENDIX — NOT PRESENTED</div>
+<div style="margin-top:8px;border-top:1px solid #ccc">
+<div style="display:flex;font-size:7px;padding:4px 0;border-bottom:1px solid #eee"><span style="flex:2">Line item</span><span style="flex:1">Unit</span><span style="flex:1">Total</span></div>
+<div style="display:flex;font-size:7px;padding:4px 0;border-bottom:1px solid #eee"><span style="flex:2">Defibering unit</span><span style="flex:1">1</span><span style="flex:1">—</span></div>
+<div style="display:flex;font-size:7px;padding:4px 0;border-bottom:1px solid #eee"><span style="flex:2">Baseline survey</span><span style="flex:1">1</span><span style="flex:1">—</span></div>
+</div></div></div><div class="cap"><b>L12 · Appendix (plain)</b>Deliberately plain. White, black type, ruled tables, no brand accents. Making it look like marketing undercuts it.</div></div>
+
+</div>
+</section>
+
+<section>
+<div class="num">06</div><h2>Do and don't</h2>
+<div class="dd">
+<div class="do"><div class="h">Do</div>
+<p>Open on the person. The story leads, the product comes last — slide 1 is never a product shot.</p>
+<p>Let one accent run per layout: gold or brown, never both.</p>
+<p>Print greyscale before every handover. Deep Green and Bughaw Blue converge in black and white — nothing may depend on telling those two apart.</p>
+<p style="margin-bottom:0">Cut copy when a slide runs long. Forty words is the ceiling.</p></div>
+<div class="dont"><div class="h">Don't</div>
+<p>No gold text on cream. No bright green text on deep green. No sky blue on Bughaw blue.</p>
+<p>No shadows, no gradients except the photographic scrim, no uniform rounded corners, no purple, no Inter.</p>
+<p>No number without its claim pill and source. No literature figure styled as a Bughaw lab result.</p>
+<p style="margin-bottom:0">No beneficiary framing — no downcast eyes, no outstretched hands. People shots show work and competence.</p></div>
+</div>
+</section>
+
+<section style="border-bottom:none">
+<div class="num">07</div><h2>How to use it</h2>
+<div class="panel"><p style="margin-bottom:8px"><strong>In a new session:</strong> the skill triggers on its own for anything Bughaw-branded. Or say it plainly:</p>
+<p style="margin-bottom:0"><code>Make me a deck on the Kaagapay network for a hotel audience. Use the Bughaw theme.</code></p></div>
+<div class="panel g"><p style="margin-bottom:8px"><strong>Alongside theme-factory:</strong> <code>references/bughaw.md</code> is written in the same format as the ten built-in presets. Drop it beside them and Bughaw becomes the eleventh.</p>
+<p style="margin-bottom:0"><code>Apply the Bughaw theme to this deck.</code></p></div>
+<div class="panel gd"><p style="margin-bottom:8px"><strong>In an HTML artifact:</strong> paste <code>references/tokens.css</code> at the top. Every variable and component primitive is there.</p>
+<p style="margin-bottom:0"><strong>In Canva or with a designer:</strong> hand over <code>tokens.json</code> and <code>layouts.md</code>. Both are readable without this system loaded.</p></div>
+</section>
+
+</div>
+
+<footer><div class="f">Bawat hibla, may pag-asa.</div><div class="e">In every fibre, a future.</div>
+<div class="c">Bughaw Design System v1.0 · August 2026 · Rendered in Gloock and DM Sans, the substitution ladder for Maragsa and Proxima Nova</div></footer>
+</body></html>

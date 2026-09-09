@@ -40,6 +40,8 @@ import {
 import { TaskPanel } from "./TaskPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UserPicker } from "@/components/ui/user-picker";
+import { useTeamDirectory } from "@/lib/useTeamDirectory";
 
 type MiniProject = { id: string; project_id: string; name: string; description: string };
 type ScopedContributor = { user_email: string; added_by_email: string | null };
@@ -221,7 +223,7 @@ export function Board({
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [scopedContributors, setScopedContributors] = useState(initialScopedContributors);
-  const [newEmail, setNewEmail] = useState("");
+  const { directory } = useTeamDirectory();
   const dragSnapshot = useRef<{ columns: Columns; tasksById: Record<string, Task> } | null>(null);
 
   const sensors = useSensors(
@@ -381,10 +383,7 @@ export function Board({
     setOpenTask(null);
   }
 
-  async function addScopedContributor(e: React.FormEvent) {
-    e.preventDefault();
-    const email = newEmail.trim().toLowerCase();
-    if (!email) return;
+  async function addScopedContributor(email: string) {
     const { data, error } = await supabase
       .from("mini_project_contributors")
       .insert({ mini_project_id: miniProject.id, user_email: email })
@@ -395,7 +394,6 @@ export function Board({
       return;
     }
     setScopedContributors((prev) => [...prev, data as ScopedContributor]);
-    setNewEmail("");
     toast.success("Contributor added.");
   }
 
@@ -492,22 +490,17 @@ export function Board({
           ))}
         </ul>
         {canAddContributor(role) && (
-          <form onSubmit={addScopedContributor} className="flex gap-2">
-            <Input
-              type="email"
-              placeholder="email@example.com"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-            />
-            <Button
-              intent="primary"
-              size="sm"
-              type="submit"
-              disabled={!newEmail.trim()}
-            >
-              Add
-            </Button>
-          </form>
+          <UserPicker
+            options={directory.filter((d) => {
+              const email = d.email.toLowerCase();
+              return (
+                !scopedContributors.some((c) => c.user_email.toLowerCase() === email) &&
+                !inheritedContributorEmails.some((e) => e.toLowerCase() === email)
+              );
+            })}
+            onSelect={addScopedContributor}
+            placeholder="Add a teammate…"
+          />
         )}
       </section>
 

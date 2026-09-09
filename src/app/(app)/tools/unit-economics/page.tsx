@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { pesoRound } from "@/lib/format";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { SliderField } from "@/components/ui/slider-field";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
@@ -48,12 +49,12 @@ const SLIDERS: {
 ];
 
 const COST_SEGMENTS: { id: keyof SimState; label: string; color: string }[] = [
-  { id: "material", label: "Materials", color: "#C2410C" },
-  { id: "labor", label: "Labor", color: "#6D28D9" },
-  { id: "freight", label: "Freight", color: "#475569" },
-  { id: "breakage", label: "Breakage", color: "#BE123C" },
-  { id: "duties", label: "Duties", color: "#57534E" },
-  { id: "equipment", label: "Equipment", color: "#0E7490" },
+  { id: "material", label: "Materials", color: "#6E5A42" },
+  { id: "labor", label: "Labor", color: "#17517D" },
+  { id: "freight", label: "Freight", color: "#8A6215" },
+  { id: "breakage", label: "Breakage", color: "#A8412A" },
+  { id: "duties", label: "Duties", color: "#6B6355" },
+  { id: "equipment", label: "Equipment", color: "#2C6B38" },
 ];
 
 const KEY = "bughaw-unit-econ-sim";
@@ -100,22 +101,18 @@ export default function UnitEconomicsPage() {
 
   return (
     <div>
-      <header className="mb-6 border-b border-line pb-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
-          🎚️ Live build · Coconut slippers (BughawPack™ P2)
-        </p>
-        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-          Unit Economics Simulator
-        </h1>
-        <p className="text-sm text-ink-soft max-w-2xl">
-          Per-pair margin, hotel-account CAC, and payback — adjust the sliders to test
-          scenarios. All figures are illustrative placeholders until COGS is confirmed.
-        </p>
-        <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
-          <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          Reset to defaults
-        </Button>
-      </header>
+      <CalculatorHeader
+        icon={SlidersHorizontal}
+        eyebrow="Live build · Coconut slippers (BughawPack™ P2)"
+        title="Unit Economics Simulator"
+        description="Per-pair margin, hotel-account CAC, and payback — adjust the sliders to test scenarios. All figures are illustrative placeholders until COGS is confirmed."
+        action={
+          <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Reset to defaults
+          </Button>
+        }
+      />
 
       <div className="grid gap-5 lg:grid-cols-[400px,1fr] items-start">
         <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
@@ -137,7 +134,7 @@ export default function UnitEconomicsPage() {
             <div className="space-y-3.5">
               <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
                 <span className="text-[13px] text-ink-soft text-right">Price</span>
-                <div className="h-8 rounded-md overflow-hidden flex bg-[#F1F5F9]">
+                <div className="h-8 rounded-md overflow-hidden flex bg-[#EDE8D6]">
                   <div className="h-full w-full bg-coir flex items-center justify-center text-xs font-bold text-white">
                     {pesoRound(s.price)}
                   </div>
@@ -146,7 +143,7 @@ export default function UnitEconomicsPage() {
               </div>
               <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
                 <span className="text-[13px] text-ink-soft text-right">Costs</span>
-                <div className="h-8 rounded-md overflow-hidden flex gap-[2px] bg-[#F1F5F9]">
+                <div className="h-8 rounded-md overflow-hidden flex gap-[2px] bg-[#EDE8D6]">
                   {COST_SEGMENTS.map((seg) => {
                     const v = s[seg.id];
                     if (v <= 0) return null;
@@ -166,12 +163,12 @@ export default function UnitEconomicsPage() {
               </div>
               <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
                 <span className="text-[13px] text-ink-soft text-right">Left over</span>
-                <div className="h-8 rounded-md overflow-hidden flex bg-[#F1F5F9]">
+                <div className="h-8 rounded-md overflow-hidden flex bg-[#EDE8D6]">
                   <div
                     className="h-full flex items-center justify-center text-xs font-bold text-white"
                     style={{
                       width: `${Math.min(100, Math.max(0, (Math.abs(contribution) / s.price) * 100))}%`,
-                      background: contribution >= 0 ? "#059669" : "#DC2626",
+                      background: contribution >= 0 ? "#2C6B38" : "#A8412A",
                     }}
                   >
                     {(contribution >= 0 ? "+" : "") + pesoRound(contribution)}

@@ -1,8 +1,9 @@
-# Bughaw Calculators Hub
+# Bughaw Suite
 
-Internal unit-economics, go-to-market, and forecasting tools for Bughaw Innovations.
-Next.js 14 (App Router) + TypeScript + Tailwind + Supabase (Postgres + Auth). All
-figures in ₱ (PHP). **Login is required for the entire app; signups are invite-only.**
+Internal operations platform for Bughaw Innovations — calculators, CRM, and task
+management in one place. Next.js 14 (App Router) + TypeScript + Tailwind + Supabase
+(Postgres + Auth). All figures in ₱ (PHP). **Login is required for the entire app;
+signups are invite-only.**
 
 ## What's inside
 

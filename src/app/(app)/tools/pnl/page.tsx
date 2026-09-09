@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { BarChart3, RotateCcw } from "lucide-react";
 import { computePnl, PNL_DEFAULTS as DEFAULTS, type PnlState } from "@/lib/pnl";
 import { pesoRound } from "@/lib/format";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { SliderField } from "@/components/ui/slider-field";
 import { Chart, specToOption } from "@/components/ui/chart";
 import { CHART } from "@/lib/chartTheme";
@@ -72,22 +73,18 @@ export default function PnlPage() {
 
   return (
     <div>
-      <header className="mb-6 border-b border-line pb-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-coir mb-1">
-          📊 Bughaw Innovations · BughawPack P2
-        </p>
-        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-          Coconut slipper — 12-month P&amp;L model
-        </h1>
-        <p className="text-sm text-ink-soft max-w-2xl">
-          Stress-test breakeven timing and year-1 cash needs for the coir-cassava slipper
-          line. Figures are modeling assumptions, not confirmed pilot-scale financials.
-        </p>
-        <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
-          <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          Reset to defaults
-        </Button>
-      </header>
+      <CalculatorHeader
+        icon={BarChart3}
+        eyebrow="Bughaw Innovations · BughawPack P2"
+        title="Coconut slipper — 12-month P&L model"
+        description="Stress-test breakeven timing and year-1 cash needs for the coir-cassava slipper line. Figures are modeling assumptions, not confirmed pilot-scale financials."
+        action={
+          <Button size="sm" className="mt-3" onClick={() => setS(DEFAULTS)}>
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Reset to defaults
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         {SECTIONS.map((section) => (

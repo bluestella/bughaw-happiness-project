@@ -5,35 +5,39 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { CATEGORIES } from "@/lib/calculators/types";
-import { calculatorsByCategory, calculatorPath } from "@/lib/calculators/registry";
 import { TOOLS } from "@/lib/tools";
+import { getIcon } from "@/lib/icons";
 import { canAccessCalculators, canAccessCrm, type Role } from "@/lib/permissions";
+import { CommandPalette } from "@/components/CommandPalette";
 
 function NavLink({
   href,
+  iconKey,
   children,
   onNavigate,
   pathname,
 }: {
   href: string;
+  iconKey: string;
   children: React.ReactNode;
   onNavigate?: () => void;
   pathname: string;
 }) {
   const active = pathname === href;
+  const Icon = getIcon(iconKey);
   return (
     <Link
       href={href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`block rounded-lg px-3 py-2 lg:py-1.5 text-[13px] leading-snug transition-colors duration-150 ${
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 lg:py-1.5 text-[13px] leading-snug transition-colors duration-150 ${
         active
           ? "bg-coir-bg text-coir-dark font-semibold"
           : "text-ink-soft hover:text-ink hover:bg-paper"
       }`}
     >
-      {children}
+      <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+      <span className="truncate">{children}</span>
     </Link>
   );
 }
@@ -62,7 +66,7 @@ function Logo() {
           Bughaw Innovations
         </p>
         <p className="text-[15px] font-semibold text-ink leading-tight truncate">
-          Calculators Hub
+          Bughaw Suite
         </p>
       </div>
     </Link>
@@ -88,32 +92,29 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
   }, [open]);
 
   const nav = useMemo(() => {
-    const linkItems: Array<{ href: string; label: React.ReactNode }> = [];
+    const primaryItems: Array<{ href: string; iconKey: string; label: string }> = [
+      { href: "/", iconKey: "dashboard", label: "Dashboard" },
+    ];
     if (showCalculators) {
-      linkItems.push({ href: "/", label: "Dashboard" });
-      linkItems.push({ href: "/saved", label: "Saved calculations" });
+      primaryItems.push(
+        { href: "/calculators", iconKey: "calculators", label: "Calculators" },
+        { href: "/saved", iconKey: "saved", label: "Saved calculations" }
+      );
     }
-
-    const toolsList = showCalculators
-      ? TOOLS.map((t) => ({ href: t.path, label: `${t.icon} ${t.name}` }))
-      : [];
-
-    const categoryGroups = showCalculators
-      ? CATEGORIES.map((cat) => ({
-          id: cat.id,
-          label: cat.name,
-          items: calculatorsByCategory(cat.id).map((c) => ({
-            href: calculatorPath(c),
-            label: `${c.icon} ${c.name}`,
-          })),
-        }))
-      : [];
 
     function renderNav(onNavigate?: () => void) {
       return (
         <nav className="pb-8">
-          {linkItems.map((item) => (
-            <NavLink key={item.href} href={item.href} onNavigate={onNavigate} pathname={pathname}>
+          <CommandPalette showCalculators={showCalculators} showCrm={showCrm} />
+
+          {primaryItems.map((item) => (
+            <NavLink
+              key={item.href}
+              href={item.href}
+              iconKey={item.iconKey}
+              onNavigate={onNavigate}
+              pathname={pathname}
+            >
               {item.label}
             </NavLink>
           ))}
@@ -121,38 +122,38 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
           {showCrm && (
             <>
               <SectionLabel>CRM</SectionLabel>
-              <NavLink href="/crm" onNavigate={onNavigate} pathname={pathname}>
-                🎯 Lead funnel
+              <NavLink href="/crm" iconKey="crm" onNavigate={onNavigate} pathname={pathname}>
+                Lead funnel
               </NavLink>
-              <NavLink href="/crm/import" onNavigate={onNavigate} pathname={pathname}>
-                📥 Import leads
+              <NavLink
+                href="/crm/import"
+                iconKey="crm-import"
+                onNavigate={onNavigate}
+                pathname={pathname}
+              >
+                Import leads
               </NavLink>
             </>
           )}
 
           <SectionLabel>Task Management</SectionLabel>
-          <NavLink href="/tasks" onNavigate={onNavigate} pathname={pathname}>
-            🗂️ Projects &amp; boards
+          <NavLink href="/tasks" iconKey="tasks" onNavigate={onNavigate} pathname={pathname}>
+            Projects &amp; boards
           </NavLink>
 
           {showCalculators && (
             <>
               <SectionLabel>Tools</SectionLabel>
-              {toolsList.map((t, i) => (
-                <NavLink key={i} href={t.href} onNavigate={onNavigate} pathname={pathname}>
-                  {t.label}
+              {TOOLS.map((t) => (
+                <NavLink
+                  key={t.id}
+                  href={t.path}
+                  iconKey={t.icon}
+                  onNavigate={onNavigate}
+                  pathname={pathname}
+                >
+                  {t.name}
                 </NavLink>
-              ))}
-
-              {categoryGroups.map((group) => (
-                <div key={group.id}>
-                  <SectionLabel>{group.label}</SectionLabel>
-                  {group.items.map((item, i) => (
-                    <NavLink key={i} href={item.href} onNavigate={onNavigate} pathname={pathname}>
-                      {item.label}
-                    </NavLink>
-                  ))}
-                </div>
               ))}
             </>
           )}

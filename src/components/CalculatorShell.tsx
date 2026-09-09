@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
 import type { CalculatorConfig, Inputs } from "@/lib/calculators/types";
+import { getIcon } from "@/lib/icons";
 import { formatValue, pesoRound } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
+import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chart, specToOption } from "@/components/ui/chart";
@@ -161,15 +163,12 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
 
   return (
     <div>
-      <header className="mb-6 border-b border-line pb-5">
-        <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-coir">
-          {config.icon} {config.category.replace("-", " ")}
-        </p>
-        <h1 className="mb-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-          {config.name}
-        </h1>
-        <p className="max-w-2xl text-sm text-ink-soft">{config.description}</p>
-      </header>
+      <CalculatorHeader
+        icon={getIcon(config.icon)}
+        eyebrow={config.category.replace("-", " ")}
+        title={config.name}
+        description={config.description}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[380px,1fr] items-start">
         <div className="space-y-4">

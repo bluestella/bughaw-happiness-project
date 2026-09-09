@@ -5,7 +5,7 @@ export const cogsCalculator: CalculatorConfig = {
   category: "unit-economics",
   name: "COGS % Calculator",
   description: "Cost of goods sold as a percentage of the price a hotel pays.",
-  icon: "💰",
+  icon: "wallet",
   inputGroups: [
     {
       id: "costs",
@@ -54,7 +54,7 @@ export const wholesaleMarginCalculator: CalculatorConfig = {
   category: "unit-economics",
   name: "Wholesale Margin Calculator",
   description: "Compare hotel wholesale pricing against retail — margins and markups.",
-  icon: "🏷️",
+  icon: "tag",
   inputGroups: [
     {
       id: "prices",
@@ -89,7 +89,7 @@ export const paybackCalculator: CalculatorConfig = {
   category: "unit-economics",
   name: "Payback Period Calculator",
   description: "How many months until the margin from a hotel account earns back its CAC.",
-  icon: "⏱️",
+  icon: "timer",
   inputGroups: [
     {
       id: "account",
@@ -128,7 +128,7 @@ export const pricingMarkupCalculator: CalculatorConfig = {
   category: "unit-economics",
   name: "Pricing & Markup",
   description: "Work backwards from a target margin to a recommended wholesale and retail price for any product.",
-  icon: "🏷️",
+  icon: "tag",
   inputGroups: [
     {
       id: "pricing",

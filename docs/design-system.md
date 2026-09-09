@@ -1,40 +1,53 @@
 # Design System & UX
 
-> The unified visual language (originating from the Unit Cost Calculator artifact)
-> and the UX rules every new screen must follow. Tokens live in
-> [`tailwind.config.ts`](../tailwind.config.ts).
+> The unified visual language — mapped onto the Bughaw corporate design system
+> (see [`docs/index.html`](index.html) for the full showcase: palette, type
+> specimens, components, and the twelve deck layouts) — and the UX rules every
+> new screen must follow. Tokens live in [`tailwind.config.ts`](../tailwind.config.ts).
 
 ## 1. Brand feel
 
-Warm, papery, analog-scientific: cream background, ink-brown text, coir-green as the
-single action color, clay/amber/danger as sparse semantic accents. It should read
-like a well-kept field notebook, not a SaaS dashboard. No dark mode.
+Warm, papery, editorial: cream background, ink-brown text, Bughaw Blue as the
+single action color, warm brown/gold/danger as sparse semantic accents. It should
+read like a well-kept field notebook carrying an actual corporate identity, not a
+generic SaaS dashboard. Governing line: **warm about people, cold about claims** —
+photography and the display face carry the warmth; numbers, panels and tables stay
+clinical. No dark mode in the app itself (the brand system's dark mode is reserved
+for decks/marketing, via the raw `deep`/`sky`/`bgreen` tokens below).
 
 ## 2. Color tokens (use these — no raw hex in JSX)
 
 | Token | Hex | Use |
 |---|---|---|
-| `paper` | `#F7F3EA` | App background |
+| `paper` | `#F5F0DE` | App background (cream) |
 | `panel` | `#FFFFFF` | Cards, sidebar, inputs |
-| `ink` | `#2B2620` | Primary text |
+| `ink` | `#241F1A` | Primary text — 14.3:1 |
 | `ink-soft` | `#6B6355` | Secondary text, labels, help text |
-| `line` | `#DED6C4` | Borders, dividers, chart grid |
-| `coir` | `#5C7A4F` | Primary actions, focus rings, active nav |
-| `coir-dark` | `#43593B` | Hover state, emphasized values, eyebrows |
-| `coir-bg` | `#F1F6EE` | Positive/emphasis surfaces, active nav bg |
-| `clay` | `#B4703F` | Warm accent, warnings-ish notices |
-| `amber` | `#C68A2E` | Medium priority, caution |
-| `danger` | `#A6432F` | Destructive, High priority, failed verdicts |
+| `line` | `#DDD6C0` | Borders, dividers, chart grid |
+| `coir` | `#20699F` | Bughaw Blue — primary actions, focus rings, active nav (5.1:1) |
+| `coir-dark` | `#17517D` | Hover state, emphasized values, eyebrows |
+| `coir-bg` | `#DCE8F4` | Emphasis surfaces, active nav bg |
+| `clay` | `#6E5A42` | Warm Brown — material/secondary accent, statistics (5.7:1) |
+| `amber` | `#8A6215` | Medium priority, caution text — a readable dark-gold |
+| `danger` | `#A8412A` | Destructive, High priority, failed verdicts |
+| `gold` | `#E5B95F` | Rules and marks only. **Never body text on light** (1.6:1 on cream) |
+| `deep` | `#1D5C13` | Dark brand field — hero/dark-band treatments only |
+| `sky` | `#3DAEE0` | Headings on `deep`, display sizes only |
+| `bgreen` | `#6EA92F` | Markers/icons on `deep` — never text on Deep Green |
 
-Chart-only companions used inline (allowed): `#D6E4CE` (coir border tint),
-`#FBEBE6`/`#E8C4B8` (danger surface/border), axis text `#6B6355`, grid `#DED6C4`.
+Chart-only companions used inline (allowed): `#C4DDB8` (success border tint),
+`#FBF0EC`/`#E8C4B8` (danger surface/border), axis text `#6B6355`, grid `#DDD6C0`.
+
+The three pairings that fail contrast, per the brand system — never ship these:
+Gold on Cream (1.6:1), Bright Green (`bgreen`) on Deep Green (2.9:1), Sky Blue on
+Bughaw Blue (2.3:1).
 
 ## 3. Typography
 
 | Family | Token | Role |
 |---|---|---|
-| Fraunces (serif) | `font-display` | Page titles, section headings, big numbers |
-| Inter | `font-sans` | Body, forms |
+| Fraunces (serif) | `font-display` | Brand name, page titles, big numbers, Filipino copy — variable, optical-size aware so it stays crisp from stat-tile numbers down to small headings; swapped in for the deck-oriented Gloock face for the app's own UI |
+| DM Sans | `font-sans` | Body, forms, operational English copy |
 | IBM Plex Mono | `font-mono` | Eyebrow labels, numeric inputs, metadata, statuses |
 
 Recurring patterns:
@@ -43,11 +56,14 @@ Recurring patterns:
 - **Page title:** `font-display text-2xl–3xl font-semibold text-ink`.
 - Small, dense sizes throughout (`text-[13px]` body in panels, `text-xs` buttons) —
   this is a data tool; keep density.
+- The language split is the system: Filipino display copy sits in the serif
+  (`font-display`), English operational copy stays in the sans (`font-sans`) — it
+  codes the emotional register against the operational one.
 
 ## 4. Component recipes (copy the existing markup)
 
 - **Card / panel:** `bg-panel border border-line rounded-xl p-4–5`.
-  Emphasized output card: `bg-coir-bg border-[#D6E4CE]`.
+  Emphasized output card: `bg-success-bg border-success-border`.
 - **Primary button:** `bg-coir hover:bg-coir-dark text-white font-semibold rounded-md`
   (small: `text-xs px-3 py-2`). One primary action per view.
 - **Secondary button:** `border border-line text-ink hover:border-ink-soft rounded-md`.
@@ -56,7 +72,7 @@ Recurring patterns:
 - **Input:** `border border-line rounded-md text-sm focus:border-coir
   focus:ring-2 focus:ring-coir/20`; currency inputs get an absolute `₱` prefix,
   percentages a `%` suffix; numeric inputs use `font-mono`.
-- **Verdict banner:** green (`coir-bg`) with `✓` or red (`#FBEBE6`) with `✕` + one
+- **Verdict banner:** green (`success-bg`) with `✓` or red (`danger-bg`) with `✕` + one
   plain sentence.
 - **Status flash:** transient text line (`flash()` pattern, 2.5–3 s), used for save
   confirmations and errors — no toast library.
