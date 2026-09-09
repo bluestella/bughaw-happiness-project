@@ -5,6 +5,7 @@ import { inventoryTurnoverCalculator, mixMarginCalculator, reorderPointCalculato
 import { cashFlowCalculator, growthScenarioCalculator, ltvSegmentCalculator, runwayCalculator, valuationCalculator } from "@/lib/calculators/configs/financial";
 import { computePnl, PNL_DEFAULTS } from "@/lib/pnl";
 import { ALL_CALCULATORS } from "@/lib/calculators/registry";
+import { CATEGORIES } from "@/lib/calculators/types";
 
 describe("COGS calculator", () => {
   it("computes COGS % and margin", () => {
@@ -50,6 +51,11 @@ describe("Payback calculator", () => {
     const o = paybackCalculator.compute({ cac: 8000, marginPerUnit: 0, unitsPerMonth: 80, lifetimeMonths: 12 });
     expect(o.paybackMonths).toBe(Infinity);
   });
+
+  it("treats a missing CAC as zero, so payback is instant", () => {
+    const o = paybackCalculator.compute({ cac: 0, marginPerUnit: 100, unitsPerMonth: 80, lifetimeMonths: 12 });
+    expect(o.paybackMonths).toBe(0);
+  });
 });
 
 describe("Penetration calculator", () => {
@@ -68,6 +74,18 @@ describe("Repeat order calculator", () => {
     expect(o.repeatRatePct).toBeCloseTo(50);
     expect(o.ordersPerHotel).toBeCloseTo(3);
     expect(o.avgReorderIntervalMonths).toBeCloseTo(3);
+  });
+
+  it("returns Infinity reorder interval when hotels order one time or fewer on average", () => {
+    const o = repeatOrderCalculator.compute({ totalHotels: 4, hotelsReordered: 0, totalOrders: 4, periodMonths: 6 });
+    expect(o.ordersPerHotel).toBe(1);
+    expect(o.avgReorderIntervalMonths).toBe(Infinity);
+  });
+
+  it("treats a missing period length as zero when computing the reorder interval", () => {
+    const o = repeatOrderCalculator.compute({ totalHotels: 4, hotelsReordered: 2, totalOrders: 12, periodMonths: 0 });
+    expect(o.ordersPerHotel).toBeGreaterThan(1);
+    expect(o.avgReorderIntervalMonths).toBe(0);
   });
 });
 
@@ -90,6 +108,17 @@ describe("Inventory turnover", () => {
     expect(o.turnover).toBeCloseTo(4);
     expect(o.annualizedTurnover).toBeCloseTo(4);
     expect(o.daysOnHand).toBeCloseTo((12 * 30.44) / 4);
+  });
+
+  it("returns zero turnover and Infinity days on hand with no inventory value", () => {
+    const o = inventoryTurnoverCalculator.compute({ periodCogs: 120000, avgInventoryValue: 0, periodMonths: 12 });
+    expect(o.turnover).toBe(0);
+    expect(o.daysOnHand).toBe(Infinity);
+  });
+
+  it("treats a missing period COGS as zero (not NaN)", () => {
+    const o = inventoryTurnoverCalculator.compute({ periodCogs: 0, avgInventoryValue: 30000, periodMonths: 12 });
+    expect(o.turnover).toBe(0);
   });
 });
 
@@ -247,6 +276,14 @@ describe("Reorder point", () => {
     expect(low.daysUntilReorder).toBe(0);
     expect(reorderPointCalculator.verdict!({ currentStock: 500 }, low).ok).toBe(false);
   });
+
+  it("treats a missing current stock as zero (not NaN), and flags a reorder", () => {
+    const o = reorderPointCalculator.compute({
+      dailyUnits: 40, leadTimeDays: 21, safetyStockDays: 7, currentStock: 0, orderCoverDays: 30,
+    });
+    expect(o.daysUntilReorder).toBe(0);
+    expect(reorderPointCalculator.verdict!({ currentStock: 0 }, o).ok).toBe(false);
+  });
 });
 
 describe("registry", () => {
@@ -313,6 +350,187 @@ describe("registry", () => {
       expect(typeof verdict.text).toBe("string");
       expect(verdict.text.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("CATEGORIES metadata", () => {
+  it("has one entry per calculator category with non-empty labels", () => {
+    expect(CATEGORIES).toHaveLength(4);
+    for (const c of CATEGORIES) {
+      expect(c.name.length).toBeGreaterThan(0);
+      expect(c.blurb.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("cogsCalculator verdict", () => {
+  it("passes the ≥30% margin gate", () => {
+    const o = cogsCalculator.compute({
+      manufacturingCost: 5, shippingCost: 2, packagingCost: 1,
+      wholesalePrice: 20, unitsPerMonth: 100,
+    });
+    expect(cogsCalculator.verdict!({}, o).ok).toBe(true);
+  });
+
+  it("fails the gate below 30% margin", () => {
+    const o = cogsCalculator.compute({
+      manufacturingCost: 15, shippingCost: 3, packagingCost: 1,
+      wholesalePrice: 20, unitsPerMonth: 100,
+    });
+    expect(cogsCalculator.verdict!({}, o).ok).toBe(false);
+  });
+});
+
+describe("paybackCalculator verdict", () => {
+  it("is ok when CAC pays back within the relationship window", () => {
+    const o = paybackCalculator.compute({ cac: 8000, marginPerUnit: 100, unitsPerMonth: 80, lifetimeMonths: 12 });
+    const v = paybackCalculator.verdict!({ lifetimeMonths: 12 }, o);
+    expect(v.ok).toBe(true);
+    expect(v.text).toContain("months");
+  });
+
+  it("is not ok when payback exceeds the relationship window", () => {
+    const o = paybackCalculator.compute({ cac: 800000, marginPerUnit: 100, unitsPerMonth: 80, lifetimeMonths: 12 });
+    const v = paybackCalculator.verdict!({ lifetimeMonths: 12 }, o);
+    expect(v.ok).toBe(false);
+  });
+
+  it("reports no-payback text when contribution is zero", () => {
+    const o = paybackCalculator.compute({ cac: 8000, marginPerUnit: 0, unitsPerMonth: 80, lifetimeMonths: 12 });
+    const v = paybackCalculator.verdict!({ lifetimeMonths: 12 }, o);
+    expect(v.ok).toBe(false);
+    expect(v.text).toContain("never earned back");
+  });
+
+  it("treats a missing lifetimeMonths input as zero when checking the verdict", () => {
+    const o = paybackCalculator.compute({ cac: 8000, marginPerUnit: 100, unitsPerMonth: 80, lifetimeMonths: 12 });
+    // paybackMonths is finite (1 month) but the verdict input omits lifetimeMonths,
+    // so the comparison falls back to `payback <= 0`, which is false.
+    const v = paybackCalculator.verdict!({}, o);
+    expect(v.ok).toBe(false);
+  });
+});
+
+describe("chart() specs render sane shapes", () => {
+  it("ltvSegmentCalculator", () => {
+    const inputs = { aMonthlyRevenue: 10000, aMarginPct: 50, aLifetimeMonths: 12, aCac: 10000, bMonthlyRevenue: 20000, bMarginPct: 50, bLifetimeMonths: 24, bCac: 40000 };
+    const o = ltvSegmentCalculator.compute(inputs);
+    const chart = ltvSegmentCalculator.chart!(inputs, o);
+    expect(chart.labels).toEqual(["Segment A", "Segment B"]);
+    expect(chart.series[0].values).toEqual([o.aLtv, o.bLtv]);
+  });
+
+  it("cashFlowCalculator", () => {
+    const inputs = { startingCash: 100000, monthlyRevenue: 100000, revenueGrowthPct: 0, grossMarginPct: 50, monthlyOpex: 50000, opexGrowthPct: 0 };
+    const o = cashFlowCalculator.compute(inputs);
+    const chart = cashFlowCalculator.chart!(inputs, o);
+    expect(chart.labels).toHaveLength(12);
+    expect(chart.series[0].values).toHaveLength(12);
+    expect(cashFlowCalculator.verdict!({}, o).ok).toBe(true);
+  });
+
+  it("cashFlowCalculator verdict flags negative cash", () => {
+    const o = cashFlowCalculator.compute({ startingCash: 1000, monthlyRevenue: 0, revenueGrowthPct: 0, grossMarginPct: 50, monthlyOpex: 10000, opexGrowthPct: 0 });
+    expect(cashFlowCalculator.verdict!({}, o).ok).toBe(false);
+  });
+
+  it("growthScenarioCalculator", () => {
+    const inputs = { baseUnits: 300, baseGrowthPct: 10, pricePerUnit: 150, costPerUnit: 65, monthlyFixed: 20000, optimisticDeltaPct: 5, pessimisticDeltaPct: 5 };
+    const o = growthScenarioCalculator.compute(inputs);
+    const chart = growthScenarioCalculator.chart!(inputs, o);
+    expect(chart.series).toHaveLength(3);
+    for (const s of chart.series) expect(s.values).toHaveLength(12);
+  });
+
+  it("runwayCalculator", () => {
+    const inputs = { cashOnHand: 300000, monthlyOpex: 150000, monthlyRevenue: 50000, revenueGrowthPct: 0 };
+    const o = runwayCalculator.compute(inputs);
+    const chart = runwayCalculator.chart!(inputs, o);
+    expect(chart.labels).toHaveLength(24);
+    expect(chart.series[0].values).toHaveLength(24);
+  });
+
+  it("runwayCalculator verdict: caution band (6-12mo)", () => {
+    const o = runwayCalculator.compute({ cashOnHand: 900000, monthlyOpex: 150000, monthlyRevenue: 50000, revenueGrowthPct: 0 });
+    const v = runwayCalculator.verdict!({}, o);
+    expect(v.text).toContain("Caution");
+  });
+
+  it("runwayCalculator verdict: healthy band (12mo+)", () => {
+    const o = runwayCalculator.compute({ cashOnHand: 100000, monthlyOpex: 50000, monthlyRevenue: 80000, revenueGrowthPct: 0 });
+    const v = runwayCalculator.verdict!({}, o);
+    expect(v.ok).toBe(true);
+    expect(v.text).toContain("Healthy");
+  });
+
+  it("valuationCalculator", () => {
+    const inputs = { monthlyRevenue: 100000, multipleLow: 2, multipleHigh: 5, annualProfit: 500000, profitMultiple: 8 };
+    const o = valuationCalculator.compute(inputs);
+    const chart = valuationCalculator.chart!(inputs, o);
+    expect(chart.labels).toEqual(["Low", "Midpoint", "High"]);
+    expect(chart.series[0].values).toEqual([o.valuationLow, o.valuationMid, o.valuationHigh]);
+  });
+
+  it("breakevenCalculator", () => {
+    const inputs = {
+      directPrice: 150, directVarCost: 50, directFixed: 10000,
+      partnerPrice: 100, partnerVarCost: 50, partnerFixed: 5000,
+      resellerPrice: 50, resellerVarCost: 50, resellerFixed: 5000,
+    };
+    const o = breakevenCalculator.compute(inputs);
+    const chart = breakevenCalculator.chart!(inputs, o);
+    expect(chart.labels).toEqual(["Direct", "Partnerships", "Resellers"]);
+    // resellerBreakeven is Infinity (zero contribution margin) -> chart maps it to 0
+    expect(chart.series[0].values[2]).toBe(0);
+  });
+
+  it("breakevenCalculator — the inverse mix (direct/partner infinite, reseller finite)", () => {
+    const inputs = {
+      directPrice: 50, directVarCost: 50, directFixed: 10000,
+      partnerPrice: 50, partnerVarCost: 50, partnerFixed: 5000,
+      resellerPrice: 150, resellerVarCost: 50, resellerFixed: 5000,
+    };
+    const o = breakevenCalculator.compute(inputs);
+    const chart = breakevenCalculator.chart!(inputs, o);
+    expect(chart.series[0].values[0]).toBe(0);
+    expect(chart.series[0].values[1]).toBe(0);
+    expect(chart.series[0].values[2]).toBeGreaterThan(0);
+  });
+
+  it("mixMarginCalculator", () => {
+    const inputs = {
+      slippersPrice: 100, slippersCost: 50, slippersUnits: 10,
+      organizersPrice: 200, organizersCost: 100, organizersUnits: 5,
+      utilitiesPrice: 0, utilitiesCost: 0, utilitiesUnits: 0,
+    };
+    const o = mixMarginCalculator.compute(inputs);
+    const chart = mixMarginCalculator.chart!(inputs, o);
+    expect(chart.labels).toEqual(["Slippers", "Organizers", "Utilities"]);
+    expect(chart.series[0].values).toEqual([o.slippersProfit, o.organizersProfit, o.utilitiesProfit]);
+  });
+
+  it("pricingMarkupCalculator", () => {
+    const inputs = { unitCost: 30, targetGrossMarginPct: 60, channelDiscountPct: 40 };
+    const o = pricingMarkupCalculator.compute(inputs);
+    const chart = pricingMarkupCalculator.chart!(inputs, o);
+    expect(chart.labels).toEqual(["Unit cost", "Wholesale", "Retail"]);
+    expect(chart.series[0].values).toEqual([inputs.unitCost, o.wholesalePrice, o.retailPrice]);
+  });
+
+  it("pricingMarkupCalculator chart treats a missing unit cost as zero", () => {
+    const inputs = { unitCost: 0, targetGrossMarginPct: 60, channelDiscountPct: 40 };
+    const o = pricingMarkupCalculator.compute(inputs);
+    const chart = pricingMarkupCalculator.chart!(inputs, o);
+    expect(chart.series[0].values[0]).toBe(0);
+  });
+});
+
+describe("reorderPointCalculator verdict — ok branch", () => {
+  it("is ok when stock is comfortably above the reorder point", () => {
+    const o = reorderPointCalculator.compute({
+      dailyUnits: 10, leadTimeDays: 5, safetyStockDays: 2, currentStock: 5000, orderCoverDays: 30,
+    });
+    expect(reorderPointCalculator.verdict!({ currentStock: 5000 }, o).ok).toBe(true);
   });
 });
 
@@ -396,5 +614,38 @@ describe("computePnl edge cases", () => {
       expect(Number.isNaN(p)).toBe(false);
       expect(Number.isFinite(p)).toBe(true);
     }
+  });
+
+  it("falls back to the fallback default when a field is NaN", () => {
+    const { profits } = computePnl({ ...PNL_DEFAULTS, unitsM1: NaN });
+    // unitsM1 NaN -> safeNum fallback 0 -> month 1 units = 0
+    expect(profits).toHaveLength(12);
+    expect(Number.isNaN(profits[0])).toBe(false);
+  });
+
+  it("freezes unit growth instead of going NaN when the compounded product overflows to Infinity", () => {
+    // Both unitsM1 and growthPct are individually finite (so safeNum keeps them
+    // as-is), but their product overflows past Number.MAX_VALUE — the guard on
+    // `grown` must fall back to the previous running unit count.
+    const { profits } = computePnl({ ...PNL_DEFAULTS, unitsM1: 1e20, growthPct: 1e300 });
+    expect(profits).toHaveLength(12);
+    for (const p of profits) {
+      expect(Number.isNaN(p)).toBe(false);
+      expect(Number.isFinite(p)).toBe(true);
+    }
+  });
+
+  it("clamps profit to 0 instead of Infinity when revenue overflows", () => {
+    const { profits, breakevenMonth } = computePnl({
+      ...PNL_DEFAULTS,
+      unitsM1: 1e200,
+      growthPct: 0,
+      price: 1e200,
+      cogs: 0,
+      cac: 0,
+    });
+    expect(profits[0]).toBe(0);
+    expect(Number.isFinite(profits[0])).toBe(true);
+    expect(breakevenMonth).toBe(1);
   });
 });

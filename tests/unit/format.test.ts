@@ -12,6 +12,7 @@ describe("format helpers", () => {
   it("formats numbers safely", () => {
     expect(formatValue("ratio", 1.25)).toBe("1.3×");
     expect(formatValue("months", 2)).toBe("2.0 mo");
+    expect(formatValue("currency", 1234.5)).toBe("₱1,235");
     expect(peso(1234.5, 2)).toBe("₱1,234.50");
     expect(pesoRound(1234.5)).toBe("₱1,235");
   });
@@ -48,6 +49,12 @@ describe("format helpers", () => {
   it("percentage and number locale formatting", () => {
     expect(formatValue("percentage", 1050.5)).toBe("1,050.5%");
     expect(formatValue("number", 1234567.8)).toBe("1,234,567.8");
+  });
+
+  it("falls back to number formatting for an unrecognized format", () => {
+    expect(formatValue("bogus" as unknown as Parameters<typeof formatValue>[0], 1234567.8)).toBe(
+      "1,234,567.8"
+    );
   });
 });
 

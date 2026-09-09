@@ -273,6 +273,16 @@ describe("normalizeSubmission (audit §10.1)", () => {
   it("leaves the account null when the company field is blank", () => {
     expect(normalizeSubmission("contact", { ...validContact, company: "  " }).account).toBeNull();
   });
+
+  it("leaves the account null for a hotel submission with a blank hotel name", () => {
+    expect(
+      normalizeSubmission("for_hotels", { ...validHotel, hotelName: "  " }).account
+    ).toBeNull();
+  });
+
+  it("leaves the account null for an inquiry submission with a blank company name", () => {
+    expect(normalizeSubmission("inquiry", { ...validInquiry, name: "  " }).account).toBeNull();
+  });
 });
 
 describe("isSubmissionForm", () => {
@@ -337,6 +347,29 @@ describe("CSV export", () => {
   it("renders a header-only file for an empty list", () => {
     expect(leadsToCsv([]).split("\r\n")).toHaveLength(1);
   });
+
+  it("falls back to blank cells when the contact or account join is null", () => {
+    const lead = {
+      id: "1",
+      status: "New",
+      origin_form: "inquiry_api",
+      lead_type: "inquiry",
+      source: "",
+      product_interests: undefined,
+      product_of_interest: "Coconut-Husk Slippers",
+      estimated_volume: "500",
+      description: "",
+      engagement_tier: "",
+      submitted_at: "2026-09-10T00:00:00Z",
+      crm_contacts: null,
+      crm_accounts: null,
+    } as unknown as CrmLeadRow;
+
+    const csv = leadsToCsv([lead]);
+    const cells = csv.split("\r\n")[1].split(",");
+    // full_name, email, job_title, account, star_rating, room_count all blank
+    expect(cells.slice(4, 10)).toEqual(["", "", "", "", "", ""]);
+  });
 });
 
 describe("CSV parsing (import screen)", () => {
@@ -371,5 +404,15 @@ describe("CSV parsing (import screen)", () => {
   it("returns nothing for a header-only or empty input", () => {
     expect(csvToBodies("name,email")).toEqual([]);
     expect(csvToBodies("")).toEqual([]);
+  });
+
+  it("skips columns with a blank header", () => {
+    const bodies = csvToBodies("name,,email\nDenise,ignored,denise@hotel.com");
+    expect(bodies).toEqual([{ name: "Denise", email: "denise@hotel.com" }]);
+  });
+
+  it("treats a row shorter than the header as blank for the missing trailing columns", () => {
+    const bodies = csvToBodies("name,email,company\nDenise,denise@hotel.com");
+    expect(bodies).toEqual([{ name: "Denise", email: "denise@hotel.com", company: "" }]);
   });
 });

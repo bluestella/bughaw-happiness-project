@@ -17,6 +17,10 @@ describe("amountNeeded", () => {
     expect(amountNeeded({ ...base, amountMode: "direct", amountNeeded: 2_000_000 })).toBe(2_000_000);
   });
 
+  it("falls back to 0 when the direct amount is falsy", () => {
+    expect(amountNeeded({ ...base, amountMode: "direct", amountNeeded: 0 })).toBe(0);
+  });
+
   it("derives from burn × runway target in burn mode", () => {
     expect(
       amountNeeded({ ...base, amountMode: "burn", monthlyBurn: 120_000, runwayTargetMonths: 18 })
@@ -190,5 +194,111 @@ describe("NaN & edge input guards", () => {
 
   it("amountNeeded: burn mode with zeros → 0 (not NaN)", () => {
     expect(amountNeeded({ ...base, amountMode: "burn", monthlyBurn: 0, runwayTargetMonths: 0 })).toBe(0);
+  });
+
+  it("computeEquity: NaN pre-money and NaN target % fall back to 0", () => {
+    const o = computeEquity(NaN, { ...base, preMoney: NaN, targetInvestorPct: NaN });
+    for (const k of Object.keys(o) as Array<keyof typeof o>) {
+      expect(Number.isNaN(o[k]), `o.${k} is NaN`).toBe(false);
+    }
+    // amount NaN -> safeAmount 0; preMoney NaN -> 0 -> postMoney 0 -> investorPct 0
+    expect(o.postMoney).toBe(0);
+    expect(o.investorPct).toBe(0);
+    // targetInvestorPct NaN -> pct 0 -> falls into the "pct <= 0" branch -> Infinity
+    expect(o.impliedPostMoney).toBe(Infinity);
+    expect(o.impliedPreMoney).toBe(Infinity);
+  });
+
+  it("computeSafe: NaN amount/cap/discount/nextRound fall back to 0 (not NaN)", () => {
+    const o = computeSafe(NaN, {
+      ...base,
+      valuationCap: NaN,
+      discountPct: NaN,
+      nextRoundPreMoney: NaN,
+    });
+    expect(Number.isNaN(o.discountBasis)).toBe(false);
+    expect(Number.isNaN(o.capBasis)).toBe(false);
+    expect(Number.isNaN(o.conversionPct)).toBe(false);
+    expect(o.conversionPct).toBe(0);
+  });
+
+  it("computeJv: NaN sweat/profit-split fall back to 0", () => {
+    const o = computeJv({
+      ...base,
+      ownCapital: 500_000,
+      partnerCapital: 500_000,
+      sweatEquityPct: NaN,
+      profitSplitOwnPct: NaN,
+      projectedAnnualProfit: 800_000,
+    });
+    expect(Number.isNaN(o.ownershipOwnPct)).toBe(false);
+    expect(o.ownershipOwnPct).toBeCloseTo(50); // 50% capital + 0 sweat
+    expect(o.ownProfitShare).toBe(0); // split falls back to 0%
+    expect(o.partnerProfitShare).toBe(800_000);
+  });
+
+  it("computeJv: sweat equity clamps ownership at 100%, never above", () => {
+    const o = computeJv({
+      ...base,
+      ownCapital: 1_000_000,
+      partnerCapital: 0,
+      sweatEquityPct: 50,
+      profitSplitOwnPct: 200, // clamps to 100
+      projectedAnnualProfit: 100_000,
+    });
+    expect(o.ownershipOwnPct).toBe(100);
+    expect(o.ownershipPartnerPct).toBe(0);
+    expect(o.ownProfitShare).toBe(100_000);
+    expect(o.partnerProfitShare).toBe(0);
+  });
+
+  it("computeJv: profitSplitOwnPct below 0 clamps to 0", () => {
+    const o = computeJv({ ...base, profitSplitOwnPct: -10, projectedAnnualProfit: 100_000 });
+    expect(o.ownProfitShare).toBe(0);
+    expect(o.partnerProfitShare).toBe(100_000);
+  });
+
+  it("computeJv: zero total capital defaults ownership split to 50/50", () => {
+    const o = computeJv({ ...base, ownCapital: 0, partnerCapital: 0, sweatEquityPct: 0 });
+    expect(o.ownershipOwnPct).toBe(50);
+    expect(o.ownershipPartnerPct).toBe(50);
+  });
+
+  it("computeLoan: NaN amount/rate/cash-flow fall back to 0 (not NaN)", () => {
+    const o = computeLoan(NaN, { ...base, annualInterestPct: NaN, monthlyCashFlow: NaN, termMonths: 12 });
+    expect(Number.isNaN(o.monthlyPayment)).toBe(false);
+    expect(o.monthlyPayment).toBe(0);
+    expect(o.totalInterest).toBe(0);
+  });
+
+  it("computeLoan: negative interest rate is clamped to 0", () => {
+    const o = computeLoan(1_000_000, { ...base, annualInterestPct: -5, termMonths: 12, monthlyCashFlow: 100_000 });
+    expect(o.monthlyPayment).toBeCloseTo(1_000_000 / 12);
+  });
+
+  it("computeLoan: zero monthly payment (zero amount) yields Infinity coverage ratio", () => {
+    const o = computeLoan(0, { ...base, annualInterestPct: 12, termMonths: 12, monthlyCashFlow: 50_000 });
+    expect(o.monthlyPayment).toBe(0);
+    expect(o.coverageRatio).toBe(Infinity);
+  });
+
+  it("computeJv: NaN own/partner capital fall back to 0 (not NaN)", () => {
+    const o = computeJv({ ...base, ownCapital: NaN, partnerCapital: NaN, projectedAnnualProfit: 100_000 });
+    expect(Number.isNaN(o.totalCapital)).toBe(false);
+    expect(o.totalCapital).toBe(0);
+    expect(o.ownershipOwnPct).toBe(60); // zero capital -> 50/50 capital split + 10 sweat equity
+  });
+
+  it("computeJv: NaN projected annual profit falls back to 0", () => {
+    const o = computeJv({ ...base, projectedAnnualProfit: NaN });
+    expect(Number.isNaN(o.ownProfitShare)).toBe(false);
+    expect(o.ownProfitShare).toBe(0);
+    expect(o.partnerProfitShare).toBe(0);
+  });
+
+  it("computeLoan: NaN term months falls back to 0, clamped to a 1-month minimum", () => {
+    const o = computeLoan(1_200_000, { ...base, annualInterestPct: 0, termMonths: NaN });
+    expect(Number.isNaN(o.monthlyPayment)).toBe(false);
+    expect(o.monthlyPayment).toBe(1_200_000); // n clamps to 1
   });
 });

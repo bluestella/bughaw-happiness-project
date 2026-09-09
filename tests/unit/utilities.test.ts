@@ -8,6 +8,7 @@ import {
 } from "@/lib/calculators/registry";
 import { TOOLS } from "@/lib/tools";
 import type { CategoryId } from "@/lib/calculators/types";
+import { LEAD_ROW_SELECT } from "@/app/(app)/crm/leadSelect";
 
 describe("cn classname helper", () => {
   it("joins string args", () => {
@@ -130,5 +131,13 @@ describe("tools nav registry", () => {
   it("tool paths are unique", () => {
     const paths = TOOLS.map((t) => t.path);
     expect(new Set(paths).size).toBe(paths.length);
+  });
+});
+
+describe("CRM lead row select", () => {
+  it("selects the joined contact and account columns", () => {
+    expect(LEAD_ROW_SELECT).toContain("crm_contacts");
+    expect(LEAD_ROW_SELECT).toContain("crm_accounts");
+    expect(LEAD_ROW_SELECT).toContain("id");
   });
 });
