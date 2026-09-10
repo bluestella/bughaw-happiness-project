@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserRole } from "@/utils/supabase/role";
@@ -5,6 +6,33 @@ import type { Task } from "@/lib/tasks";
 import { Board } from "./Board";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { projectId: string; miniProjectId: string };
+}): Promise<Metadata> {
+  const supabase = createClient();
+  const [{ data: miniProject }, { data: project }] = await Promise.all([
+    supabase
+      .from("mini_projects")
+      .select("id, project_id, name")
+      .eq("id", params.miniProjectId)
+      .eq("project_id", params.projectId)
+      .maybeSingle(),
+    supabase
+      .from("projects")
+      .select("id, name")
+      .eq("id", params.projectId)
+      .maybeSingle(),
+  ]);
+  const boardName = miniProject?.name ?? "Board";
+  const parentName = project?.name ?? "Project";
+  return {
+    title: `${boardName} · ${parentName}`,
+    description: `Kanban board for ${boardName} under the ${parentName} project.`,
+  };
+}
 
 export default async function MiniProjectPage({
   params,

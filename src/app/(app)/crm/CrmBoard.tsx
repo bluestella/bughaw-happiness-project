@@ -35,7 +35,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { TabBar } from "@/components/ui/tab-bar";
+import { TabBar, TabPanel } from "@/components/ui/tab-bar";
 import { LeadPanel } from "./LeadPanel";
 import { NewLeadForm } from "./NewLeadForm";
 
@@ -93,23 +93,37 @@ function LeadCard({
     disabled: !draggable,
   });
 
+  const accountName = lead.crm_accounts?.name || lead.crm_contacts?.full_name || "Unnamed lead";
+  const contactName = lead.crm_contacts?.full_name || lead.crm_contacts?.email;
+  const ariaLabel = contactName
+    ? `${accountName} — ${contactName}. Lead status: ${lead.status}.`
+    : `${accountName}. Lead status: ${lead.status}.`;
+
   return (
-    <div
+    <button
+      type="button"
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className={`rounded-lg border border-line bg-white p-3 shadow-card transition-colors [@media(hover:hover)]:hover:border-coir/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 ${
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && !attributes?.role) {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      aria-label={ariaLabel}
+      className={`w-full rounded-lg border border-line bg-white p-3 shadow-card text-left transition-colors [@media(hover:hover)]:hover:border-coir/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 bg-none ${
         isDragging ? "opacity-40" : ""
       } ${draggable ? "cursor-pointer" : "cursor-default"}`}
     >
-      <p className="text-[13px] font-medium leading-snug text-ink">
-        {lead.crm_accounts?.name || lead.crm_contacts?.full_name || "Unnamed lead"}
+      <p className="text-[13px] font-medium leading-snug text-ink group-hover:underline">
+        {accountName}
       </p>
       {lead.crm_contacts && (
         <p className="mt-0.5 truncate font-mono text-[10px] text-ink-soft">
-          {lead.crm_contacts.full_name || lead.crm_contacts.email}
+          {contactName}
         </p>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -127,7 +141,7 @@ function LeadCard({
           {lead.product_interests.join(" · ")}
         </p>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -386,6 +400,7 @@ export function CrmBoard({
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <TabBar
+          idBase="crm-view"
           tabs={[
             { id: "funnel" as const, label: "Funnel" },
             { id: "list" as const, label: "All leads" },
@@ -399,13 +414,12 @@ export function CrmBoard({
             <Download className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             Export CSV
           </Button>
-          <Link
-            href="/crm/import"
-            className="inline-flex items-center rounded-md border border-line bg-white px-3 py-1.5 text-[12px] font-semibold text-ink shadow-card transition-colors hover:border-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
-          >
-            <Upload className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Import
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/crm/import">
+              <Upload className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              Import
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -455,91 +469,111 @@ export function CrmBoard({
         </div>
       )}
 
-      {allLeads.length > 0 && tab === "funnel" && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-          onDragCancel={rollbackDrag}
-        >
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {LEAD_STATUSES.map((s) => (
-              <Column
-                key={s}
-                status={s}
-                leadIds={visibleColumns[s]}
-                leadsById={leadsById}
-                draggable={editable}
-                onOpenLead={setOpenLead}
-              />
-            ))}
-          </div>
-          <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" }}>
-            {activeLead ? (
-              <div className="rotate-2 rounded-lg border border-coir bg-white p-3 shadow-pop">
-                <p className="text-[13px] font-medium leading-snug text-ink">
-                  {activeLead.crm_accounts?.name || activeLead.crm_contacts?.full_name || "Lead"}
-                </p>
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      )}
-
-      {allLeads.length > 0 && tab === "list" && (
-        <div className="overflow-x-auto rounded-xl border border-line bg-white shadow-card">
-          <table className="w-full min-w-[52rem] text-left text-[13px]">
-            <thead>
-              <tr className="border-b border-line">
-                {["Submitted", "Account", "Contact", "Form", "Status", "Interests"].map((h) => (
-                  <th
-                    key={h}
-                    className="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-soft"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLeads.map((lead) => (
-                <tr
-                  key={lead.id}
-                  onClick={() => setOpenLead(lead)}
-                  className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-paper"
-                >
-                  <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] text-ink-soft">
-                    {new Date(lead.submitted_at).toLocaleDateString("en-PH")}
-                  </td>
-                  <td className="px-3 py-2 text-ink">{lead.crm_accounts?.name ?? "—"}</td>
-                  <td className="px-3 py-2 text-ink-soft">
-                    {lead.crm_contacts?.full_name || lead.crm_contacts?.email || "—"}
-                  </td>
-                  <td className="px-3 py-2 text-ink-soft">
-                    {ORIGIN_FORM_LABELS[lead.origin_form]}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={`rounded-full border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide ${
-                        STATUS_ACCENT[lead.status]
-                      }`}
-                    >
-                      {lead.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-ink-soft">
-                    {lead.product_interests.length > 0
-                      ? lead.product_interests.map(productLabel).join(", ")
-                      : lead.product_of_interest || "—"}
-                  </td>
-                </tr>
+      <TabPanel idBase="crm-view" value="funnel" current={tab}>
+        {allLeads.length > 0 && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+            onDragCancel={rollbackDrag}
+          >
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {LEAD_STATUSES.map((s) => (
+                <Column
+                  key={s}
+                  status={s}
+                  leadIds={visibleColumns[s]}
+                  leadsById={leadsById}
+                  draggable={editable}
+                  onOpenLead={setOpenLead}
+                />
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </div>
+            <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" }}>
+              {activeLead ? (
+                <div className="rotate-2 rounded-lg border border-coir bg-white p-3 shadow-pop">
+                  <p className="text-[13px] font-medium leading-snug text-ink">
+                    {activeLead.crm_accounts?.name || activeLead.crm_contacts?.full_name || "Lead"}
+                  </p>
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+      </TabPanel>
+
+      <TabPanel idBase="crm-view" value="list" current={tab}>
+        {allLeads.length > 0 && (
+          <div className="overflow-x-auto rounded-xl border border-line bg-white shadow-card">
+            <table className="w-full min-w-[52rem] text-left text-[13px]" aria-label="All leads list">
+              <thead>
+                <tr className="border-b border-line">
+                  {["Submitted", "Account", "Contact", "Form", "Status", "Interests"].map((h) => (
+                    <th
+                      key={h}
+                      scope="col"
+                      className="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-soft"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLeads.map((lead) => {
+                  const accountLabel = lead.crm_accounts?.name ?? "Unnamed lead";
+                  const contactLabel =
+                    lead.crm_contacts?.full_name || lead.crm_contacts?.email || "No contact";
+                  const rowLabel = `${accountLabel}, ${contactLabel}. Status: ${lead.status}. Open lead details.`;
+                  return (
+                    <tr
+                      key={lead.id}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={rowLabel}
+                      onClick={() => setOpenLead(lead)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setOpenLead(lead);
+                        }
+                      }}
+                      className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 focus-visible:bg-paper"
+                    >
+                      <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] text-ink-soft">
+                        {new Date(lead.submitted_at).toLocaleDateString("en-PH")}
+                      </td>
+                      <td className="px-3 py-2 text-ink">{lead.crm_accounts?.name ?? "—"}</td>
+                      <td className="px-3 py-2 text-ink-soft">
+                        {lead.crm_contacts?.full_name || lead.crm_contacts?.email || "—"}
+                      </td>
+                      <td className="px-3 py-2 text-ink-soft">
+                        {ORIGIN_FORM_LABELS[lead.origin_form]}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span
+                          className={`rounded-full border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide ${
+                            STATUS_ACCENT[lead.status]
+                          }`}
+                        >
+                          {lead.status}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-ink-soft">
+                        {lead.product_interests.length > 0
+                          ? lead.product_interests.map(productLabel).join(", ")
+                          : lead.product_of_interest || "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </TabPanel>
 
       {openLead && (
         <LeadPanel

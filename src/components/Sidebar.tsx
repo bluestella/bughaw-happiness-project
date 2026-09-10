@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { TOOLS } from "@/lib/tools";
 import { getIcon } from "@/lib/icons";
@@ -80,15 +80,31 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
   const pathname = usePathname();
   const close = () => setOpen(false);
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
+    const t = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
     return () => {
+      window.clearTimeout(t);
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
+  }, [open]);
+
+  useEffect(() => {
+    if (open) return;
+    const prev = triggerRef.current;
+    if (prev && document.activeElement && !document.body.contains(document.activeElement)) {
+      prev.focus();
+      return;
+    }
+    const t = window.setTimeout(() => triggerRef.current?.focus(), 10);
+    return () => window.clearTimeout(t);
   }, [open]);
 
   const nav = useMemo(() => {
@@ -168,9 +184,11 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
       {/* Mobile top app bar */}
       <header className="lg:hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-panel/90 px-4 backdrop-blur">
         <button
+          ref={triggerRef}
           onClick={() => setOpen(true)}
           aria-label="Open navigation"
           aria-expanded={open}
+          aria-controls="sidebar-drawer"
           className="-ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-ink transition-colors hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
         >
           <Menu className="h-5 w-5" aria-hidden />
@@ -189,6 +207,7 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
 
       {/* Drawer (mobile) / sidebar (desktop) */}
       <aside
+        id="sidebar-drawer"
         aria-label="Main navigation"
         className={`fixed lg:sticky top-0 z-50 lg:z-auto flex h-dvh lg:h-screen w-72 lg:w-64 shrink-0 flex-col border-r border-line bg-panel transition-transform duration-300 ease-out-strong motion-reduce:transition-none lg:translate-x-0 ${
           open ? "translate-x-0 shadow-pop lg:shadow-none" : "-translate-x-full"
@@ -197,6 +216,7 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4 lg:border-b-0 lg:pt-5 lg:pb-2">
           <Logo />
           <button
+            ref={closeBtnRef}
             onClick={close}
             aria-label="Close navigation"
             className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-paper hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"

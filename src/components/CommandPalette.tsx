@@ -156,10 +156,12 @@ export function CommandPalette({
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onListKeyDown}
                 placeholder="Search calculators, tools, and pages…"
+                aria-label="Search calculators, tools, and pages"
+                aria-controls="command-listbox"
                 className="w-full bg-transparent text-sm text-ink placeholder:text-ink-soft focus:outline-none"
               />
             </div>
-            <div role="listbox" className="max-h-[60vh] overflow-y-auto py-2">
+            <div id="command-listbox" role="listbox" className="max-h-[60vh] overflow-y-auto py-2">
               {filtered.length === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-ink-soft">No matches.</p>
               ) : (

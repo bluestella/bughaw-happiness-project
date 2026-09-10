@@ -1,9 +1,29 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserRole } from "@/utils/supabase/role";
 import { ProjectDetail } from "./ProjectDetail";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { projectId: string };
+}): Promise<Metadata> {
+  const supabase = createClient();
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, name")
+    .eq("id", params.projectId)
+    .maybeSingle();
+  return {
+    title: project ? `${project.name} · Projects` : "Project",
+    description: project
+      ? `Kanban boards and mini-projects for the ${project.name} project.`
+      : "Bughaw Suite project.",
+  };
+}
 
 export default async function ProjectPage({
   params,

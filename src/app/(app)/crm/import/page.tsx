@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Inbox } from "lucide-react";
@@ -8,6 +9,12 @@ import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { ImportClient } from "./ImportClient";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Import leads — CRM",
+  description:
+    "Backfill CRM leads from CSV or JSON exports. Existing contacts are reused rather than duplicated.",
+};
 
 export default async function CrmImportPage() {
   const supabase = createClient();

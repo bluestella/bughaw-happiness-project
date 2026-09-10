@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,12 @@ import { CrmBoard } from "./CrmBoard";
 import { LEAD_ROW_SELECT } from "./leadSelect";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Lead funnel — CRM",
+  description:
+    "Track hotel accounts and leads from the Bughaw Innovations marketing site through the sales pipeline.",
+};
 
 export default async function CrmPage() {
   const supabase = createClient();

@@ -3,7 +3,10 @@ import "./globals.css";
 import { AppToaster } from "@/components/AppToaster";
 
 export const metadata: Metadata = {
-  title: "Bughaw Suite",
+  title: {
+    default: "Bughaw Suite",
+    template: "%s · Bughaw Suite",
+  },
   description:
     "Internal operations platform for Bughaw Innovations — calculators, CRM, and task management in one place.",
   manifest: "/site.webmanifest",
@@ -22,7 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <div className="app-root">
+          <a href="#main-content" className="sr-only-focusable">
+            Skip to main content
+          </a>
           {children}
+          <div aria-live="polite" aria-atomic="true" className="sr-only" id="aria-live-announcer" />
           <AppToaster />
         </div>
       </body>

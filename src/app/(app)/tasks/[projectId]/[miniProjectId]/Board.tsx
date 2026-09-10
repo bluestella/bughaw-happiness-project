@@ -73,18 +73,33 @@ function TaskCard({
     disabled: !draggable,
   });
 
+  const ariaLabelParts = [task.title, `Priority: ${task.priority}`];
+  if (task.due_date) ariaLabelParts.push(`Due: ${task.due_date}`);
+  if (task.assignee_email) ariaLabelParts.push(`Assigned to: ${task.assignee_email}`);
+  ariaLabelParts.push(`Status: ${task.status}`);
+
   return (
-    <div
+    <button
+      type="button"
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className={`rounded-lg border border-line bg-white p-3 shadow-card cursor-pointer transition-colors [@media(hover:hover)]:hover:border-coir/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 ${
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && !attributes?.role) {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      aria-label={ariaLabelParts.join(". ")}
+      className={`w-full rounded-lg border border-line bg-white p-3 shadow-card text-left transition-colors [@media(hover:hover)]:hover:border-coir/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 bg-none ${
         isDragging ? "opacity-40" : ""
-      } ${draggable ? "" : "cursor-default"}`}
+      } ${draggable ? "cursor-pointer" : "cursor-default"}`}
     >
-      <p className="text-[13px] font-medium text-ink leading-snug">{task.title}</p>
+      <p className="text-[13px] font-medium text-ink leading-snug hover:underline hover:decoration-ink-soft hover:underline-offset-2">
+        {task.title}
+      </p>
       <div className="flex items-center gap-2 mt-2 flex-wrap">
         <span
           className={`font-mono text-[10px] px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${
@@ -102,7 +117,7 @@ function TaskCard({
           → {task.assignee_email}
         </p>
       )}
-    </div>
+    </button>
   );
 }
 

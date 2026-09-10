@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { SectionIntro } from "@/components/SectionIntro";
 import { CalculatorCatalog } from "@/components/CalculatorCatalog";
+
+export const metadata: Metadata = {
+  title: "Calculators",
+  description:
+    "Every unit-economics, go-to-market, product, and financial model for Bughaw Innovations.",
+};
 
 export default function CalculatorsPage() {
   return (

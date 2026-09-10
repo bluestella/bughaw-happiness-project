@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FolderKanban } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +8,12 @@ import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { NewProjectForm } from "./NewProjectForm";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Projects — Tasks",
+  description:
+    "Task management for Bughaw Innovations: projects, mini-projects, and kanban boards.",
+};
 
 export default async function TasksPage() {
   const supabase = createClient();

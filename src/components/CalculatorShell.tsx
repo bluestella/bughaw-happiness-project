@@ -178,41 +178,66 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
               className="rounded-xl border border-line bg-panel p-5 shadow-card"
             >
               <h2 className="mb-4 text-sm font-semibold text-ink">{group.title}</h2>
-              {group.fields.map((f) => (
-                <div key={f.id} className="mb-3.5 last:mb-0">
-                  <label className="mb-1 block text-xs font-medium text-ink-soft" htmlFor={f.id}>
-                    {f.label}
-                  </label>
-                  <div className="relative">
-                    {f.type === "currency" && (
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-soft">
-                        ₱
-                      </span>
-                    )}
-                    <input
-                      id={f.id}
-                      type="number"
-                      value={inputs[f.id] ?? 0}
-                      min={f.min}
-                      max={f.max}
-                      step={f.step ?? "any"}
-                      onChange={(e) => setField(f.id, e.target.value)}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      className={`w-full rounded-lg border border-line bg-white py-2 font-mono text-sm transition-colors focus:border-coir focus:outline-none focus:ring-2 focus:ring-coir/20 ${
-                        f.type === "currency" ? "pl-7 pr-3" : "px-3"
-                      } ${f.type === "percentage" ? "pr-8" : ""}`}
-                    />
-                    {f.type === "percentage" && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-soft">
-                        %
-                      </span>
+              {group.fields.map((f) => {
+                const prefixId = f.type === "currency" ? `${f.id}-prefix` : undefined;
+                const suffixId = f.type === "percentage" ? `${f.id}-suffix` : undefined;
+                const helpId = f.helpText ? `${f.id}-help` : undefined;
+                const describedBy = [prefixId, suffixId, helpId].filter(Boolean).join(" ") ||
+                  undefined;
+                return (
+                  <div key={f.id} className="mb-3.5 last:mb-0">
+                    <label className="mb-1 block text-xs font-medium text-ink-soft" htmlFor={f.id}>
+                      {f.label}
+                    </label>
+                    <div className="relative">
+                      {f.type === "currency" && (
+                        <span
+                          id={prefixId}
+                          aria-hidden="true"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-soft"
+                        >
+                          ₱
+                        </span>
+                      )}
+                      <input
+                        id={f.id}
+                        type="number"
+                        value={inputs[f.id] ?? 0}
+                        min={f.min}
+                        max={f.max}
+                        step={f.step ?? "any"}
+                        onChange={(e) => setField(f.id, e.target.value)}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        aria-label={
+                          f.type === "currency"
+                            ? `${f.label} in Philippine pesos`
+                            : f.type === "percentage"
+                              ? `${f.label} in percent`
+                              : undefined
+                        }
+                        aria-describedby={describedBy}
+                        className={`w-full rounded-lg border border-line bg-white py-2 font-mono text-sm transition-colors focus:border-coir focus:outline-none focus:ring-2 focus:ring-coir/20 ${
+                          f.type === "currency" ? "pl-7 pr-3" : "px-3"
+                        } ${f.type === "percentage" ? "pr-8" : ""}`}
+                      />
+                      {f.type === "percentage" && (
+                        <span
+                          id={suffixId}
+                          aria-hidden="true"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-soft"
+                        >
+                          %
+                        </span>
+                      )}
+                    </div>
+                    {f.helpText && (
+                      <p id={helpId} className="mt-1 text-[12px] leading-relaxed text-ink-soft">
+                        {f.helpText}
+                      </p>
                     )}
                   </div>
-                  {f.helpText && (
-                    <p className="mt-1 text-[11px] text-ink-soft">{f.helpText}</p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </section>
           ))}
 

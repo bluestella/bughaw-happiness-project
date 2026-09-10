@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { TabBar } from "@/components/ui/tab-bar";
+import { TabBar, TabPanel } from "@/components/ui/tab-bar";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -249,11 +249,12 @@ export default function PipelinePage() {
       />
 
       <TabBar
+        idBase="pipeline"
         className="mb-5"
         tabs={[
-          { id: "sim", label: "Simulator" },
-          { id: "econ", label: "Unit Economics" },
-          { id: "track", label: "Real Pipeline (source data)" },
+          { id: "sim" as const, label: "Simulator" },
+          { id: "econ" as const, label: "Unit Economics" },
+          { id: "track" as const, label: "Real Pipeline (source data)" },
         ] as const}
         value={tab}
         onChange={setTab}
@@ -266,7 +267,7 @@ export default function PipelinePage() {
         </div>
       ) : (
         <>
-          {tab === "sim" && (
+          <TabPanel idBase="pipeline" value="sim" current={tab}>
             <div>
               <div
                 className={`rounded-xl border px-5 py-4 mb-4 ${
@@ -450,12 +451,13 @@ export default function PipelinePage() {
                 real pipeline tab until you actually add them there.
               </p>
             </div>
-          )}
+          </TabPanel>
 
-          {tab === "econ" && (
+          <TabPanel idBase="pipeline" value="econ" current={tab}>
             <div>
               <div className="flex justify-between items-center flex-wrap gap-3 mb-5">
                 <TabBar
+                  idBase="pipeline-econ"
                   tabs={[
                     { id: "today", label: "Today (real)" },
                     { id: "projected", label: "Projected (Jul 24 scenario)" },
@@ -542,9 +544,9 @@ export default function PipelinePage() {
                 </div>
               </div>
             </div>
-          )}
+          </TabPanel>
 
-          {tab === "track" && (
+          <TabPanel idBase="pipeline" value="track" current={tab}>
             <div>
               <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
                 <Button intent="primary" size="sm" onClick={() => openModal(null)}>
@@ -630,7 +632,7 @@ export default function PipelinePage() {
                 )}
               </div>
             </div>
-          )}
+          </TabPanel>
         </>
       )}
 

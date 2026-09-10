@@ -36,6 +36,16 @@ function LoginForm() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const emailInvalid = Boolean(error && error.toLowerCase().includes("email"));
+  const passwordInvalid = Boolean(error && error.toLowerCase().includes("password"));
+  const anyFieldInvalid = Boolean(error);
+  const errorMsgId = "login-form-error";
+  const noticeMsgId = "login-form-notice";
+
+  function describedBy(...ids: (string | false | null | undefined)[]) {
+    return ids.filter(Boolean).join(" ") || undefined;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -47,7 +57,9 @@ function LoginForm() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         console.warn("[auth] signin failed", error.status);
-        setError("Invalid email or password.");
+        setError(
+          "Invalid email or password. If you forgot your password, ask a Bughaw admin to reset it for you."
+        );
       } else {
         router.replace(next);
         router.refresh();
@@ -122,6 +134,7 @@ function LoginForm() {
           <form
             onSubmit={handleSubmit}
             className="space-y-4 rounded-xl border border-line bg-panel p-6 shadow-card"
+            aria-describedby={describedBy(error && errorMsgId, notice && noticeMsgId)}
           >
             <div>
               <label className="block text-xs text-ink-soft mb-1.5" htmlFor="email">
@@ -133,6 +146,8 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={emailInvalid || anyFieldInvalid || undefined}
+                aria-describedby={describedBy(error && errorMsgId)}
                 className="w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20"
               />
             </div>
@@ -147,19 +162,35 @@ function LoginForm() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={passwordInvalid || anyFieldInvalid || undefined}
+                aria-describedby={describedBy(error && errorMsgId)}
                 className="w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:border-coir focus:ring-2 focus:ring-coir/20"
               />
             </div>
 
-            {error && <p className="text-sm text-danger">{error}</p>}
-            {notice && <p className="text-sm text-coir-dark">{notice}</p>}
+            {error && (
+              <p id={errorMsgId} role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            )}
+            {notice && (
+              <p id={noticeMsgId} role="status" className="text-sm text-coir-dark">
+                {notice}
+              </p>
+            )}
 
             <button
               type="submit"
               disabled={busy}
               className="w-full rounded-lg bg-coir py-2.5 text-sm font-semibold text-white shadow-card transition-colors duration-150 hover:bg-coir-dark disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40"
             >
-              {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+              {busy
+                ? mode === "signin"
+                  ? "Signing in…"
+                  : "Creating account…"
+                : mode === "signin"
+                  ? "Sign in"
+                  : "Create account"}
             </button>
 
             <button

@@ -5,7 +5,7 @@ import { Handshake, RotateCcw } from "lucide-react";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { Button } from "@/components/ui/button";
 import { InfoTip } from "@/components/ui/tooltip";
-import { TabBar } from "@/components/ui/tab-bar";
+import { TabBar, TabPanel } from "@/components/ui/tab-bar";
 import { formatValue, peso, pesoRound } from "@/lib/format";
 import {
   amountNeeded,
@@ -278,9 +278,9 @@ export default function FundingPage() {
         </div>
       </div>
 
-      <TabBar className="mb-5" tabs={TABS} value={tab} onChange={setTab} />
+      <TabBar idBase="funding" className="mb-5" tabs={TABS} value={tab} onChange={setTab} />
 
-      {tab === "equity" && (
+      <TabPanel idBase="funding" value="equity" current={tab}>
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
           <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <div className="flex gap-2 mb-4">
@@ -368,9 +368,9 @@ export default function FundingPage() {
             />
           </div>
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "safe" && (
+      <TabPanel idBase="funding" value="safe" current={tab}>
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
           <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <NumField
@@ -426,9 +426,9 @@ export default function FundingPage() {
             </p>
           </div>
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "jv" && (
+      <TabPanel idBase="funding" value="jv" current={tab}>
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
           <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <NumField
@@ -506,9 +506,9 @@ export default function FundingPage() {
             </div>
           </div>
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "loan" && (
+      <TabPanel idBase="funding" value="loan" current={tab}>
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
           <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
             <NumField
@@ -546,9 +546,9 @@ export default function FundingPage() {
             <VerdictBanner tone={loanVerdict.tone} text={loanVerdict.text} />
           </div>
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "compare" && (
+      <TabPanel idBase="funding" value="compare" current={tab}>
         <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
           <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
             Same {pesoRound(amount)} need, four ways to fund it
@@ -589,7 +589,7 @@ export default function FundingPage() {
             &ldquo;cheapest&rdquo; answer, only the trade-off that fits.
           </p>
         </div>
-      )}
+      </TabPanel>
     </div>
   );
 }

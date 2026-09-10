@@ -80,3 +80,37 @@ input[inputmode="decimal"]::-webkit-inner-spin-button {
     transition: none;
   }
 }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background-color: #ffffff;
+  border: 2px solid #20699F;
+  border-radius: 0.5rem;
+  color: #241F1A;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 10px 38px -10px rgb(15 23 42 / 0.28), 0 10px 20px -15px rgb(15 23 42 / 0.2);
+}

@@ -27,6 +27,10 @@ export default function SavedPage() {
   const [pendingDelete, setPendingDelete] = useState<SavedRow | null>(null);
 
   useEffect(() => {
+    document.title = "Saved calculations · Bughaw Suite";
+  }, []);
+
+  useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("saved_calculations")
@@ -95,12 +99,9 @@ export default function SavedPage() {
                   </div>
                   <div className="flex gap-2">
                     {config && (
-                      <Link
-                        href={calculatorPath(config)}
-                        className="rounded-md border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-card transition-colors hover:border-ink-soft"
-                      >
-                        Open calculator
-                      </Link>
+                      <Button asChild size="sm">
+                        <Link href={calculatorPath(config)}>Open calculator</Link>
+                      </Button>
                     )}
                     <Button intent="danger" size="sm" onClick={() => setPendingDelete(r)}>
                       Delete

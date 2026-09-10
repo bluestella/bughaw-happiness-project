@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, FolderKanban, Target } from "lucide-react";
 import { TOOLS } from "@/lib/tools";
 import { getIcon } from "@/lib/icons";
 import { FeaturedCard } from "@/components/ui/card";
 import { SectionIntro } from "@/components/SectionIntro";
+import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description:
+    "Calculators, CRM, and task management for running Bughaw Innovations operations.",
+};
 
 export default function Dashboard() {
   const [primary, ...rest] = TOOLS;
@@ -58,13 +66,12 @@ export default function Dashboard() {
           title="Every calculator"
           blurb="Unit economics, go-to-market, product, and financial models — searchable by name or category."
           action={
-            <Link
-              href="/calculators"
-              className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-xs font-semibold text-ink shadow-card transition-colors hover:border-coir hover:text-coir-dark"
-            >
-              Browse all
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-            </Link>
+            <Button asChild size="sm">
+              <Link href="/calculators">
+                Browse all
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              </Link>
+            </Button>
           }
         />
       </section>

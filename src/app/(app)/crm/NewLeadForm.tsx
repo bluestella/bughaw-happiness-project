@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useMemo, useState } from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { Plus } from "lucide-react";
@@ -47,19 +48,41 @@ const EMPTY: Record<string, string> = {
 
 function Field({
   label,
+  htmlFor,
   error,
+  errorId,
   children,
 }: {
   label: string;
+  htmlFor: string;
   error?: string;
+  errorId?: string;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="font-mono text-[10px] uppercase tracking-wide text-ink-soft">{label}</span>
-      {children}
-      {error && <span className="mt-0.5 block text-[11px] text-danger">{error}</span>}
-    </label>
+    <div className="block">
+      <label
+        htmlFor={htmlFor}
+        className="block font-mono text-[10px] uppercase tracking-wide text-ink-soft"
+      >
+        {label}
+      </label>
+      {React.Children.map(children, (child) => {
+        if (!React.isValidElement(child)) return child;
+        const extra: Record<string, string | boolean | undefined> = {};
+        if (error) {
+          extra["aria-invalid"] = true;
+          extra["aria-describedby"] = errorId;
+        }
+        if (!child.props.id) extra.id = htmlFor;
+        return React.cloneElement(child as React.ReactElement<any>, extra);
+      })}
+      {error && (
+        <span id={errorId} role="alert" className="mt-0.5 block text-[11px] text-danger">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -140,8 +163,9 @@ export function NewLeadForm({ onCreated }: { onCreated: (lead: CrmLeadRow) => vo
             </div>
 
             <form onSubmit={submit} className="space-y-3 p-5">
-              <Field label="Submission type">
+              <Field htmlFor="nl-form" label="Submission type">
                 <Select
+                  id="nl-form"
                   value={form}
                   onChange={(e) => {
                     setForm(e.target.value as SubmissionForm);
@@ -158,24 +182,26 @@ export function NewLeadForm({ onCreated }: { onCreated: (lead: CrmLeadRow) => vo
 
               {form === "contact" && (
                 <>
-                  <Field label="Full name *" error={errors.name}>
-                    <Input value={values.name} onChange={(e) => set("name", e.target.value)} />
+                  <Field htmlFor="nl-name" label="Full name *" error={errors.name} errorId="nl-name-err">
+                    <Input id="nl-name" value={values.name} onChange={(e) => set("name", e.target.value)} />
                   </Field>
-                  <Field label="Email address *" error={errors.email}>
+                  <Field htmlFor="nl-email" label="Email address *" error={errors.email} errorId="nl-email-err">
                     <Input
+                      id="nl-email"
                       type="email"
                       value={values.email}
                       onChange={(e) => set("email", e.target.value)}
                     />
                   </Field>
-                  <Field label="Company / organisation *" error={errors.company}>
-                    <Input value={values.company} onChange={(e) => set("company", e.target.value)} />
+                  <Field htmlFor="nl-company" label="Company / organisation *" error={errors.company} errorId="nl-company-err">
+                    <Input id="nl-company" value={values.company} onChange={(e) => set("company", e.target.value)} />
                   </Field>
-                  <Field label="Their role *" error={errors.role}>
-                    <Input value={values.role} onChange={(e) => set("role", e.target.value)} />
+                  <Field htmlFor="nl-role" label="Their role *" error={errors.role} errorId="nl-role-err">
+                    <Input id="nl-role" value={values.role} onChange={(e) => set("role", e.target.value)} />
                   </Field>
-                  <Field label="Message *" error={errors.message}>
+                  <Field htmlFor="nl-message" label="Message *" error={errors.message} errorId="nl-message-err">
                     <Textarea
+                      id="nl-message"
                       rows={4}
                       value={values.message}
                       onChange={(e) => set("message", e.target.value)}
@@ -186,28 +212,32 @@ export function NewLeadForm({ onCreated }: { onCreated: (lead: CrmLeadRow) => vo
 
               {form === "for_hotels" && (
                 <>
-                  <Field label="Full name *" error={errors.fullName}>
+                  <Field htmlFor="nl-fullname" label="Full name *" error={errors.fullName} errorId="nl-fullname-err">
                     <Input
+                      id="nl-fullname"
                       value={values.fullName}
                       onChange={(e) => set("fullName", e.target.value)}
                     />
                   </Field>
-                  <Field label="Email address *" error={errors.email}>
+                  <Field htmlFor="nl-email-htl" label="Email address *" error={errors.email} errorId="nl-email-htl-err">
                     <Input
+                      id="nl-email-htl"
                       type="email"
                       value={values.email}
                       onChange={(e) => set("email", e.target.value)}
                     />
                   </Field>
-                  <Field label="Hotel / property name *" error={errors.hotelName}>
+                  <Field htmlFor="nl-hotel" label="Hotel / property name *" error={errors.hotelName} errorId="nl-hotel-err">
                     <Input
+                      id="nl-hotel"
                       value={values.hotelName}
                       onChange={(e) => set("hotelName", e.target.value)}
                     />
                   </Field>
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="DOT star rating" error={errors.starRating}>
+                    <Field htmlFor="nl-stars" label="DOT star rating" error={errors.starRating} errorId="nl-stars-err">
                       <Select
+                        id="nl-stars"
                         value={values.starRating}
                         onChange={(e) => set("starRating", e.target.value)}
                       >
@@ -217,8 +247,9 @@ export function NewLeadForm({ onCreated }: { onCreated: (lead: CrmLeadRow) => vo
                         ))}
                       </Select>
                     </Field>
-                    <Field label="Approximate room count" error={errors.roomCount}>
+                    <Field htmlFor="nl-rooms" label="Approximate room count" error={errors.roomCount} errorId="nl-rooms-err">
                       <Select
+                        id="nl-rooms"
                         value={values.roomCount}
                         onChange={(e) => set("roomCount", e.target.value)}
                       >
@@ -253,16 +284,17 @@ export function NewLeadForm({ onCreated }: { onCreated: (lead: CrmLeadRow) => vo
                       ))}
                     </div>
                   </fieldset>
-                  <Field label="How did they hear about us?" error={errors.source}>
-                    <Select value={values.source} onChange={(e) => set("source", e.target.value)}>
+                  <Field htmlFor="nl-source" label="How did they hear about us?" error={errors.source} errorId="nl-source-err">
+                    <Select id="nl-source" value={values.source} onChange={(e) => set("source", e.target.value)}>
                       <option value="">Select a source</option>
                       {SOURCES.map((s) => (
                         <option key={s}>{s}</option>
                       ))}
                     </Select>
                   </Field>
-                  <Field label="Message" error={errors.message}>
+                  <Field htmlFor="nl-message-htl" label="Message" error={errors.message} errorId="nl-message-htl-err">
                     <Textarea
+                      id="nl-message-htl"
                       rows={3}
                       value={values.message}
                       onChange={(e) => set("message", e.target.value)}
@@ -273,27 +305,30 @@ export function NewLeadForm({ onCreated }: { onCreated: (lead: CrmLeadRow) => vo
 
               {form === "inquiry" && (
                 <>
-                  <Field label="Company name *" error={errors.name}>
-                    <Input value={values.name} onChange={(e) => set("name", e.target.value)} />
+                  <Field htmlFor="nl-name-inq" label="Company name *" error={errors.name} errorId="nl-name-inq-err">
+                    <Input id="nl-name-inq" value={values.name} onChange={(e) => set("name", e.target.value)} />
                   </Field>
-                  <Field label="Email address *" error={errors.email}>
+                  <Field htmlFor="nl-email-inq" label="Email address *" error={errors.email} errorId="nl-email-inq-err">
                     <Input
+                      id="nl-email-inq"
                       type="email"
                       value={values.email}
                       onChange={(e) => set("email", e.target.value)}
                     />
                   </Field>
-                  <Field label="Product interest *" error={errors.product}>
-                    <Input value={values.product} onChange={(e) => set("product", e.target.value)} />
+                  <Field htmlFor="nl-product" label="Product interest *" error={errors.product} errorId="nl-product-err">
+                    <Input id="nl-product" value={values.product} onChange={(e) => set("product", e.target.value)} />
                   </Field>
-                  <Field label="Estimated volume *" error={errors.quantity}>
+                  <Field htmlFor="nl-quantity" label="Estimated volume *" error={errors.quantity} errorId="nl-quantity-err">
                     <Input
+                      id="nl-quantity"
                       value={values.quantity}
                       onChange={(e) => set("quantity", e.target.value)}
                     />
                   </Field>
-                  <Field label="Additional information" error={errors.additionalInfo}>
+                  <Field htmlFor="nl-addl" label="Additional information" error={errors.additionalInfo} errorId="nl-addl-err">
                     <Textarea
+                      id="nl-addl"
                       rows={3}
                       value={values.additionalInfo}
                       onChange={(e) => set("additionalInfo", e.target.value)}
