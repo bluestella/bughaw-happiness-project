@@ -69,3 +69,9 @@ export function canEditLead(role: Role | null): boolean {
 export function canDeleteLead(role: Role | null): boolean {
   return role === "super_admin";
 }
+
+// public.allowed_emails — managed only via the admin_* RPCs in
+// 0007_manage_allowlist.sql, which enforce super_admin server-side too.
+export function canManageAllowlist(role: Role | null): boolean {
+  return role === "super_admin";
+}

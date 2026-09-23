@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { TOOLS } from "@/lib/tools";
 import { getIcon } from "@/lib/icons";
-import { canAccessCalculators, canAccessCrm, type Role } from "@/lib/permissions";
+import { canAccessCalculators, canAccessCrm, canManageAllowlist, type Role } from "@/lib/permissions";
 import { CommandPalette } from "@/components/CommandPalette";
 
 function NavLink({
@@ -77,6 +77,7 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
   const [open, setOpen] = useState(false);
   const showCalculators = canAccessCalculators(role);
   const showCrm = canAccessCrm(role);
+  const showAdmin = canManageAllowlist(role);
   const pathname = usePathname();
   const close = () => setOpen(false);
 
@@ -173,11 +174,20 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
               ))}
             </>
           )}
+
+          {showAdmin && (
+            <>
+              <SectionLabel>Admin</SectionLabel>
+              <NavLink href="/admin/allowlist" iconKey="shield-check" onNavigate={onNavigate} pathname={pathname}>
+                Allowlist
+              </NavLink>
+            </>
+          )}
         </nav>
       );
     }
     return renderNav;
-  }, [showCalculators, showCrm, pathname]);
+  }, [showCalculators, showCrm, showAdmin, pathname]);
 
   return (
     <>

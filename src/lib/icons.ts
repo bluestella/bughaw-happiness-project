@@ -15,6 +15,7 @@ import {
   Repeat,
   Route,
   Scale,
+  ShieldCheck,
   SlidersHorizontal,
   Tag,
   Target,
@@ -54,6 +55,7 @@ export const ICONS = {
   wallet: Wallet,
   tag: Tag,
   timer: Timer,
+  "shield-check": ShieldCheck,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconKey = keyof typeof ICONS;
