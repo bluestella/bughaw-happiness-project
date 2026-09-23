@@ -10,6 +10,7 @@ import {
   canDeleteProjectOrMiniProject,
   canEditLead,
   canEditOrDeleteTask,
+  canManageAllowlist,
   canRemoveContributor,
   type Role,
 } from "@/lib/permissions";
@@ -82,6 +83,12 @@ describe("role capability matrix", () => {
     {
       fn: canDeleteLead,
       name: "canDeleteLead",
+      expected: { super_admin: true, member: false, contractor: false },
+      nullExpected: false,
+    },
+    {
+      fn: canManageAllowlist,
+      name: "canManageAllowlist",
       expected: { super_admin: true, member: false, contractor: false },
       nullExpected: false,
     },
