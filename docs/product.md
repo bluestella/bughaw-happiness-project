@@ -11,8 +11,9 @@ team plus external contractors. This app is the **single internal workbench** fo
 all of that — replacing a scatter of standalone HTML artifacts (still in the repo
 root as frozen reference).
 
-All financial figures are **PHP (₱)**. The app is internal and invite-only; there is
-no public/marketing surface and none is planned without an explicit decision.
+All financial figures are **PHP (₱)**. The app is internal and invite-only. The one
+explicitly decided exception (Oct 2026) is the public digital business card at
+`/c/<token>` — see [digital-cards.md](digital-cards.md).
 
 ## 2. Users & roles
 
@@ -45,6 +46,13 @@ route-level; see [security.md](security.md) §5.1 for the enforcement caveat.)
   Won/Lost) with an append-only activity log, notes, CSV export, manual entry, CSV
   import, and one-click promotion into the Pipeline Simulator. Intake is a
   secret-authenticated endpoint the marketing site mirrors submissions to.
+
+**Outreach**
+- Digital business cards (`/admin/cards`, super_admin only): branded cards with
+  link, QR, NFC, email-signature and `.vcf` sharing, Apple/Google Wallet passes
+  (dormant until keys are configured), and counts-only analytics. Published cards
+  are public at `/c/<random token>`. Plan and decisions:
+  [digital-cards.md](digital-cards.md).
 
 **Execution**
 - Projects → mini-projects → kanban boards (To Do / In Progress / Done), priorities,

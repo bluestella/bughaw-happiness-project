@@ -16,6 +16,7 @@ import {
   Route,
   Scale,
   ShieldCheck,
+  IdCard,
   SlidersHorizontal,
   Tag,
   Target,
@@ -56,6 +57,7 @@ export const ICONS = {
   tag: Tag,
   timer: Timer,
   "shield-check": ShieldCheck,
+  "id-card": IdCard,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconKey = keyof typeof ICONS;

@@ -11,6 +11,7 @@ first. Deeper detail lives in the child docs under [`docs/`](docs/):
 | [docs/testing.md](docs/testing.md) | Test strategy, what to test, how to run |
 | [docs/design-system.md](docs/design-system.md) | Colors, typography, component patterns, UX rules |
 | [docs/product.md](docs/product.md) | What the app is for, users, roles, feature inventory, roadmap |
+| [docs/digital-cards.md](docs/digital-cards.md) | Digital business cards: plan, decisions, public-layer security, analytics |
 
 ---
 
@@ -29,7 +30,9 @@ selling sustainable coconut-coir slippers/amenities to hotels). Two halves:
    every CRM column lives in [`FORMS_AUDIT.md`](FORMS_AUDIT.md).
 
 **Login is required for the entire app.** Signups are invite-only via a DB allowlist.
-There is no public surface beyond `/login` and `/auth/*`.
+The only public surfaces are `/login`, `/auth/*`, the secret-authed CRM ingest, and
+**published digital business cards at `/c/<token>`**, which read through one
+security-definer RPC and no table ([docs/digital-cards.md](docs/digital-cards.md)).
 
 ## 2. Tech stack
 
@@ -69,6 +72,8 @@ src/
         leadSelect.ts           # Shared column list behind CrmLeadRow
         import/                 # CSV / JSON import with a dry-run preview
     api/crm/ingest/route.ts     # Lead intake from the marketing site (secret-authed)
+    (app)/admin/cards/          # super_admin: card editor, share kit, analytics
+    c/[token]/                  # PUBLIC digital card (+ vcard/, event/, wallet/)
   components/
     Sidebar.tsx                 # Role-aware nav (hides calculators from contractors)
     CalculatorShell.tsx         # Renders ANY calculator config (form/outputs/chart/export)
@@ -81,6 +86,8 @@ src/
     tasks.ts                    # Task types + fractional-position ordering math
     crm.ts                      # CRM vocabulary, validation, normalization, CSV (pure)
     crmClient.ts                # Browser write path for manual entry + import (dedupe)
+    cards.ts                    # Digital cards: validation, vCard, signature, analytics (pure)
+    wallet.ts                   # Apple/Google Wallet signing (SERVER-ONLY, env secrets)
     pnl.ts                      # P&L Machine formula (pure)
     format.ts                   # ₱ / % / ratio / months formatters
     useAppState.ts              # Shared team JSONB state hook (debounced upsert)
@@ -93,7 +100,10 @@ supabase/migrations/
   0001_init.sql                 # Allowlist, signup trigger, workspace tables, RLS
   0002_task_management.sql      # Roles, task tables, security-definer fns, RLS
   0003_crm.sql                  # CRM tables, RLS, ingest_form_submission()
-tests/unit/                     # calculators.test.ts, permissions.test.ts, crm.test.ts
+  0004–0007                     # Calculator RLS, hardening, team directory, allowlist admin
+  0008_fix_admin_role_checks.sql  # SECURITY: null-safe admin guards, revoke anon EXECUTE
+  0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
+tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
 .github/workflows/ci.yml        # lint → test → build
 *.html (repo root)              # Original artifacts, kept for reference ONLY — do not edit
 implementation.md               # Historical plan (partially superseded; this doc wins)
@@ -124,6 +134,7 @@ service role can touch it):
 | Create mini-projects | ✅ | ✅ (with project access) | ❌ |
 | Add contributors | ✅ | ✅ | ❌ |
 | Remove contributors | ✅ | ❌ | ❌ |
+| Manage digital cards + card analytics | ✅ | ❌ | ❌ |
 | Create tasks | ✅ | ✅ | ✅ (with board access) |
 | Edit/delete tasks | ✅ all | ✅ all (in scope) | only own tasks |
 | See projects | all | contributor-only | contributor-only |
@@ -204,8 +215,8 @@ npm run lint
 npm run build      # works with placeholder env vars (CI does this)
 ```
 
-Supabase setup: run `supabase/migrations/0001_init.sql`, then
-`0002_task_management.sql`, then `0003_crm.sql` in the SQL editor (0003 has an
+Supabase setup: run every file in `supabase/migrations/` in numeric order
+(`0001_init.sql` … `0009_digital_cards.sql`) in the SQL editor (0003 has an
 ACTION REQUIRED header: insert an ingest secret before the marketing site can post
 leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.

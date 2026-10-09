@@ -3,8 +3,11 @@ import { createClient } from "@/utils/supabase/middleware";
 
 // /api/crm/ingest authenticates with a shared secret checked inside Postgres,
 // not with a user session — see supabase/migrations/0003_crm.sql.
+// /c/<token> is the public digital business card. It can only reach the
+// get_public_card / record_card_event RPCs (0009_digital_cards.sql).
 const PUBLIC_EXACT = ["/login", "/api/crm/ingest"] as const;
-const PUBLIC_PREFIXES = ["/auth/"] as const;
+const PUBLIC_PREFIXES = ["/auth/", "/c/"] as const;
+const PUBLIC_CARD_PREFIX = "/c/";
 const CALCULATOR_PREFIXES = ["/calculators/", "/tools/", "/saved/", "/crm/"] as const;
 const CALCULATOR_EXACT = ["/", "/calculators", "/tools", "/saved", "/crm"] as const;
 
@@ -56,6 +59,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (matchesPublic(pathname) && pathname !== "/login") {
+    if (pathname.startsWith(PUBLIC_CARD_PREFIX)) {
+      // Cards are shared by link/QR, never discovered via search engines.
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
     return applySecurityHeaders(response);
   }
 
