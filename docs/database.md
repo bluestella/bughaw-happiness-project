@@ -70,6 +70,9 @@ All `created_by_email` / `added_by_email` / `author_email` columns default to
   phone + `show_phone`/`phone_on_viber`, social URLs, company blurb, CTA).
   Check constraints enforce https-only URLs, a phone character whitelist and length
   caps. A trigger owns `updated_at` and pins `created_by_*` on update.
+- `business_cards.qr_style` (0010) — jsonb QR *look* only: `theme`, `rounded`, `logo`,
+  `sunRing`, `logoSize` (12–28). A check constraint allows no other keys or types.
+  `get_public_card()` returns it. The QR content is never stored.
 - `business_card_events` — append-only analytics: `card_id` (cascade delete),
   `event`, `target` (clicks only), `source` (`link`/`qr`/`nfc`/`email`), `device`,
   `occurred_at`. No IP or visitor identifier, by design.

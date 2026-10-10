@@ -5,6 +5,8 @@
 // The vocabularies below MIRROR the check constraints and record_card_event()
 // in supabase/migrations/0009_digital_cards.sql — change the SQL first.
 
+import { DEFAULT_QR_STYLE, normalizeQrStyle, type QrStyle } from "@/lib/qrStyle";
+
 export const COMPANY_NAME = "Bughaw Innovations";
 export const COMPANY_WEBSITE = "https://bughawinnovations.ph";
 
@@ -86,6 +88,7 @@ export type BusinessCard = {
   company_blurb: string;
   cta_label: string;
   cta_url: string;
+  qr_style: QrStyle;
   created_by_email: string;
   created_at: string;
   updated_at: string;
@@ -108,6 +111,8 @@ export type PublicCard = {
   company_blurb: string;
   cta_label: string;
   cta_url: string;
+  /** Display style only (migration 0010). */
+  qr_style: QrStyle;
 };
 
 export type CardDraft = Omit<
@@ -134,6 +139,7 @@ export function emptyCardDraft(): CardDraft {
     company_blurb: DEFAULT_COMPANY_BLURB,
     cta_label: DEFAULT_CTA_LABEL,
     cta_url: DEFAULT_CTA_URL,
+    qr_style: { ...DEFAULT_QR_STYLE },
   };
 }
 
@@ -155,6 +161,7 @@ export function toPublicCard(draft: CardDraft, token = "preview00000"): PublicCa
     company_blurb: draft.company_blurb,
     cta_label: draft.cta_label,
     cta_url: draft.cta_url,
+    qr_style: normalizeQrStyle(draft.qr_style),
   };
 }
 
@@ -244,6 +251,7 @@ export function normalizeCard(draft: CardDraft): CardDraft {
     company_blurb: draft.company_blurb.trim(),
     cta_label: draft.cta_label.trim(),
     cta_url: draft.cta_url.trim(),
+    qr_style: normalizeQrStyle(draft.qr_style),
   };
 }
 

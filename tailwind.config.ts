@@ -37,6 +37,8 @@ const config: Config = {
         sky: "#3DAEE0", // headings on dark, display sizes only
         bgreen: "#6EA92F", // markers/icons on dark — never text on Deep Green
         mist: "#E8E8E8", // brand Light Grey — body text on Deep Green / ink (6.6:1+)
+        leaf: "#4C8B32", // Bughaw Green — outcome colour; QR "Dawn" gradient start
+        frost: "#F4F6F5", // light ground behind the QR card (public card page)
       },
       fontFamily: {
         // Fraunces (variable, optical-size aware) for headings and big numbers;

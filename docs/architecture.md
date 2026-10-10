@@ -154,13 +154,14 @@ a rule changes in exactly one place. The ingest route is the only entry in
 
 - **Admin** (`src/app/(app)/admin/cards/`): server page loads all cards and a
   90-day `admin_card_event_rollup`, then `CardsAdmin` (tabs *Cards* /
-  *Analytics*) → `CardEditor` (form + live preview) + `ShareKit` (link, QR
-  SVG/PNG via `qrcode`, NFC URL, email signature, rotate, delete) and
+  *Analytics*) → `CardEditor` (form + live preview) + `ShareKit` (card
+  link, NFC URL, email signature, rotate, delete), `QrDesigner` (styled QR: theme,
+  dots, logo, sun ring, size; PNG export, .vcf, Copy vCard) and
   `CardAnalytics` (stat tiles, ECharts daily bars, breakdowns, per-card table).
 - **Public** (`src/app/c/[token]/`): server-rendered, outside the `(app)` layout.
   `data.ts` wraps the two RPCs (`getPublicCard` is `cache()`d per request).
-  `PublicCardView` (`src/components/cards/`) is presentational and shared with the
-  admin preview. `CardClickTracker` sends click beacons. `vcard/`, `event/`,
+  `PublicCardView`, `StyledQr` and `CardParts` (`src/components/cards/`) are
+  presentational and shared with the admin preview and designer. `CardClickTracker` sends click beacons. `vcard/`, `event/`,
   `wallet/{apple,google}/` are route handlers.
 - **Pure logic** lives in `src/lib/cards.ts` (validation, vCard, signature HTML,
   UA parsing, analytics rollup) and `src/lib/wallet.ts` (server-only signing),

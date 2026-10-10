@@ -1,48 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import QRCode from "qrcode";
-import { Copy, Download, ExternalLink, Nfc, RotateCcw, Signature, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Nfc, RotateCcw, Signature, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  COMPANY_NAME,
-  buildEmailSignatureHtml,
-  cardUrl,
-  vcardFileName,
-  type BusinessCard,
-} from "@/lib/cards";
-
-// QR in Bughaw dark blue on white — high contrast for reliable scanning.
-const QR_DARK = "#17517D";
-const QR_LIGHT = "#FFFFFF";
-
-/** Public base URL: NEXT_PUBLIC_SITE_URL when it is a real https origin, else this tab's origin. */
-function shareBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
-  if (configured && configured.startsWith("https://")) return configured;
-  return typeof window === "undefined" ? "" : window.location.origin;
-}
-
-function downloadBlob(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-async function copyText(value: string, label: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.success(`${label} copied.`);
-  } catch {
-    toast.error("Copy failed — select the text and copy it manually.");
-  }
-}
+import { COMPANY_NAME, buildEmailSignatureHtml, cardUrl, type BusinessCard } from "@/lib/cards";
+import { copyText, shareBaseUrl } from "./shareUtils";
 
 function Row({
   icon: Icon,
@@ -82,42 +47,14 @@ export function ShareKit({
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [base, setBase] = useState("");
-  const [qrSvg, setQrSvg] = useState("");
   const [confirm, setConfirm] = useState<"rotate" | "delete" | null>(null);
 
   useEffect(() => setBase(shareBaseUrl()), []);
 
   const link = base ? cardUrl(base, card.token) : "";
-  const qrLink = base ? cardUrl(base, card.token, "qr") : "";
   const nfcLink = base ? cardUrl(base, card.token, "nfc") : "";
   const emailLink = base ? cardUrl(base, card.token, "email") : "";
-  const fileBase = vcardFileName(card.full_name).replace(/\.vcf$/, "");
   const published = card.status === "published";
-
-  useEffect(() => {
-    if (!qrLink) return;
-    let cancelled = false;
-    QRCode.toString(qrLink, {
-      type: "svg",
-      margin: 1,
-      errorCorrectionLevel: "M",
-      color: { dark: QR_DARK, light: QR_LIGHT },
-    }).then((svg) => !cancelled && setQrSvg(svg));
-    return () => {
-      cancelled = true;
-    };
-  }, [qrLink]);
-
-  async function downloadPng() {
-    const dataUrl = await QRCode.toDataURL(qrLink, {
-      width: 1024,
-      margin: 2,
-      errorCorrectionLevel: "M",
-      color: { dark: QR_DARK, light: QR_LIGHT },
-    });
-    const blob = await (await fetch(dataUrl)).blob();
-    downloadBlob(blob, `${fileBase}-qr.png`);
-  }
 
   async function copySignature() {
     const html = buildEmailSignatureHtml(card, {
@@ -164,7 +101,7 @@ export function ShareKit({
   }
 
   return (
-    <section className="rounded-xl border border-line bg-white p-4 shadow-card" aria-label="Share this card">
+    <section className="rounded-[22px] border border-line/80 bg-white p-5 shadow-card" aria-label="Share this card">
       <p className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.1em] text-coir-dark">Share</p>
 
       {!published && (
@@ -197,35 +134,6 @@ export function ShareKit({
           </a>
         </Button>
       </Row>
-
-      <Row
-        icon={Download}
-        title="QR code"
-        description="For print, booths and slides. Scans are counted as “QR code” in analytics."
-      >
-        <Button
-          size="sm"
-          disabled={!qrSvg}
-          onClick={() => downloadBlob(new Blob([qrSvg], { type: "image/svg+xml" }), `${fileBase}-qr.svg`)}
-        >
-          SVG
-        </Button>
-        <Button size="sm" disabled={!qrLink} onClick={downloadPng}>
-          PNG
-        </Button>
-      </Row>
-      {qrSvg && (
-        <div className="mb-3 flex justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrSvg)}`}
-            alt={`QR code linking to ${card.full_name}'s card`}
-            width={148}
-            height={148}
-            className="rounded-[3px] border border-line"
-          />
-        </div>
-      )}
 
       <Row
         icon={Nfc}

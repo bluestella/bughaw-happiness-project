@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,7 @@ import { PublicCardView } from "@/components/cards/PublicCardView";
 import { useTeamDirectory } from "@/lib/useTeamDirectory";
 import {
   BIO_MAX,
+  cardUrl,
   BLURB_MAX,
   CARD_STATUSES,
   CTA_LABEL_MAX,
@@ -26,6 +27,8 @@ import {
   type CardStatus,
 } from "@/lib/cards";
 import { ShareKit } from "./ShareKit";
+import { QrDesigner } from "./QrDesigner";
+import { shareBaseUrl } from "./shareUtils";
 
 function draftFrom(card: BusinessCard | null): CardDraft {
   if (!card) return emptyCardDraft();
@@ -88,6 +91,13 @@ export function CardEditor({
   const [draft, setDraft] = useState<CardDraft>(() => draftFrom(card));
   const [errors, setErrors] = useState<CardErrors>({});
   const [saving, setSaving] = useState(false);
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => setBaseUrl(shareBaseUrl()), []);
+
+  // The QR always encodes the card link; before the first save there is no token yet.
+  const qrValue =
+    card && baseUrl ? cardUrl(baseUrl, card.token, "qr") : `${baseUrl || "https://bughaw.ph"}/c/preview00000?s=qr`;
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftFrom(card));
 
@@ -132,172 +142,191 @@ export function CardEditor({
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
-      <div className="min-w-0 space-y-4">
-        <form onSubmit={save} className="space-y-4" noValidate>
-          <Group title="Person">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field id="card-full_name" label="Full name *" error={errors.full_name}>
-                <Input {...text("full_name")} required autoComplete="off" />
+    <div className="space-y-5">
+      <form onSubmit={save} className="space-y-5" noValidate>
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+          <div className="min-w-0 space-y-4">
+            <Group title="Person">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field id="card-full_name" label="Full name *" error={errors.full_name}>
+                  <Input {...text("full_name")} required autoComplete="off" />
+                </Field>
+                <Field id="card-job_title" label="Job title" error={errors.job_title}>
+                  <Input {...text("job_title")} placeholder="e.g. Partnerships Lead" />
+                </Field>
+              </div>
+              <Field
+                id="card-bio"
+                label="Short bio"
+                error={errors.bio}
+                hint={`${draft.bio.length}/${BIO_MAX} characters`}
+              >
+                <Textarea {...text("bio")} rows={2} maxLength={BIO_MAX} />
               </Field>
-              <Field id="card-job_title" label="Job title" error={errors.job_title}>
-                <Input {...text("job_title")} placeholder="e.g. Partnerships Lead" />
+              <Field
+                id="card-photo_url"
+                label="Photo URL"
+                error={errors.photo_url}
+                hint="A full https:// link to a square photo. It loads from that host on every view."
+              >
+                <Input {...text("photo_url")} type="url" placeholder="https://…" />
               </Field>
-            </div>
-            <Field
-              id="card-bio"
-              label="Short bio"
-              error={errors.bio}
-              hint={`${draft.bio.length}/${BIO_MAX} characters`}
-            >
-              <Textarea {...text("bio")} rows={2} maxLength={BIO_MAX} />
-            </Field>
-            <Field
-              id="card-photo_url"
-              label="Photo URL"
-              error={errors.photo_url}
-              hint="A full https:// link to a square photo. It loads from that host on every view."
-            >
-              <Input {...text("photo_url")} type="url" placeholder="https://…" />
-            </Field>
-            <Field
-              id="card-owner_email"
-              label="Teammate (optional)"
-              hint="Who this card belongs to. For your reference only — never shown publicly."
-            >
-              <Select
+              <Field
                 id="card-owner_email"
-                value={draft.owner_email}
-                onChange={(e) => set("owner_email", e.target.value)}
+                label="Teammate (optional)"
+                hint="Who this card belongs to. For your reference only — never shown publicly."
               >
-                <option value="">— Not linked —</option>
-                {draft.owner_email && !directory.some((d) => d.email === draft.owner_email) && (
-                  <option value={draft.owner_email}>{draft.owner_email}</option>
-                )}
-                {directory.map((d) => (
-                  <option key={d.email} value={d.email}>
-                    {d.email}
-                    {d.note ? ` — ${d.note}` : ""}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </Group>
+                <Select
+                  id="card-owner_email"
+                  value={draft.owner_email}
+                  onChange={(e) => set("owner_email", e.target.value)}
+                >
+                  <option value="">— Not linked —</option>
+                  {draft.owner_email && !directory.some((d) => d.email === draft.owner_email) && (
+                    <option value={draft.owner_email}>{draft.owner_email}</option>
+                  )}
+                  {directory.map((d) => (
+                    <option key={d.email} value={d.email}>
+                      {d.email}
+                      {d.note ? ` — ${d.note}` : ""}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </Group>
 
-          <Group title="Contact">
-            <Field id="card-email" label="Work email" error={errors.email}>
-              <Input {...text("email")} type="email" placeholder="name@bughawinnovations.ph" />
-            </Field>
-            <Field
-              id="card-phone"
-              label="Mobile number"
-              error={errors.phone}
-              hint="Stays private unless “Show on card” is ticked."
-            >
-              <Input {...text("phone")} type="tel" placeholder="+63 917 000 0000" />
-            </Field>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-coir"
-                  checked={draft.show_phone}
-                  onChange={(e) => set("show_phone", e.target.checked)}
-                />
-                Show on card
-              </label>
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-coir"
-                  checked={draft.phone_on_viber}
-                  disabled={!draft.show_phone}
-                  onChange={(e) => set("phone_on_viber", e.target.checked)}
-                />
-                Reachable on Viber
-              </label>
-            </div>
-          </Group>
-
-          <Group title="Links">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field id="card-linkedin_url" label="LinkedIn" error={errors.linkedin_url}>
-                <Input {...text("linkedin_url")} type="url" placeholder="https://www.linkedin.com/in/…" />
+            <Group title="Contact">
+              <Field id="card-email" label="Work email" error={errors.email}>
+                <Input {...text("email")} type="email" placeholder="name@bughawinnovations.ph" />
               </Field>
-              <Field id="card-facebook_url" label="Facebook" error={errors.facebook_url}>
-                <Input {...text("facebook_url")} type="url" placeholder="https://www.facebook.com/…" />
-              </Field>
-              <Field id="card-instagram_url" label="Instagram" error={errors.instagram_url}>
-                <Input {...text("instagram_url")} type="url" placeholder="https://www.instagram.com/…" />
-              </Field>
-              <Field id="card-website_url" label="Website" error={errors.website_url}>
-                <Input {...text("website_url")} type="url" />
-              </Field>
-            </div>
-          </Group>
-
-          <Group title="Company">
-            <Field
-              id="card-company_blurb"
-              label="About Bughaw"
-              error={errors.company_blurb}
-              hint={`${draft.company_blurb.length}/${BLURB_MAX} characters. Plain facts only — no certifications or partnerships without a signed document.`}
-            >
-              <Textarea {...text("company_blurb")} rows={3} maxLength={BLURB_MAX} />
-            </Field>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field id="card-cta_label" label="Button label" error={errors.cta_label}>
-                <Input {...text("cta_label")} maxLength={CTA_LABEL_MAX} />
-              </Field>
-              <Field id="card-cta_url" label="Button link" error={errors.cta_url}>
-                <Input {...text("cta_url")} type="url" />
-              </Field>
-            </div>
-          </Group>
-
-          <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-line bg-white p-4 shadow-card">
-            <div className="min-w-[180px]">
-              <label htmlFor="card-status" className="mb-1 block text-[11px] font-semibold text-ink-soft">
-                Visibility
-              </label>
-              <Select
-                id="card-status"
-                value={draft.status}
-                onChange={(e) => set("status", e.target.value as CardStatus)}
+              <Field
+                id="card-phone"
+                label="Mobile number"
+                error={errors.phone}
+                hint="Stays private unless “Show on card” is ticked."
               >
-                {CARD_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {STATUS_LABEL[s]}
-                    {s === "published" ? " — public via link" : s === "draft" ? " — private" : " — link disabled"}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <Button intent="primary" type="submit" disabled={saving || (!!card && !dirty)}>
-              <Save className="mr-1.5 h-4 w-4" aria-hidden />
-              {saving ? "Saving…" : card ? "Save changes" : "Create card"}
-            </Button>
+                <Input {...text("phone")} type="tel" placeholder="+63 917 000 0000" />
+              </Field>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-coir"
+                    checked={draft.show_phone}
+                    onChange={(e) => set("show_phone", e.target.checked)}
+                  />
+                  Show on card
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-coir"
+                    checked={draft.phone_on_viber}
+                    disabled={!draft.show_phone}
+                    onChange={(e) => set("phone_on_viber", e.target.checked)}
+                  />
+                  Reachable on Viber
+                </label>
+              </div>
+            </Group>
+
+            <Group title="Links">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field id="card-linkedin_url" label="LinkedIn" error={errors.linkedin_url}>
+                  <Input {...text("linkedin_url")} type="url" placeholder="https://www.linkedin.com/in/…" />
+                </Field>
+                <Field id="card-facebook_url" label="Facebook" error={errors.facebook_url}>
+                  <Input {...text("facebook_url")} type="url" placeholder="https://www.facebook.com/…" />
+                </Field>
+                <Field id="card-instagram_url" label="Instagram" error={errors.instagram_url}>
+                  <Input {...text("instagram_url")} type="url" placeholder="https://www.instagram.com/…" />
+                </Field>
+                <Field id="card-website_url" label="Website" error={errors.website_url}>
+                  <Input {...text("website_url")} type="url" />
+                </Field>
+              </div>
+            </Group>
+
+            <Group title="Company">
+              <Field
+                id="card-company_blurb"
+                label="About Bughaw"
+                error={errors.company_blurb}
+                hint={`${draft.company_blurb.length}/${BLURB_MAX} characters. Plain facts only — no certifications or partnerships without a signed document.`}
+              >
+                <Textarea {...text("company_blurb")} rows={3} maxLength={BLURB_MAX} />
+              </Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field id="card-cta_label" label="Button label" error={errors.cta_label}>
+                  <Input {...text("cta_label")} maxLength={CTA_LABEL_MAX} />
+                </Field>
+                <Field id="card-cta_url" label="Button link" error={errors.cta_url}>
+                  <Input {...text("cta_url")} type="url" />
+                </Field>
+              </div>
+            </Group>
           </div>
-        </form>
 
-        {card && (
-          <ShareKit
-            card={card}
-            dirty={dirty}
-            onTokenRotated={(token) => onSaved({ ...card, token })}
-            onDeleted={() => onDeleted(card.id)}
-          />
-        )}
-      </div>
-
-      <div className="xl:sticky xl:top-16 xl:self-start">
-        <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-soft">
-          Live preview {dirty && "· unsaved"}
-        </p>
-        <div className="overflow-hidden rounded-xl border border-line">
-          <PublicCardView card={toPublicCard(draft, card?.token)} preview wallet={wallet} />
+          <div className="xl:sticky xl:top-16 xl:self-start">
+            <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-soft">
+              Live preview {dirty && "· unsaved"}
+            </p>
+            <div className="overflow-hidden rounded-xl border border-line">
+              <PublicCardView
+                card={toPublicCard(draft, card?.token)}
+                qrValue={qrValue}
+                preview
+                wallet={wallet}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+
+        <div>
+          <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.1em] text-coir-dark">QR code</p>
+          <QrDesigner
+            className="mx-auto max-w-[680px]"
+            value={qrValue}
+            draft={draft}
+            saved={card ? { token: card.token, draft: draftFrom(card) } : null}
+            baseUrl={baseUrl}
+            onChange={(style) => set("qr_style", style)}
+          />
+        </div>
+
+        <div className="sticky bottom-4 z-10 flex flex-wrap items-end justify-between gap-3 rounded-xl border border-line bg-white/95 p-4 shadow-pop backdrop-blur">
+          <div className="min-w-[180px]">
+            <label htmlFor="card-status" className="mb-1 block text-[11px] font-semibold text-ink-soft">
+              Visibility
+            </label>
+            <Select
+              id="card-status"
+              value={draft.status}
+              onChange={(e) => set("status", e.target.value as CardStatus)}
+            >
+              {CARD_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABEL[s]}
+                  {s === "published" ? " — public via link" : s === "draft" ? " — private" : " — link disabled"}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <Button intent="primary" type="submit" disabled={saving || (!!card && !dirty)}>
+            <Save className="mr-1.5 h-4 w-4" aria-hidden />
+            {saving ? "Saving…" : card ? "Save changes" : "Create card"}
+          </Button>
+        </div>
+      </form>
+
+      {card && (
+        <ShareKit
+          card={card}
+          dirty={dirty}
+          onTokenRotated={(token) => onSaved({ ...card, token })}
+          onDeleted={() => onDeleted(card.id)}
+        />
+      )}
     </div>
   );
 }

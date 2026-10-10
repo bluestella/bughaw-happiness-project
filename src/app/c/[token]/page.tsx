@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicCardView } from "@/components/cards/PublicCardView";
-import { COMPANY_NAME, parseSource } from "@/lib/cards";
+import { COMPANY_NAME, cardUrl, parseSource } from "@/lib/cards";
 import { appleWalletConfig, googleWalletConfig } from "@/lib/wallet";
-import { getPublicCard, recordCardEvent } from "./data";
+import { getPublicCard, recordCardEvent, requestOrigin } from "./data";
 import { CardClickTracker } from "./CardClickTracker";
 
 // PUBLIC route — no sign-in. Middleware lets /c/* through untouched; the only
@@ -40,6 +40,7 @@ export default async function PublicCardPage({ params, searchParams }: Props) {
     <>
       <PublicCardView
         card={card}
+        qrValue={cardUrl(requestOrigin(), card.token, "qr")}
         source={source}
         wallet={{ apple: appleWalletConfig() !== null, google: googleWalletConfig() !== null }}
       />

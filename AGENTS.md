@@ -88,6 +88,7 @@ src/
     crmClient.ts                # Browser write path for manual entry + import (dedupe)
     cards.ts                    # Digital cards: validation, vCard, signature, analytics (pure)
     wallet.ts                   # Apple/Google Wallet signing (SERVER-ONLY, env secrets)
+    qrStyle.ts                  # Styled-QR config + geometry (themes, logo clearing, EC H)
     pnl.ts                      # P&L Machine formula (pure)
     format.ts                   # ₱ / % / ratio / months formatters
     useAppState.ts              # Shared team JSONB state hook (debounced upsert)
@@ -103,7 +104,8 @@ supabase/migrations/
   0004–0007                     # Calculator RLS, hardening, team directory, allowlist admin
   0008_fix_admin_role_checks.sql  # SECURITY: null-safe admin guards, revoke anon EXECUTE
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
-tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
+  0010_card_qr_style.sql        # Per-card QR look (jsonb), returned by get_public_card
+tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT), qrStyle tests
 .github/workflows/ci.yml        # lint → test → build
 *.html (repo root)              # Original artifacts, kept for reference ONLY — do not edit
 implementation.md               # Historical plan (partially superseded; this doc wins)
@@ -216,7 +218,7 @@ npm run build      # works with placeholder env vars (CI does this)
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order
-(`0001_init.sql` … `0009_digital_cards.sql`) in the SQL editor (0003 has an
+(`0001_init.sql` … `0010_card_qr_style.sql`) in the SQL editor (0003 has an
 ACTION REQUIRED header: insert an ingest secret before the marketing site can post
 leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.

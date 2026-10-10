@@ -1,4 +1,3 @@
-import Image from "next/image";
 import {
   Briefcase,
   Camera,
@@ -17,30 +16,38 @@ import {
   cardPath,
   dialableNumber,
   firstName,
-  initials,
   viberLink,
   type ClickTarget,
   type PublicCard,
 } from "@/lib/cards";
+import { normalizeQrStyle } from "@/lib/qrStyle";
+import { cn } from "@/lib/cn";
+import { StyledQr } from "./StyledQr";
+import { CardIdentity, SunDivider, primaryGradientButton, secondaryButton } from "./CardParts";
 
 type Row = { target: ClickTarget; icon: LucideIcon; label: string; value: string; href: string };
 
 /**
  * The public digital business card. Presentational only — no hooks, no data
- * access — so the admin editor can render the exact same markup as a live
- * preview (`preview`), with downloads disabled.
+ * access — so the admin editor renders the exact same markup as a live preview
+ * (`preview`), with links and downloads inert.
  *
- * Brand mode for an HTML page: Deep Green hero band → cream body → dark footer.
- * Filipino display copy in the serif, operational English in the sans.
- * Anchors carry `data-track` so CardClickTracker can count clicks.
+ * Layout follows the QR-card pattern: a white rounded card with the styled QR
+ * (display only — never downloadable here), the name block and the sun divider,
+ * then contact, links and company panels. Filipino display copy in the serif,
+ * operational English in the sans. Anchors carry `data-track` so
+ * CardClickTracker can count clicks.
  */
 export function PublicCardView({
   card,
+  qrValue,
   preview = false,
   source,
   wallet = { apple: false, google: false },
 }: {
   card: PublicCard;
+  /** Absolute card URL the QR encodes (cardUrl(base, token, "qr")). */
+  qrValue: string;
   preview?: boolean;
   /** Attribution passed through to downloads (?s=qr etc.). */
   source?: string;
@@ -48,6 +55,7 @@ export function PublicCardView({
 }) {
   const base = cardPath(card.token);
   const qs = source && source !== "link" ? `?s=${source}` : "";
+  const qrStyle = normalizeQrStyle(card.qr_style);
 
   const contact: Row[] = [];
   if (card.email) {
@@ -95,145 +103,124 @@ export function PublicCardView({
   const name = card.full_name || "Your name";
   // Inside the admin page the preview must not add a second <main>/<h1>.
   const Main = preview ? "div" : "main";
-  const Heading = preview ? "p" : "h1";
 
   return (
-    <div className="mx-auto w-full max-w-[440px] overflow-hidden bg-paper sm:my-8 sm:rounded-[3px] sm:border sm:border-line">
-      {/* Hero — Deep Green brand field */}
-      <header className="bg-deep px-6 pb-8 pt-6 text-white">
-        <div className="flex items-center gap-2.5">
-          <Image src="/brand/logo-mark.png" alt="" width={28} height={28} className="shrink-0" />
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-mist">
-            {COMPANY_NAME}
-          </p>
-        </div>
+    <div className={cn("bg-frost px-4", preview ? "py-5" : "min-h-screen py-6 sm:py-10")}>
+      <Main
+        {...(preview ? {} : { id: "main-content", tabIndex: -1 })}
+        className="mx-auto w-full max-w-[460px] space-y-4 outline-none"
+      >
+        {/* QR card */}
+        <article className="rounded-[28px] border border-line/80 bg-white px-6 pb-7 pt-8 sm:px-8">
+          <StyledQr
+            id={preview ? "preview-qr" : "card-qr"}
+            value={qrValue}
+            qrStyle={qrStyle}
+            title={`QR code for ${name}'s digital card`}
+            className="mx-auto block w-full max-w-[280px] select-none"
+          />
 
-        <div className="mt-8 flex flex-col items-start gap-5">
-          {card.photo_url ? (
+          {card.photo_url && (
             // Admin-supplied https URL on any host, so next/image's allowlist can't apply.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={card.photo_url}
               alt={`Photo of ${name}`}
-              width={96}
-              height={96}
+              width={64}
+              height={64}
               referrerPolicy="no-referrer"
-              className="h-24 w-24 rounded-full border-2 border-white/80 object-cover"
+              className="mx-auto mt-6 h-16 w-16 rounded-full border border-line object-cover"
             />
-          ) : (
-            <div
-              aria-hidden
-              className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold font-display text-3xl font-semibold text-white"
-            >
-              {initials(name)}
-            </div>
           )}
-          <div>
-            <Heading className="font-display text-[32px] font-semibold leading-[1.1] text-white">{name}</Heading>
-            {card.job_title && (
-              <p className="mt-1.5 text-[15px] text-mist">
-                {card.job_title} · {COMPANY_NAME}
-              </p>
+
+          <CardIdentity
+            name={name}
+            title={card.job_title}
+            as={preview ? "p" : "h1"}
+            className={card.photo_url ? "mt-3" : "mt-7"}
+          />
+
+          <SunDivider className="mt-6" />
+
+          <div className="mt-5 text-center">
+            <p className="font-display text-[20px] leading-snug text-deep">Ikinagagalak kitang makilala.</p>
+            <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+              Pleased to meet you
+            </p>
+          </div>
+          {card.bio && <p className="mt-3 text-center text-[15px] leading-relaxed text-ink">{card.bio}</p>}
+
+          <div className="mt-6 space-y-3">
+            {preview ? (
+              <span className={cn(primaryGradientButton, "cursor-default")}>
+                <Download className="h-4 w-4" aria-hidden />
+                Save contact
+              </span>
+            ) : (
+              <a href={`${base}/vcard${qs}`} className={primaryGradientButton}>
+                <Download className="h-4 w-4" aria-hidden />
+                Save contact
+              </a>
+            )}
+            {(wallet.apple || wallet.google) && (
+              <div className="grid grid-cols-2 gap-3">
+                {wallet.apple && (
+                  <a href={preview ? undefined : `${base}/wallet/apple${qs}`} className={secondaryButton}>
+                    <Wallet className="h-4 w-4" aria-hidden />
+                    Apple Wallet
+                  </a>
+                )}
+                {wallet.google && (
+                  <a href={preview ? undefined : `${base}/wallet/google${qs}`} className={secondaryButton}>
+                    <Wallet className="h-4 w-4" aria-hidden />
+                    Google Wallet
+                  </a>
+                )}
+              </div>
             )}
           </div>
-        </div>
-      </header>
-      <div className="h-[3px] bg-gold" aria-hidden />
+        </article>
 
-      <Main
-        {...(preview ? {} : { id: "main-content", tabIndex: -1 })}
-        className="space-y-6 px-6 py-7 outline-none"
-      >
-        <section>
-          <p className="font-display text-[22px] leading-snug text-deep">Ikinagagalak kitang makilala.</p>
-          <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft">
-            Pleased to meet you
-          </p>
-          {card.bio && <p className="mt-3 text-[15px] leading-relaxed text-ink">{card.bio}</p>}
-        </section>
-
-        {/* Primary actions */}
-        <section className="space-y-2.5" aria-label="Save this contact">
-          {preview ? (
-            <span className="flex w-full cursor-default items-center justify-center gap-2 rounded-md border border-coir bg-coir px-4 py-3 text-[15px] font-semibold text-white">
-              <Download className="h-4 w-4" aria-hidden />
-              Save contact
-            </span>
-          ) : (
-            <a
-              href={`${base}/vcard${qs}`}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-coir bg-coir px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:border-coir-dark hover:bg-coir-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40 focus-visible:ring-offset-2"
-            >
-              <Download className="h-4 w-4" aria-hidden />
-              Save contact
-            </a>
-          )}
-          {(wallet.apple || wallet.google) && (
-            <div className="grid grid-cols-2 gap-2.5">
-              {wallet.apple && (
-                <a
-                  href={preview ? undefined : `${base}/wallet/apple${qs}`}
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-ink bg-ink px-3 py-2.5 text-[13px] font-semibold text-white"
-                >
-                  <Wallet className="h-4 w-4" aria-hidden />
-                  Apple Wallet
-                </a>
-              )}
-              {wallet.google && (
-                <a
-                  href={preview ? undefined : `${base}/wallet/google${qs}`}
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2.5 text-[13px] font-semibold text-ink"
-                >
-                  <Wallet className="h-4 w-4" aria-hidden />
-                  Google Wallet
-                </a>
-              )}
-            </div>
-          )}
-        </section>
-
-        {contact.length > 0 && <LinkList title="Contact" rows={contact} rule="border-l-coir" />}
-        {links.length > 0 && <LinkList title="Find me online" rows={links} rule="border-l-clay" external />}
+        {contact.length > 0 && <LinkList title="Contact" rows={contact} preview={preview} />}
+        {links.length > 0 && <LinkList title="Find me online" rows={links} preview={preview} external />}
 
         {(card.company_blurb || card.cta_url) && (
-          <section className="rounded-[3px] border border-line border-l-4 border-l-gold bg-white p-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft">
+          <section className="rounded-[22px] border border-line/80 bg-white px-6 py-5">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-soft">
               About {COMPANY_NAME}
-            </p>
+            </h2>
             {card.company_blurb && (
-              <p className="mt-2 text-[14px] leading-relaxed text-ink">{card.company_blurb}</p>
+              <p className="mt-2 text-[14.5px] leading-relaxed text-ink">{card.company_blurb}</p>
             )}
             {card.cta_url && card.cta_label && (
               <a
-                href={card.cta_url}
+                href={preview ? undefined : card.cta_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-track="cta"
-                className="mt-3 inline-flex items-center rounded-md border border-coir px-3.5 py-2 text-[13px] font-semibold text-coir-dark transition-colors hover:bg-coir-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40"
+                className="mt-4 inline-flex items-center rounded-full border border-coir bg-coir-bg px-4 py-2 text-[14px] font-semibold text-coir-dark transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40"
               >
                 {card.cta_label} →
               </a>
             )}
           </section>
         )}
-      </Main>
 
-      <footer className="bg-ink px-6 py-5 text-[12px] leading-relaxed text-mist">
-        <p>
-          {COMPANY_NAME} Corporation · Philippines ·{" "}
-          <a
-            href={COMPANY_WEBSITE}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-gold underline-offset-2"
-          >
-            bughawinnovations.ph
-          </a>
-        </p>
-        <p className="mt-1 text-[11px] text-mist/75">
-          This card shows only what {firstName(name) || "this person"} chose to publish.
-        </p>
-      </footer>
+        <footer className="px-2 pb-2 text-center text-[12px] leading-relaxed text-ink-soft">
+          <p>
+            {COMPANY_NAME} Corporation · Philippines ·{" "}
+            <a
+              href={preview ? undefined : COMPANY_WEBSITE}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-coir-dark underline decoration-gold underline-offset-2"
+            >
+              bughawinnovations.ph
+            </a>
+          </p>
+          <p className="mt-1">This card shows only what {firstName(name) || "this person"} chose to publish.</p>
+        </footer>
+      </Main>
     </div>
   );
 }
@@ -241,29 +228,31 @@ export function PublicCardView({
 function LinkList({
   title,
   rows,
-  rule,
+  preview,
   external = false,
 }: {
   title: string;
   rows: Row[];
-  rule: string;
+  preview: boolean;
   external?: boolean;
 }) {
   return (
-    <section>
-      <h2 className="mb-2 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft">{title}</h2>
-      <ul className={`divide-y divide-line rounded-[3px] border border-line border-l-4 bg-white ${rule}`}>
+    <section className="overflow-hidden rounded-[22px] border border-line/80 bg-white">
+      <h2 className="px-6 pb-1 pt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-soft">{title}</h2>
+      <ul className="divide-y divide-line/70">
         {rows.map((row) => {
           const Icon = row.icon;
           return (
             <li key={row.target}>
               <a
-                href={row.href}
+                href={preview ? undefined : row.href}
                 data-track={row.target}
                 {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-paper focus:outline-none focus-visible:bg-coir-bg"
+                className="flex items-center gap-3.5 px-6 py-3.5 transition-colors hover:bg-frost focus:outline-none focus-visible:bg-coir-bg"
               >
-                <Icon className="h-[18px] w-[18px] shrink-0 text-coir" strokeWidth={1.75} aria-hidden />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-coir-bg">
+                  <Icon className="h-[17px] w-[17px] text-coir-dark" strokeWidth={1.75} aria-hidden />
+                </span>
                 <span className="min-w-0">
                   <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
                     {row.label}

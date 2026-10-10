@@ -2,7 +2,8 @@
 
 > Feature plan, decisions, and the security design for the Suite's first
 > public surface. Product-owner + engineering view. Status: **v1 built**
-> (migration `0009_digital_cards.sql`, `/admin/cards`, `/c/<token>`).
+> (migrations `0009_digital_cards.sql` + `0010_card_qr_style.sql`, `/admin/cards`,
+> `/c/<token>`).
 
 ## 1. Why
 
@@ -54,6 +55,7 @@ vendor claims.
 | D7 | Public fields | Work email + title, mobile/Viber (per-card opt-in), social links, company blurb + CTA, bio **≤150 characters**. |
 | D8 | Photos | **Pasted https URL.** No upload feature, no storage bucket. |
 | D9 | Event logging | An anonymous, insert-only, throttled RPC is acceptable. |
+| D10 | QR design | Branded QR (theme, rounded modules, centre logo, sun ring, logo size) designed per card in admin. The public card **displays** it but offers no QR download. QR **content is unchanged**: always the card link. Bughaw logo only. |
 
 ## 4. How it works
 
@@ -79,6 +81,28 @@ record_card_event(...)  ── security definer ── business_card_events ◄�
   `?s=email`. Anything else counts as `link`.
 - **Preview**: the admin editor renders the same `PublicCardView` component the
   public page uses, so what you see is what visitors get.
+
+## 4b. QR code design
+
+- **Content**: always `https://<site>/c/<token>?s=qr`. The designer changes only
+  the look, so scans still count in analytics and *Replace link* still revokes
+  every printed code.
+- **Style** (`business_cards.qr_style`, migration 0010): `theme` (Dawn = green→blue
+  gradient, Ocean, Grove, Ink), `rounded` (dot modules + rounded finder eyes),
+  `logo` (Bughaw emblem on a white tile), `sunRing` (gold ring around the tile) and
+  `logoSize` (12–28% of the code width). A check constraint rejects anything else.
+  `normalizeQrStyle()` re-validates on every render.
+- **Error correction is always H** (30% recoverable), so the centre logo never
+  breaks scanning. At the largest logo, under 12% of the area is cleared. Every
+  combination (4 themes × dots/squares × no logo and 12/20/28%) was decoded with
+  ZXing from on-screen renders before shipping.
+- **Rendering**: `StyledQr` draws one inline SVG (one path for all modules) with
+  no client JavaScript, so the public card renders it on the server.
+- **Admin** (`QrDesigner`): theme chips, toggles and the logo-size slider; *Download
+  PNG* (2048 px, 4-module quiet zone for print); *Download .vcf*; *Copy vCard*; and
+  the vCard text. Style changes apply to the public card after *Save changes*.
+- **Public**: the same QR at the top of the card, display only. There is no
+  download control, though nothing stops a visitor taking a screenshot.
 
 ## 5. Analytics: what is recorded, and what isn't
 
@@ -125,8 +149,13 @@ variables are set, the routes return 404 and the buttons stay hidden.
 
 ## 7. Brand rules applied
 
-Per the Bughaw design system, the public card uses the HTML mode: Deep Green
-hero band, cream body, dark footer, and a 3px gold rule. Filipino display copy
+The card follows the **QR-card pattern** the founder chose (Oct 2026): a white
+rounded card on a light ground, the styled QR on top, a serif name,
+`BUGHAW INNOVATIONS CORP.` in spaced Deep Green capitals, and a green→blue rule
+with a rising gold sun. This is an **explicit exception** to the design system's
+"no gradients" rule, limited to the QR fill, the primary button and that rule.
+Colours stay inside the brand palette (Bughaw Green, Bughaw Blue, its dark hover,
+Deep Green, Gold, Ink). Filipino display copy
 (*"Ikinagagalak kitang makilala."*) is set in the serif and operational English
 in the sans. Content guardrails are enforced in the editor hints and the
 default copy:
