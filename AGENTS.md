@@ -58,7 +58,7 @@ src/
       page.tsx                  # Dashboard (calculator grid)
       saved/page.tsx            # Browse team-shared saved calculations
       calculators/[category]/[calculatorId]/page.tsx   # Config-driven calculators
-      tools/{pipeline,cost-calculator,unit-economics,pnl}/page.tsx  # Migrated tools
+      tools/{pipeline,cost-calculator,unit-economics,pnl,qr-studio}/page.tsx  # Migrated tools
       tasks/                    # Task management
         page.tsx                # Project list
         NewProjectForm.tsx
@@ -86,6 +86,7 @@ src/
     tasks.ts                    # Task types + fractional-position ordering math
     crm.ts                      # CRM vocabulary, validation, normalization, CSV (pure)
     crmClient.ts                # Browser write path for manual entry + import (dedupe)
+    qrStudio.ts                 # QR Studio: vCard, landing-page HTML, QR matrix (pure)
     cards.ts                    # Digital cards: validation, vCard, signature, analytics (pure)
     wallet.ts                   # Apple/Google Wallet signing (SERVER-ONLY, env secrets)
     pnl.ts                      # P&L Machine formula (pure)

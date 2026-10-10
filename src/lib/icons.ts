@@ -12,6 +12,7 @@ import {
   Inbox,
   LayoutDashboard,
   Package,
+  QrCode,
   Repeat,
   Route,
   Scale,
@@ -58,6 +59,7 @@ export const ICONS = {
   timer: Timer,
   "shield-check": ShieldCheck,
   "id-card": IdCard,
+  "qr-code": QrCode,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconKey = keyof typeof ICONS;
