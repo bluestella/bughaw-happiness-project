@@ -75,3 +75,10 @@ export function canDeleteLead(role: Role | null): boolean {
 export function canManageAllowlist(role: Role | null): boolean {
   return role === "super_admin";
 }
+
+// public.business_cards / business_card_events — RLS in
+// 0009_digital_cards.sql grants super_admin only. The card admin section and
+// its analytics are one super_admin-only area at /admin/cards.
+export function canManageCards(role: Role | null): boolean {
+  return role === "super_admin";
+}

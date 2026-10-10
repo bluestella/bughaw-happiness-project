@@ -181,6 +181,9 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
               <NavLink href="/admin/allowlist" iconKey="shield-check" onNavigate={onNavigate} pathname={pathname}>
                 Allowlist
               </NavLink>
+              <NavLink href="/admin/cards" iconKey="id-card" onNavigate={onNavigate} pathname={pathname}>
+                Digital cards
+              </NavLink>
             </>
           )}
         </nav>

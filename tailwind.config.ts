@@ -36,6 +36,7 @@ const config: Config = {
         brown: "#6E5A42",
         sky: "#3DAEE0", // headings on dark, display sizes only
         bgreen: "#6EA92F", // markers/icons on dark — never text on Deep Green
+        mist: "#E8E8E8", // brand Light Grey — body text on Deep Green / ink (6.6:1+)
       },
       fontFamily: {
         // Fraunces (variable, optical-size aware) for headings and big numbers;

@@ -12,7 +12,9 @@ Postgres, and **Row Level Security is the sole enforcement layer**. Auth is Supa
 GoTrue (email/password + Google OAuth); membership is a DB allowlist enforced by a
 `before insert` trigger on `auth.users`; roles are a column on that allowlist, read
 through a security-definer RPC. Everything client-side (middleware redirects,
-sidebar hiding, `permissions.ts`) is UX, not security.
+sidebar hiding, `permissions.ts`) is UX, not security. The single exception to
+"invite-only" is the public digital business card at `/c/<token>` (§8), which can
+reach exactly two narrow security-definer functions and no table.
 
 ## 2. Auth chain (defense in depth, outermost first)
 
@@ -24,7 +26,8 @@ sidebar hiding, `permissions.ts`) is UX, not security.
    mapping.
 2. **Session middleware** (`src/middleware.ts`): refreshes the session cookie via
    `auth.getUser()` on every non-static request; signed-out users are redirected to
-   `/login?next=…`. Only `/login` and `/auth/*` are public.
+   `/login?next=…`. Only `/login`, `/auth/*`, the secret-authed `/api/crm/ingest`
+   and the public card route `/c/*` (§8) skip the login redirect.
 3. **Role routing**: signed-in contractors are redirected off `/`, `/calculators/*`,
    `/tools/*`, `/saved` to `/tasks`. **This is navigation control, not data
    control** (see §5.1).
@@ -61,6 +64,13 @@ is right. **Never "fix" a permission bug in TypeScript only.**
   ever becomes necessary, it must only be read in route handlers/server code and
   reviewed here first.
 - CI builds with placeholder Supabase values — builds must never require real creds.
+- **Wallet signing keys (optional, server-only)** — `APPLE_PASS_*`, `APPLE_TEAM_ID`,
+  `APPLE_WWDR_CERT_PEM`, `GOOGLE_WALLET_*`. These are the app's only non-public
+  secrets. They are read solely by `src/lib/wallet.ts` from the
+  `src/app/c/[token]/wallet/*` route handlers, never from client code, and
+  never with a `NEXT_PUBLIC_` prefix. Unset means the wallet routes 404. A
+  Google *Cloud* service account for Wallet is unrelated to (and does not
+  justify) a Supabase service-role key, which is still banned.
 
 ## 5. Known gaps (accepted risks — do not silently "discover" these as new)
 
@@ -84,10 +94,25 @@ is right. **Never "fix" a permission bug in TypeScript only.**
    no `dangerouslySetInnerHTML` in the app. Keep it that way — if rich text is ever
    added, sanitize server-side.
 
+8. **Fixed in 0008 (Oct 2026), kept here as a lesson:** the `admin_*` allowlist
+   RPCs from 0007 guarded with `current_user_role() <> 'super_admin'`. For an
+   anonymous caller that is `NULL <> …` = `NULL`, so the guard never fired. And
+   Postgres grants `EXECUTE` to `PUBLIC` by default, so anyone with the anon key
+   could add themselves to the allowlist as super_admin (reproduced locally).
+   0008 makes the guards null-safe (`is distinct from`) and revokes `EXECUTE`
+   from `public, anon`.
+
 ## 6. Security review checklist for PRs
 
 - [ ] New table → RLS enabled + policies written in the same migration?
 - [ ] New security-definer function → `set search_path = public` + minimal grant?
+      That means `revoke all … from public, anon` **before** granting: Postgres
+      grants EXECUTE to PUBLIC by default, and Supabase also grants anon.
+- [ ] Role guards are null-safe: `if current_user_role() is distinct from
+      'super_admin'`, never `<>` (a NULL role must be refused).
+- [ ] Anything reachable without login (`/c/*`, `/api/crm/ingest`) reads only through
+      a security-definer function returning display-safe columns. No anon
+      table policies.
 - [ ] Any permission logic changed in TS → matching SQL policy change + tests?
 - [ ] No service-role key, no secret in `NEXT_PUBLIC_*`, `.env.example` updated?
 - [ ] All email comparisons case-insensitive (`lower()` / `.toLowerCase()`)?
@@ -106,3 +131,24 @@ is right. **Never "fix" a permission bug in TypeScript only.**
 4. Sentry (or similar) + Supabase log drains for visibility.
 5. Optional: move Google OAuth + email confirm settings under change control
    (documented dashboard config), enable leaked-password protection in Supabase Auth.
+
+## 8. The public card layer (`/c/<token>`, migration 0009)
+
+The Suite's only public page. It exists because sharing a business card has to
+work without a login. Design rules, all enforced in the database:
+
+| Threat | Control |
+|---|---|
+| Reading unpublished cards, hidden phone numbers, owner/admin fields | `get_public_card()` returns published rows only and a fixed list of display columns. Phone is blanked unless `show_phone`. `anon` has **no** table policy on `business_cards` or `business_card_events`. |
+| Enumerating the team by guessing URLs | Random 12-char base62 token (~70 bits). Unknown, draft, suspended and rotated tokens all render the same "not available" page. |
+| A leaked or lost QR/NFC tag | `admin_rotate_card_token()` (new token, every old link dies) or set status `suspended`. |
+| Analytics spam / storage abuse | `record_card_event()` validates every field against a fixed vocabulary, inserts only, ignores unpublished cards, throttles 60/min per card and 600/min globally, and returns nothing (not an oracle). The click route is same-origin only and always answers 204. |
+| Search engines indexing staff details | `X-Robots-Tag: noindex, nofollow` from middleware plus robots metadata. |
+| Script/markup injection via card fields | https-only URL check constraints (no `javascript:`), phone character whitelist, length caps. All text is rendered by React. The email-signature HTML is built with `escapeHtml()` and never rendered in-app. |
+| Visitor privacy (Data Privacy Act) | No IP, cookie, fingerprint or location stored. Counts only. Bots/unfurlers are skipped. |
+| Admin data leaking to non-admins | `business_cards`, `business_card_events`, `admin_card_event_rollup()` and `admin_rotate_card_token()` are super_admin-only in RLS/function guards. `/admin/cards` also redirects non-admins. |
+
+Accepted residual risks: anyone holding a card link can see that card (by
+design). A motivated actor can inflate a card's counters up to the throttle.
+Photos load from whatever https host the admin pasted, so that host sees the
+visitor's IP (`referrerPolicy="no-referrer"` limits what else it learns).

@@ -34,6 +34,8 @@ the DB the single source of truth for permissions.
    - unauthenticated + non-public path → redirect `/login?next=<path>`
    - authenticated on `/login` → redirect to `/` (or `/tasks` for contractors)
    - contractor on `/`, `/calculators/*`, `/tools/*`, `/saved` → redirect `/tasks`
+   - `/c/*` (public digital card) → passed through untouched, plus
+     `X-Robots-Tag: noindex`. See [digital-cards.md](digital-cards.md).
 2. Server components under `src/app/(app)/` fetch initial data server-side
    (e.g., the board page runs parallel queries for mini-project, tasks,
    contributors, role, user) and pass it to client components as props.
@@ -147,6 +149,22 @@ a rule changes in exactly one place. The ingest route is the only entry in
 `computeNewPosition` from `src/lib/tasks.ts`; `LeadPanel.tsx` is the detail drawer
 (activity timeline, notes, and **promote to pipeline account**, which writes a
 `pipeline_accounts` row so the Pipeline Simulator keeps its inputs).
+
+## 6c. Digital business cards (`/admin/cards`, public `/c/<token>`)
+
+- **Admin** (`src/app/(app)/admin/cards/`): server page loads all cards and a
+  90-day `admin_card_event_rollup`, then `CardsAdmin` (tabs *Cards* /
+  *Analytics*) → `CardEditor` (form + live preview) + `ShareKit` (link, QR
+  SVG/PNG via `qrcode`, NFC URL, email signature, rotate, delete) and
+  `CardAnalytics` (stat tiles, ECharts daily bars, breakdowns, per-card table).
+- **Public** (`src/app/c/[token]/`): server-rendered, outside the `(app)` layout.
+  `data.ts` wraps the two RPCs (`getPublicCard` is `cache()`d per request).
+  `PublicCardView` (`src/components/cards/`) is presentational and shared with the
+  admin preview. `CardClickTracker` sends click beacons. `vcard/`, `event/`,
+  `wallet/{apple,google}/` are route handlers.
+- **Pure logic** lives in `src/lib/cards.ts` (validation, vCard, signature HTML,
+  UA parsing, analytics rollup) and `src/lib/wallet.ts` (server-only signing),
+  both covered by `tests/unit/cards.test.ts`.
 
 ## 7. Established patterns (follow these)
 

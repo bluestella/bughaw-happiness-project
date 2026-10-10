@@ -11,6 +11,7 @@ import {
   canEditLead,
   canEditOrDeleteTask,
   canManageAllowlist,
+  canManageCards,
   canRemoveContributor,
   type Role,
 } from "@/lib/permissions";
@@ -89,6 +90,12 @@ describe("role capability matrix", () => {
     {
       fn: canManageAllowlist,
       name: "canManageAllowlist",
+      expected: { super_admin: true, member: false, contractor: false },
+      nullExpected: false,
+    },
+    {
+      fn: canManageCards,
+      name: "canManageCards",
       expected: { super_admin: true, member: false, contractor: false },
       nullExpected: false,
     },
