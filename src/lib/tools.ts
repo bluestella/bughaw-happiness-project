@@ -42,4 +42,11 @@ export const TOOLS: ToolDef[] = [
     icon: "handshake",
     path: "/tools/funding",
   },
+  {
+    id: "qr-studio",
+    name: "QR Studio",
+    description: "Branded QR codes for links or contact cards, plus a matching landing page.",
+    icon: "qr-code",
+    path: "/tools/qr-studio",
+  },
 ];
