@@ -99,44 +99,71 @@ export function PublicCardView({
 
   return (
     <div className="mx-auto w-full max-w-[440px] overflow-hidden bg-paper sm:my-8 sm:rounded-[3px] sm:border sm:border-line">
-      {/* Hero — Deep Green brand field */}
-      <header className="bg-deep px-6 pb-8 pt-6 text-white">
-        <div className="flex items-center gap-2.5">
-          <Image src="/brand/logo-mark.png" alt="" width={28} height={28} className="shrink-0" />
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-mist">
-            {COMPANY_NAME}
-          </p>
-        </div>
-
-        <div className="mt-8 flex flex-col items-start gap-5">
-          {card.photo_url ? (
-            // Admin-supplied https URL on any host, so next/image's allowlist can't apply.
-            // eslint-disable-next-line @next/next/no-img-element
+      {/* Hero — Deep Green brand field, or a full-bleed portrait when one is supplied */}
+      <header className="relative bg-deep text-white">
+        {card.photo_url ? (
+          <div className="relative aspect-[4/5] w-full overflow-hidden bg-deep">
+            {/* Admin-supplied https URL on any host, so next/image's allowlist can't apply. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={card.photo_url}
               alt={`Photo of ${name}`}
-              width={96}
-              height={96}
               referrerPolicy="no-referrer"
-              className="h-24 w-24 rounded-full border-2 border-white/80 object-cover"
+              className="absolute inset-0 h-full w-full object-cover object-top"
             />
-          ) : (
             <div
               aria-hidden
-              className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold font-display text-3xl font-semibold text-white"
-            >
-              {initials(name)}
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-deep from-10% via-deep/70 to-transparent"
+            />
+            <div className="absolute left-4 top-4 rounded-full bg-black/35 px-3 py-1.5 backdrop-blur-sm">
+              <Image
+                src="/brand/logo-secondary_dark.png"
+                alt={COMPANY_NAME}
+                width={2000}
+                height={500}
+                sizes="112px"
+                className="h-5 w-auto"
+              />
             </div>
-          )}
-          <div>
-            <Heading className="font-display text-[32px] font-semibold leading-[1.1] text-white">{name}</Heading>
-            {card.job_title && (
-              <p className="mt-1.5 text-[15px] text-mist">
-                {card.job_title} · {COMPANY_NAME}
-              </p>
-            )}
+            <div className="absolute inset-x-0 bottom-0 px-6 pb-6 pt-10">
+              <Heading className="font-display text-[32px] font-semibold leading-[1.1] text-white [text-shadow:0_1px_16px_rgba(0,0,0,0.4)]">
+                {name}
+              </Heading>
+              {card.job_title && (
+                <p className="mt-1.5 text-[15px] text-mist [text-shadow:0_1px_12px_rgba(0,0,0,0.5)]">
+                  {card.job_title} · {COMPANY_NAME}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="px-6 pb-8 pt-6">
+            <Image
+              src="/brand/logo-secondary_dark.png"
+              alt={COMPANY_NAME}
+              width={2000}
+              height={500}
+              sizes="140px"
+              className="h-6 w-auto"
+            />
+            <div className="mt-8 flex flex-col items-start gap-5">
+              <div
+                aria-hidden
+                className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold font-display text-3xl font-semibold text-white"
+              >
+                {initials(name)}
+              </div>
+              <div>
+                <Heading className="font-display text-[32px] font-semibold leading-[1.1] text-white">{name}</Heading>
+                {card.job_title && (
+                  <p className="mt-1.5 text-[15px] text-mist">
+                    {card.job_title} · {COMPANY_NAME}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </header>
       <div className="h-[3px] bg-gold" aria-hidden />
 
@@ -145,7 +172,9 @@ export function PublicCardView({
         className="space-y-6 px-6 py-7 outline-none"
       >
         <section>
-          <p className="font-display text-[22px] leading-snug text-deep">Ikinagagalak kitang makilala.</p>
+          <p lang="tl" className="font-display text-[22px] leading-snug text-deep">
+            Ikinagagalak kitang makilala.
+          </p>
           <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft">
             Pleased to meet you
           </p>
@@ -173,7 +202,7 @@ export function PublicCardView({
               {wallet.apple && (
                 <a
                   href={preview ? undefined : `${base}/wallet/apple${qs}`}
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-ink bg-ink px-3 py-2.5 text-[13px] font-semibold text-white"
+                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-md border border-ink bg-ink px-3 py-2.5 text-[13px] font-semibold text-white"
                 >
                   <Wallet className="h-4 w-4" aria-hidden />
                   Apple Wallet
@@ -182,7 +211,7 @@ export function PublicCardView({
               {wallet.google && (
                 <a
                   href={preview ? undefined : `${base}/wallet/google${qs}`}
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2.5 text-[13px] font-semibold text-ink"
+                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2.5 text-[13px] font-semibold text-ink"
                 >
                   <Wallet className="h-4 w-4" aria-hidden />
                   Google Wallet
@@ -211,7 +240,7 @@ export function PublicCardView({
                 data-track="cta"
                 className="mt-3 inline-flex items-center rounded-md border border-coir px-3.5 py-2 text-[13px] font-semibold text-coir-dark transition-colors hover:bg-coir-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/40"
               >
-                {card.cta_label} →
+                {card.cta_label} →<span className="sr-only"> (opens in new tab)</span>
               </a>
             )}
           </section>
@@ -219,6 +248,14 @@ export function PublicCardView({
       </Main>
 
       <footer className="bg-ink px-6 py-5 text-[12px] leading-relaxed text-mist">
+        <Image
+          src="/brand/logo-secondary_dark.png"
+          alt={COMPANY_NAME}
+          width={2000}
+          height={500}
+          sizes="140px"
+          className="mb-3 h-6 w-auto"
+        />
         <p>
           {COMPANY_NAME} Corporation · Philippines ·{" "}
           <a
@@ -227,7 +264,7 @@ export function PublicCardView({
             rel="noopener noreferrer"
             className="underline decoration-gold underline-offset-2"
           >
-            bughawinnovations.ph
+            bughawinnovations.ph<span className="sr-only"> (opens in new tab)</span>
           </a>
         </p>
         <p className="mt-1 text-[11px] text-mist/75">
