@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="lg:flex min-h-screen">
       <Sidebar role={role} email={user?.email} />
       <div className="flex-1 min-w-0">
-        <header className="hidden lg:flex sticky top-0 z-10 items-center justify-end gap-3 border-b border-line bg-paper/90 px-6 py-2.5 backdrop-blur">
+        <header className="hidden lg:flex print:hidden sticky top-0 z-10 items-center justify-end gap-3 border-b border-line bg-paper/90 px-6 py-2.5 backdrop-blur">
           <span className="truncate text-xs text-ink-soft">{user?.email}</span>
           <form action="/auth/signout" method="post">
             <Button size="sm" type="submit">
@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Button>
           </form>
         </header>
-        <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 outline-none">{children}</main>
+        <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 outline-none print:max-w-none print:p-0">{children}</main>
       </div>
     </div>
   );

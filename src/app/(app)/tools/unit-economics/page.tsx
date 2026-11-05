@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
-import { pesoRound } from "@/lib/format";
+import { pesoCompact, pesoRound, ratioCompact } from "@/lib/format";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { SliderField } from "@/components/ui/slider-field";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,15 @@ const COST_SEGMENTS: { id: keyof SimState; label: string; color: string }[] = [
 
 const KEY = "bughaw-unit-econ-sim";
 
+const signedPeso = (n: number) => (n >= 0 ? "+" : "") + pesoRound(n);
+
+/** "<0.1 mo" instead of a misleading "0.0 mo" when payback is near-instant. */
+function formatPayback(months: number): string {
+  if (!Number.isFinite(months)) return "—";
+  if (months < 0.1) return "<0.1 mo";
+  return months.toFixed(1) + " mo";
+}
+
 export default function UnitEconomicsPage() {
   const [s, setS] = useState<SimState>(() => {
     if (typeof window === "undefined") return DEFAULTS;
@@ -83,6 +92,9 @@ export default function UnitEconomicsPage() {
   const ratio = s.cac > 0 ? ltv / s.cac : 0;
   const payback = monthlyContribution > 0 ? s.cac / monthlyContribution : Infinity;
   const gatePass = marginPct >= 30;
+
+  const scale = Math.max(s.price, totalCost, 1);
+  const pctOfScale = (v: number) => Math.min(100, Math.max(0, (v / scale) * 100));
 
   const slider = (def: (typeof SLIDERS)[number]) => (
     <SliderField
@@ -131,87 +143,101 @@ export default function UnitEconomicsPage() {
             <h2 className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft mb-4">
               Where the ₱ goes — one pair
             </h2>
-            <div className="space-y-3.5">
-              <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
-                <span className="text-[13px] text-ink-soft text-right">Price</span>
-                <div className="h-8 rounded-md overflow-hidden flex bg-[#EDE8D6]">
-                  <div className="h-full w-full bg-coir flex items-center justify-center text-xs font-bold text-white">
-                    {pesoRound(s.price)}
-                  </div>
-                </div>
-                <span className="font-mono text-sm font-semibold">{pesoRound(s.price)}</span>
+            {/* One shared axis (max of price and cost) so the three bars are comparable
+                and costs above price visibly overrun instead of being clipped. Values live
+                in the right column + legend; no text inside bars, so nothing truncates. */}
+            <div className="grid grid-cols-[auto,minmax(0,1fr),auto] items-center gap-x-3 gap-y-3">
+              <span className="text-[13px] text-ink-soft">Price</span>
+              <div className="h-6 rounded-md bg-paper">
+                <div
+                  className="h-full rounded-md bg-coir"
+                  style={{ width: `${pctOfScale(s.price)}%` }}
+                />
               </div>
-              <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
-                <span className="text-[13px] text-ink-soft text-right">Costs</span>
-                <div className="h-8 rounded-md overflow-hidden flex gap-[2px] bg-[#EDE8D6]">
+              <span className="text-right font-mono text-sm font-semibold tabular-nums">
+                {pesoRound(s.price)}
+              </span>
+
+              <span className="text-[13px] text-ink-soft">Costs</span>
+              <div className="h-6 rounded-md bg-paper">
+                <div
+                  className="flex h-full gap-px overflow-hidden rounded-md"
+                  style={{ width: `${pctOfScale(totalCost)}%` }}
+                >
                   {COST_SEGMENTS.map((seg) => {
                     const v = s[seg.id];
                     if (v <= 0) return null;
-                    const pct = Math.max(0, (v / s.price) * 100);
                     return (
                       <div
                         key={seg.id}
-                        className="h-full flex items-center justify-center text-[11px] font-bold text-white whitespace-nowrap overflow-hidden"
-                        style={{ width: `${pct}%`, background: seg.color }}
-                      >
-                        {pct > 9 ? seg.label : ""}
-                      </div>
+                        title={`${seg.label}: ${pesoRound(v)}`}
+                        className="h-full"
+                        style={{ flexGrow: v, flexBasis: 0, background: seg.color }}
+                      />
                     );
                   })}
                 </div>
-                <span className="font-mono text-sm font-semibold">{pesoRound(totalCost)}</span>
               </div>
-              <div className="grid grid-cols-[80px,1fr,80px] items-center gap-3">
-                <span className="text-[13px] text-ink-soft text-right">Left over</span>
-                <div className="h-8 rounded-md overflow-hidden flex bg-[#EDE8D6]">
-                  <div
-                    className="h-full flex items-center justify-center text-xs font-bold text-white"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, (Math.abs(contribution) / s.price) * 100))}%`,
-                      background: contribution >= 0 ? "#2C6B38" : "#A8412A",
-                    }}
+              <span className="text-right font-mono text-sm font-semibold tabular-nums">
+                {pesoRound(totalCost)}
+              </span>
+
+              <span className="text-[13px] text-ink-soft">Left over</span>
+              <div className="h-6 rounded-md bg-paper">
+                <div
+                  className={`h-full rounded-md ${contribution >= 0 ? "bg-success" : "bg-danger"}`}
+                  style={{ width: `${pctOfScale(Math.abs(contribution))}%` }}
+                />
+              </div>
+              <span
+                className={`text-right font-mono text-sm font-semibold tabular-nums ${contribution >= 0 ? "text-success" : "text-danger"}`}
+              >
+                {signedPeso(contribution)}
+              </span>
+            </div>
+
+            <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-line pt-4 sm:grid-cols-3">
+              {COST_SEGMENTS.map((seg) => {
+                const v = s[seg.id];
+                return (
+                  <li
+                    key={seg.id}
+                    className={`flex min-w-0 items-center gap-2 text-xs ${v > 0 ? "" : "opacity-50"}`}
                   >
-                    {(contribution >= 0 ? "+" : "") + pesoRound(contribution)}
-                  </div>
-                </div>
-                <span
-                  className={`font-mono text-sm font-semibold ${contribution >= 0 ? "text-success" : "text-danger"}`}
-                >
-                  {(contribution >= 0 ? "+" : "") + pesoRound(contribution)}
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-4 flex-wrap mt-4 pt-4 border-t border-line">
-              {COST_SEGMENTS.map((seg) => (
-                <span key={seg.id} className="flex items-center gap-1.5 text-xs text-ink-soft">
-                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: seg.color }} />
-                  {seg.label}
-                </span>
-              ))}
-            </div>
+                    <span
+                      aria-hidden
+                      className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                      style={{ background: seg.color }}
+                    />
+                    <span className="truncate text-ink-soft">{seg.label}</span>
+                    <span className="ml-auto font-mono tabular-nums text-ink">{pesoRound(v)}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
             <StatCard
               label="Contribution"
-              value={(contribution >= 0 ? "+" : "") + pesoRound(contribution)}
+              value={<span title={signedPeso(contribution)}>{signedPeso(contribution)}</span>}
               tone={contribution >= 0 ? "success" : "danger"}
               note={`margin ${marginPct.toFixed(1)}% of price`}
             />
             <StatCard
               label="LTV (per hotel)"
-              value={pesoRound(ltv)}
+              value={<span title={pesoRound(ltv)}>{pesoCompact(ltv)}</span>}
               note="margin/pair × pairs/mo × lifetime"
             />
             <StatCard
               label="LTV : CAC"
-              value={`${ratio.toFixed(1)}×`}
+              value={<span title={`${ratio.toFixed(2)}×`}>{ratioCompact(ratio)}</span>}
               tone={ratio >= 3 ? "success" : "amber"}
               note="a healthy account is ≥3×"
             />
             <StatCard
               label="CAC payback"
-              value={isFinite(payback) ? payback.toFixed(1) + " mo" : "—"}
+              value={formatPayback(payback)}
               tone={isFinite(payback) && payback <= s.life ? "success" : "amber"}
               note="months to earn the CAC back"
             />

@@ -46,7 +46,9 @@ This is a deliberate trade for an internal tool — don't let it erode:
    that signs in as each role and attempts each operation would close the gap
    between `permissions.ts` and the SQL — the highest-value missing suite.
 3. **E2E smoke** (Playwright): login → dashboard → run a calculator → save to team;
-   contractor login → verify redirect to `/tasks`.
+   contractor login → verify redirect to `/tasks`. **Planned in full in
+   [ui-testing.md](ui-testing.md)**: architecture, use cases, test case IDs, CI cadence
+   and the issue-reporting loop.
 4. Lighthouse/perf budget if the tool ever gets heavy pages.
 
 ## 4. Manual QA checklist (until E2E exists)

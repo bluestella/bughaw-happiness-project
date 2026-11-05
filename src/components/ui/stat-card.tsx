@@ -30,7 +30,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-xl border p-5 shadow-card",
+        "min-w-0 rounded-xl border p-5 shadow-card",
         emphasis ? "border-coir/25 bg-coir-bg" : "border-line bg-panel",
         className
       )}
@@ -40,7 +40,7 @@ export function StatCard({
       </p>
       <p
         className={cn(
-          "font-semibold tabular-nums",
+          "font-semibold leading-tight tabular-nums [overflow-wrap:anywhere]",
           emphasis ? "text-[26px]" : "text-[22px]",
           toneClass
         )}
