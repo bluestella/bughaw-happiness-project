@@ -126,3 +126,40 @@ input[inputmode="decimal"]::-webkit-inner-spin-button {
   font-weight: 600;
   box-shadow: 0 10px 38px -10px rgb(15 23 42 / 0.28), 0 10px 20px -15px rgb(15 23 42 / 0.2);
 }
+
+/* Print — used by report pages (e.g. /tools/cost-calculator/report).
+   App chrome carries `print:hidden`; this sets the page itself. */
+.print-exact {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+  }
+}
+
+/* Newly added list rows/cards: brief fade-in so the new item doesn't just pop.
+   Opacity only — safe for table rows and for reduced-motion users. */
+.row-enter {
+  transition: opacity 200ms var(--ease-out-strong);
+}
+@starting-style {
+  .row-enter {
+    opacity: 0;
+  }
+}
+
+/* Destructive icon buttons stay quiet until a mouse hovers them;
+   touch devices would otherwise "stick" the hover colour after a tap. */
+@media (hover: hover) and (pointer: fine) {
+  .remove-btn:hover {
+    color: theme("colors.danger");
+    background-color: theme("colors.danger-bg");
+  }
+}

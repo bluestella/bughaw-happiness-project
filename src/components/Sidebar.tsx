@@ -195,7 +195,7 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
   return (
     <>
       {/* Mobile top app bar */}
-      <header className="lg:hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-panel/90 px-4 backdrop-blur">
+      <header className="lg:hidden print:hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-panel/90 px-4 backdrop-blur">
         <button
           ref={triggerRef}
           onClick={() => setOpen(true)}
@@ -222,7 +222,7 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
       <aside
         id="sidebar-drawer"
         aria-label="Main navigation"
-        className={`fixed lg:sticky top-0 z-50 lg:z-auto flex h-dvh lg:h-screen w-72 lg:w-64 shrink-0 flex-col border-r border-line bg-panel transition-transform duration-300 ease-out-strong motion-reduce:transition-none lg:translate-x-0 ${
+        className={`print:hidden fixed lg:sticky top-0 z-50 lg:z-auto flex h-dvh lg:h-screen w-72 lg:w-64 shrink-0 flex-col border-r border-line bg-panel transition-transform duration-300 ease-out-strong motion-reduce:transition-none lg:translate-x-0 ${
           open ? "translate-x-0 shadow-pop lg:shadow-none" : "-translate-x-full"
         }`}
       >

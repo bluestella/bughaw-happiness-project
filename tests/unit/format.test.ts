@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatValue, peso, pesoRound } from "@/lib/format";
+import { formatValue, peso, pesoCompact, pesoRound, ratioCompact } from "@/lib/format";
 
 describe("format helpers", () => {
   it("renders dashes for null/undefined", () => {
@@ -56,5 +56,15 @@ describe("format helpers", () => {
       "1,234,567.8"
     );
   });
-});
 
+  it("compacts large pesos and ratios for tiles", () => {
+    expect(pesoCompact(166_320_000)).toBe("₱166.3M");
+    expect(pesoCompact(-2_500_000)).toBe("-₱2.5M");
+    expect(pesoCompact(999_999)).toBe("₱999,999");
+    expect(pesoCompact(Infinity)).toBe("—");
+    expect(ratioCompact(3.04)).toBe("3.0×");
+    expect(ratioCompact(20_790)).toBe("20,790×");
+    expect(ratioCompact(2_000_000)).toBe("2M×");
+    expect(ratioCompact(NaN)).toBe("—");
+  });
+});

@@ -9,6 +9,7 @@ first. Deeper detail lives in the child docs under [`docs/`](docs/):
 | [docs/database.md](docs/database.md) | Schema, RLS policy matrix, migrations, SQL functions |
 | [docs/security.md](docs/security.md) | Threat model, auth chain, role enforcement, known gaps, rules |
 | [docs/testing.md](docs/testing.md) | Test strategy, what to test, how to run |
+| [docs/ui-testing.md](docs/ui-testing.md) | Playwright UI/E2E plan: use cases, test cases, CI, issue-reporting loop |
 | [docs/design-system.md](docs/design-system.md) | Colors, typography, component patterns, UX rules |
 | [docs/product.md](docs/product.md) | What the app is for, users, roles, feature inventory, roadmap |
 | [docs/digital-cards.md](docs/digital-cards.md) | Digital business cards: plan, decisions, public-layer security, analytics |
@@ -90,6 +91,7 @@ src/
     cards.ts                    # Digital cards: validation, vCard, signature, analytics (pure)
     wallet.ts                   # Apple/Google Wallet signing (SERVER-ONLY, env secrets)
     pnl.ts                      # P&L Machine formula (pure)
+    costCalc.ts                 # Unit Cost Calculator: units, batch/pair cost, planner, report CSV (pure)
     format.ts                   # ₱ / % / ratio / months formatters
     useAppState.ts              # Shared team JSONB state hook (debounced upsert)
     supabase/{client,server}.ts # Re-exports of utils/supabase (import from here)
@@ -198,6 +200,10 @@ Don't replace this with reindex-the-column writes.
 - Don't gate anything security-relevant only in middleware, the sidebar, or
   `permissions.ts` — see 4.1.
 - Don't edit the root `*.html` artifacts — they are frozen reference material.
+- Don't let tests leave data behind. E2E tests run only against the local Supabase
+  (`env.ts` refuses any other host), and global teardown deletes everything a run created,
+  then fails the run if anything is left over. See
+  [docs/ui-testing.md §1.1](docs/ui-testing.md#11-the-test-data-rule-tests-leave-nothing-behind).
 - Don't introduce per-user private data casually: the workspace tables
   (`pipeline_accounts`, `app_state`, `saved_calculations`) are intentionally
   shared-team (RLS = any authenticated user). Changing that is a product decision.

@@ -17,7 +17,7 @@ export const TOOLS: ToolDef[] = [
   {
     id: "cost-calculator",
     name: "Unit Cost Calculator",
-    description: "R&D costing table — ingredients, equipment amortization, cost per pair.",
+    description: "Cost of one batch, cost per pair, a production planner and a printable report.",
     icon: "flask-conical",
     path: "/tools/cost-calculator",
   },
