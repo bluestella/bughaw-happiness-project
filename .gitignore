@@ -10,3 +10,11 @@ next-env.d.ts
 coverage/
 .DS_Store
 supabase/.temp/
+
+# E2E (docs/ui-testing.md)
+.env.e2e
+test-results/
+playwright-report/
+blob-report/
+playwright/.auth/
+playwright/.baseline.json

@@ -107,6 +107,10 @@ supabase/migrations/
   0008_fix_admin_role_checks.sql  # SECURITY: null-safe admin guards, revoke anon EXECUTE
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
 tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
+tests/e2e/                      # Playwright UI tests (docs/ui-testing.md); LOCAL Supabase only
+playwright.config.ts            # E2E projects, webServer on :3100, global setup/teardown
+scripts/e2e/                    # env.sh (.env.e2e from `supabase status`), clean.ts
+supabase/config.toml, seed.sql  # LOCAL stack for E2E only (ports 554xx); never prod
 .github/workflows/ci.yml        # lint → test → build
 *.html (repo root)              # Original artifacts, kept for reference ONLY — do not edit
 implementation.md               # Historical plan (partially superseded; this doc wins)
@@ -220,6 +224,9 @@ npm run test       # vitest run (pure-logic tests, no network needed)
 npm run test:watch
 npm run lint
 npm run build      # works with placeholder env vars (CI does this)
+npm run e2e:db     # E2E: local Supabase (Docker) on ports 554xx + .env.e2e
+npm run e2e:smoke  # E2E @smoke subset; app on :3100; leaves no data behind
+npm run e2e:clean  # E2E: remove leftovers after an interrupted run
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order

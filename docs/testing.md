@@ -22,6 +22,19 @@ npm run test         # one-shot
 npm run test:watch   # watch mode
 ```
 
+- **E2E (Playwright)**, being built per [ui-testing.md](ui-testing.md): `tests/e2e/`,
+  run against a throwaway **local** Supabase. **Tests leave nothing behind**: global
+  teardown diff-deletes everything a run created and fails the run on leftovers
+  ([ui-testing.md §1.1](ui-testing.md#11-the-test-data-rule-tests-leave-nothing-behind)).
+
+```bash
+npm run e2e:db       # supabase start + db reset + write .env.e2e (needs Docker)
+npm run e2e:smoke    # @smoke subset, chromium (what the PR gate runs)
+npm run e2e          # everything
+npm run e2e:ui       # Playwright UI mode
+npm run e2e:clean    # after a Ctrl-C'd run: delete leftovers back to the baseline
+```
+
 ## 2. The testing philosophy here
 
 **Everything with a formula or a permission decision is a pure function in

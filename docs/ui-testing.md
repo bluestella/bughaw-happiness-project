@@ -1,8 +1,14 @@
 # UI Testing Plan — Playwright E2E for Bughaw Suite
 
-> **Status: plan, not yet implemented** (written 2026-11-05). Use this as the blueprint
-> for building the UI test framework. As phases land, update §5 and remove the matching
+> **Status: Phase 0 landed (2026-11-05); Phase 1 started** (`auth.spec.ts`). Use this
+> as the blueprint for the rest. As phases land, update §5 and remove the matching
 > "Day-one findings" in §6 once their issues are filed.
+>
+> **Local deviations from the plan text below:** the E2E app server runs on **:3100** (so
+> a normal `npm run dev` on :3000, which may point at the hosted Supabase, is never
+> reused), and the local Supabase stack uses ports **554xx** (so it can run beside other
+> local Supabase projects). The header helper is `src/lib/securityHeaders.js`
+> (CommonJS, because `next.config.js` can only `require` plain JS).
 
 ## Context
 
@@ -482,7 +488,19 @@ Exploration already turned up these problems. The tests above will catch them:
    `KeyboardSensor`, so keyboard users can't move cards. (a11y, Mj)
 5. **Pipeline Simulator projection `<select>`s have no labels.** (a11y, Mn)
 6. **Only default 404s and no `error.tsx`.** `/tools` has no index page and 404s. (Mn)
-7. **The docs are wrong in two places.** `docs/testing.md` lists 2 suites and 11 calculators;
+7. **Invite-only signup message never shows (TC-AUTH-05 fails).** Supabase returns
+   HTTP 500 "Database error saving new user" when the allowlist trigger blocks a signup.
+   supabase-js turns any 5xx into an `AuthRetryableFetchError` whose message is `{}`, so
+   `login/page.tsx`'s `includes("invite-only") || includes("Database error")` check never
+   matches. Uninvited people see "Could not create account…" instead. Likely fix: also
+   treat `error.status === 500` on signup as invite-only. (auth, Mj)
+8. **Migrations rely on Supabase's old default table grants.** Newer stacks no longer
+   auto-grant `select/insert/update/delete` on new public tables to `anon`,
+   `authenticated` and `service_role`, so on a fresh stack every query fails with
+   "permission denied". `supabase/seed.sql` grants the old defaults locally. A new
+   numbered migration with explicit grants would make a fresh hosted project work too
+   (it's a no-op on the current one). (db, Mj)
+9. **The docs are wrong in two places.** `docs/testing.md` lists 2 suites and 11 calculators;
    there are 11 suites and 15 calculators. `docs/security.md` §5.1 says contractors can reach
    the workspace tables, but migration 0004 restricts them. TC-RBAC-07 will confirm which is
    true. (docs, Mn)

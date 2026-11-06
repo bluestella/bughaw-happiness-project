@@ -1,0 +1,4 @@
+{
+  "$comment": "route + axe ruleId → GitHub issue. Listed violations are reported but don't fail TC-A11Y. Delete the entry in the PR that fixes it (docs/ui-testing.md §2).",
+  "violations": []
+}
