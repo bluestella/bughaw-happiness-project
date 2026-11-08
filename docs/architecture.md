@@ -32,8 +32,10 @@ the DB the single source of truth for permissions.
    (`src/utils/supabase/middleware.ts`), calls `auth.getUser()` (refreshes the
    session), and:
    - unauthenticated + non-public path → redirect `/login?next=<path>`
-   - authenticated on `/login` → redirect to `/` (or `/tasks` for contractors)
-   - contractor on `/`, `/calculators/*`, `/tools/*`, `/saved` → redirect `/tasks`
+   - one RPC, `current_user_access()`, returns the caller's role + visible sections
+   - authenticated on `/login` → redirect to `landingPath()` (`/`, else `/tasks`, else `/crm`)
+   - a route owned by a section they can't see (`/crm/*`, `/tasks/*`, `/calculators/*`,
+     `/saved`, `/tools/<id>`) → redirect to `landingPath()`; see `src/lib/access.ts`
    - `/c/*` (public digital card) → passed through untouched, plus
      `X-Robots-Tag: noindex`. See [digital-cards.md](digital-cards.md).
 2. Server components under `src/app/(app)/` fetch initial data server-side

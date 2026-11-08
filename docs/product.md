@@ -21,11 +21,15 @@ explicitly decided exception (Oct 2026) is the public digital business card at
 |---|---|---|
 | Founder/owner (currently the sole super_admin) | `super_admin` | Everything: pipeline, economics modeling, project setup, roles, deletions |
 | Core team | `member` | Run calculators, update pipeline, manage boards & contributors |
-| External contractors | `contractor` | Task boards only — locked out of business/financial data routes and of the CRM (enforced by RLS, not just routing) |
+| External contractors | `contractor` | Task boards only by default — locked out of business/financial data and the CRM (enforced by RLS, not just routing) |
 
 The contractor role exists specifically so outside help can collaborate on execution
-without seeing margins, CAC/LTV, or the hotel pipeline. (Note: today this is
-route-level; see [security.md](security.md) §5.1 for the enforcement caveat.)
+without seeing margins, CAC/LTV, or the hotel pipeline.
+
+**Page access (0010).** Roles only set *defaults*. A super_admin can change what
+each role sees by default, and allow or deny any section (CRM, Projects & boards,
+Calculators, Saved calculations) or tool page for one person, at **Admin → Page
+access** (`/admin/access`). Super admins always see everything.
 
 ## 3. Feature inventory (shipped)
 

@@ -7,7 +7,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { TOOLS } from "@/lib/tools";
 import { getIcon } from "@/lib/icons";
-import { canAccessCalculators, canAccessCrm, canManageAllowlist, type Role } from "@/lib/permissions";
+import { canManageAllowlist, type Role } from "@/lib/permissions";
+import { canSee, hasWorkspace, toolSection, type SectionKey } from "@/lib/access";
 import { CommandPalette } from "@/components/CommandPalette";
 
 function NavLink({
@@ -73,10 +74,22 @@ function Logo() {
   );
 }
 
-export function Sidebar({ role, email }: { role: Role | null; email?: string | null }) {
+export function Sidebar({
+  role,
+  sections,
+  email,
+}: {
+  role: Role | null;
+  sections: SectionKey[];
+  email?: string | null;
+}) {
   const [open, setOpen] = useState(false);
-  const showCalculators = canAccessCalculators(role);
-  const showCrm = canAccessCrm(role);
+  // `sections` is a fresh array each render; key the memo on its contents.
+  const sectionsKey = sections.join(",");
+  const access = useMemo(
+    () => ({ role, sections: new Set(sectionsKey ? (sectionsKey.split(",") as SectionKey[]) : []) }),
+    [role, sectionsKey]
+  );
   const showAdmin = canManageAllowlist(role);
   const pathname = usePathname();
   const close = () => setOpen(false);
@@ -109,20 +122,27 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
   }, [open]);
 
   const nav = useMemo(() => {
-    const primaryItems: Array<{ href: string; iconKey: string; label: string }> = [
-      { href: "/", iconKey: "dashboard", label: "Dashboard" },
-    ];
-    if (showCalculators) {
-      primaryItems.push(
-        { href: "/calculators", iconKey: "calculators", label: "Calculators" },
-        { href: "/saved", iconKey: "saved", label: "Saved calculations" }
-      );
+    const primaryItems: Array<{ href: string; iconKey: string; label: string }> = [];
+    if (hasWorkspace(access)) {
+      primaryItems.push({ href: "/", iconKey: "dashboard", label: "Dashboard" });
     }
+    if (canSee(access, "calculators")) {
+      primaryItems.push({ href: "/calculators", iconKey: "calculators", label: "Calculators" });
+    }
+    if (canSee(access, "saved")) {
+      primaryItems.push({ href: "/saved", iconKey: "saved", label: "Saved calculations" });
+    }
+    const showCrm = canSee(access, "crm");
+    const showTasks = canSee(access, "tasks");
+    const tools = TOOLS.filter((t) => {
+      const key = toolSection(t.id);
+      return key !== null && canSee(access, key);
+    });
 
     function renderNav(onNavigate?: () => void) {
       return (
         <nav className="pb-8">
-          <CommandPalette showCalculators={showCalculators} showCrm={showCrm} />
+          <CommandPalette access={access} />
 
           {primaryItems.map((item) => (
             <NavLink
@@ -153,15 +173,19 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
             </>
           )}
 
-          <SectionLabel>Task Management</SectionLabel>
-          <NavLink href="/tasks" iconKey="tasks" onNavigate={onNavigate} pathname={pathname}>
-            Projects &amp; boards
-          </NavLink>
+          {showTasks && (
+            <>
+              <SectionLabel>Task Management</SectionLabel>
+              <NavLink href="/tasks" iconKey="tasks" onNavigate={onNavigate} pathname={pathname}>
+                Projects &amp; boards
+              </NavLink>
+            </>
+          )}
 
-          {showCalculators && (
+          {tools.length > 0 && (
             <>
               <SectionLabel>Tools</SectionLabel>
-              {TOOLS.map((t) => (
+              {tools.map((t) => (
                 <NavLink
                   key={t.id}
                   href={t.path}
@@ -181,6 +205,9 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
               <NavLink href="/admin/allowlist" iconKey="shield-check" onNavigate={onNavigate} pathname={pathname}>
                 Allowlist
               </NavLink>
+              <NavLink href="/admin/access" iconKey="key-round" onNavigate={onNavigate} pathname={pathname}>
+                Page access
+              </NavLink>
               <NavLink href="/admin/cards" iconKey="id-card" onNavigate={onNavigate} pathname={pathname}>
                 Digital cards
               </NavLink>
@@ -190,7 +217,7 @@ export function Sidebar({ role, email }: { role: Role | null; email?: string | n
       );
     }
     return renderNav;
-  }, [showCalculators, showCrm, showAdmin, pathname]);
+  }, [access, showAdmin, pathname]);
 
   return (
     <>

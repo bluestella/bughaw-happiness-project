@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/middleware";
+import { landingPath, routeRedirect } from "@/lib/access";
+import { getCurrentUserAccess } from "@/utils/supabase/access";
 
 // /api/crm/ingest authenticates with a shared secret checked inside Postgres,
 // not with a user session — see supabase/migrations/0003_crm.sql.
@@ -8,21 +10,11 @@ import { createClient } from "@/utils/supabase/middleware";
 const PUBLIC_EXACT = ["/login", "/api/crm/ingest"] as const;
 const PUBLIC_PREFIXES = ["/auth/", "/c/"] as const;
 const PUBLIC_CARD_PREFIX = "/c/";
-const CALCULATOR_PREFIXES = ["/calculators/", "/tools/", "/saved/", "/crm/"] as const;
-const CALCULATOR_EXACT = ["/", "/calculators", "/tools", "/saved", "/crm"] as const;
 
 function matchesPublic(pathname: string): boolean {
   if (PUBLIC_EXACT.includes(pathname as typeof PUBLIC_EXACT[number])) return true;
   for (let i = 0; i < PUBLIC_PREFIXES.length; i++) {
     if (pathname.startsWith(PUBLIC_PREFIXES[i])) return true;
-  }
-  return false;
-}
-
-function matchesCalculatorBlock(pathname: string): boolean {
-  if (CALCULATOR_EXACT.includes(pathname as typeof CALCULATOR_EXACT[number])) return true;
-  for (let i = 0; i < CALCULATOR_PREFIXES.length; i++) {
-    if (pathname.startsWith(CALCULATOR_PREFIXES[i])) return true;
   }
   return false;
 }
@@ -80,19 +72,22 @@ export async function middleware(request: NextRequest) {
     return applySecurityHeaders(NextResponse.redirect(url));
   }
 
-  const { data: role } = await supabase.rpc("current_user_role");
-  const isContractor = role === "contractor";
+  // Role + visible sections in one RPC. The rules live in the DB
+  // (0010_section_access.sql) and RLS enforces them again on the data; this
+  // redirect is the page-level layer on top.
+  const access = await getCurrentUserAccess(supabase);
 
   if (isLoginPath) {
     const url = request.nextUrl.clone();
-    url.pathname = isContractor ? "/tasks" : "/";
+    url.pathname = landingPath(access);
     url.search = "";
     return applySecurityHeaders(NextResponse.redirect(url));
   }
 
-  if (isContractor && matchesCalculatorBlock(pathname)) {
+  const redirectTo = routeRedirect(pathname, access);
+  if (redirectTo !== null) {
     const url = request.nextUrl.clone();
-    url.pathname = "/tasks";
+    url.pathname = redirectTo;
     url.search = "";
     return applySecurityHeaders(NextResponse.redirect(url));
   }

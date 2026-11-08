@@ -47,22 +47,15 @@ export function canDeleteProjectOrMiniProject(role: Role | null): boolean {
   return role === "super_admin";
 }
 
-// Route/sidebar gating for /calculators, /tools, /saved
-export function canAccessCalculators(role: Role | null): boolean {
-  return role !== "contractor";
-}
+// Which sections/pages a person can open (CRM, calculators, saved, tasks,
+// each tool) is per-person data since 0010_section_access.sql — see
+// src/lib/access.ts. The helpers below cover what a role may do *inside* a
+// section it can see.
 
-// CRM policies from supabase/migrations/0003_crm.sql — the crm_* tables are
-// readable/writable by super_admin and member only.
-
-// crm_* select policies
-export function canAccessCrm(role: Role | null): boolean {
-  return role === "super_admin" || role === "member";
-}
-
-// crm_* insert/update policies
+// crm_* insert/update policies (0010): anyone who can see the CRM may work it.
+// Callers only render the CRM for people with the 'crm' section.
 export function canEditLead(role: Role | null): boolean {
-  return role === "super_admin" || role === "member";
+  return role !== null;
 }
 
 // crm_* delete policies
@@ -80,5 +73,12 @@ export function canManageAllowlist(role: Role | null): boolean {
 // 0009_digital_cards.sql grants super_admin only. The card admin section and
 // its analytics are one super_admin-only area at /admin/cards.
 export function canManageCards(role: Role | null): boolean {
+  return role === "super_admin";
+}
+
+// public.app_sections / role_section_defaults / user_section_overrides —
+// edited only through the admin_* RPCs in 0010_section_access.sql, which
+// enforce super_admin server-side too.
+export function canManageAccess(role: Role | null): boolean {
   return role === "super_admin";
 }

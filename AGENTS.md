@@ -49,7 +49,7 @@ security-definer RPC and no table ([docs/digital-cards.md](docs/digital-cards.md
 
 ```
 src/
-  middleware.ts                 # Auth gate + contractor route lockout (every request)
+  middleware.ts                 # Auth gate + per-section route redirects (every request)
   app/
     layout.tsx, globals.css     # Root layout, fonts, Tailwind
     login/page.tsx              # Email/password + Google OAuth sign-in (client)
@@ -74,6 +74,7 @@ src/
         import/                 # CSV / JSON import with a dry-run preview
     api/crm/ingest/route.ts     # Lead intake from the marketing site (secret-authed)
     (app)/admin/cards/          # super_admin: card editor, share kit, analytics
+    (app)/admin/access/         # super_admin: role defaults + per-person page access
     c/[token]/                  # PUBLIC digital card (+ vcard/, event/, wallet/)
   components/
     Sidebar.tsx                 # Role-aware nav (hides calculators from contractors)
@@ -84,6 +85,7 @@ src/
     calculators/registry.ts     # ALL_CALCULATORS + lookup helpers
     calculators/configs/*.ts    # 11 calculator definitions (pure, declarative)
     permissions.ts              # Pure role helpers — MIRRORS RLS, UI-gating only
+    access.ts                   # Sections/pages per person — MIRRORS has_section() (0010)
     tasks.ts                    # Task types + fractional-position ordering math
     crm.ts                      # CRM vocabulary, validation, normalization, CSV (pure)
     crmClient.ts                # Browser write path for manual entry + import (dedupe)
@@ -99,6 +101,7 @@ src/
   utils/supabase/
     client.ts, server.ts, middleware.ts   # @supabase/ssr client factories
     role.ts                     # getCurrentUserRole() → RPC current_user_role()
+    access.ts                   # getCurrentUserAccess() → RPC current_user_access()
 supabase/migrations/
   0001_init.sql                 # Allowlist, signup trigger, workspace tables, RLS
   0002_task_management.sql      # Roles, task tables, security-definer fns, RLS
@@ -106,6 +109,7 @@ supabase/migrations/
   0004–0007                     # Calculator RLS, hardening, team directory, allowlist admin
   0008_fix_admin_role_checks.sql  # SECURITY: null-safe admin guards, revoke anon EXECUTE
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
+  0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
 tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
 tests/e2e/                      # Playwright UI tests (docs/ui-testing.md); LOCAL Supabase only
 playwright.config.ts            # E2E projects, webServer on :3100, global setup/teardown
@@ -132,10 +136,20 @@ Three roles stored on `public.allowed_emails.role`, read via the security-define
 `current_user_role()` (the allowlist table itself has RLS with **no policies** — only
 service role can touch it):
 
+**Which sections a person sees is data, not code (0010).** Sections are CRM,
+Projects & boards, Calculators, Saved calculations, plus each Tool page. Each role
+has editable defaults, and a super_admin can allow or deny any section for one
+person at `/admin/access`. Effective = super_admin → all; else override ?? role
+default ?? none. It is enforced by the middleware (redirect), the nav (hidden) and
+RLS (`has_section()` on the section's tables). The pure mirror is
+`src/lib/access.ts`. The rows below marked *default* are the seeded role defaults.
+
 | Capability | super_admin | member | contractor |
 |---|---|---|---|
-| See calculators/tools/saved | ✅ | ✅ | ❌ (redirected to `/tasks`) |
-| See / work the CRM | ✅ | ✅ | ❌ (route **and** RLS) |
+| See calculators / each tool / saved | ✅ always | ✅ *default* | ❌ *default* |
+| See / work the CRM | ✅ always | ✅ *default* | ❌ *default* (route **and** RLS) |
+| See projects & boards | ✅ always | ✅ *default* | ✅ *default* |
+| Manage page access (`/admin/access`) | ✅ | ❌ | ❌ |
 | Delete CRM records | ✅ | ❌ | ❌ |
 | Create/delete projects | ✅ | ❌ | ❌ |
 | Create mini-projects | ✅ | ✅ (with project access) | ❌ |
@@ -230,7 +244,7 @@ npm run e2e:clean  # E2E: remove leftovers after an interrupted run
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order
-(`0001_init.sql` … `0009_digital_cards.sql`) in the SQL editor (0003 has an
+(`0001_init.sql` … `0010_section_access.sql`) in the SQL editor (0003 has an
 ACTION REQUIRED header: insert an ingest secret before the marketing site can post
 leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.
@@ -240,13 +254,13 @@ Deploy: Vercel, auto from `main`. CI must be green.
 
 ## 7. Known gaps & honest caveats (verify before "fixing", and read docs/security.md)
 
-- **Contractor calculator lockout is route-level only.** RLS on
-  `pipeline_accounts` / `app_state` / `saved_calculations` grants **all**
-  authenticated users (including contractors) full access — a contractor with the
-  anon key and their JWT could query business data directly. Accepted for now
-  (trusted small team); tightening it means new RLS policies using
-  `current_user_role()`. The `crm_*` tables added in 0003 already do this and are
-  the pattern to copy.
+- **Client-only tools are gated by route only.** Since 0010, every table behind a
+  section checks `has_section()`. Calculators, Unit Economics, P&L, Funding and QR
+  Studio have no table (browser math / localStorage), so denying them hides and
+  redirects the page and nothing more. **A new tool that stores `app_state` must
+  map its key in `app_state_section()`** (new migration); unmapped keys are
+  super_admin-only. A new section = `app_sections` row + `role_section_defaults`
+  rows + `SECTIONS` entry in `src/lib/access.ts` (the access test diffs them).
 - **The CRM ingest secret is stored in plaintext** in `crm_ingest_secrets` (a table
   with RLS and no policies, so service-role only — same posture as
   `allowed_emails`). Rotating it means updating that row and the marketing site's

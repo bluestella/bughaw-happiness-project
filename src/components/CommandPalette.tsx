@@ -9,6 +9,7 @@ import { ALL_CALCULATORS, calculatorPath } from "@/lib/calculators/registry";
 import { getIcon } from "@/lib/icons";
 import { DialogBackdrop } from "@/components/ui/dialog";
 import { cn } from "@/lib/cn";
+import { canSee, hasWorkspace, toolSection, type Access } from "@/lib/access";
 
 interface PaletteItem {
   href: string;
@@ -18,28 +19,35 @@ interface PaletteItem {
   iconKey: string;
 }
 
-function buildItems(showCalculators: boolean, showCrm: boolean): PaletteItem[] {
-  const items: PaletteItem[] = [
-    { href: "/", label: "Dashboard", description: "Home — featured tools & shortcuts", group: "Go to", iconKey: "dashboard" },
-  ];
-  if (showCalculators) {
-    items.push(
-      { href: "/calculators", label: "Calculators", description: "Full catalog, filterable by category", group: "Go to", iconKey: "calculators" },
-      { href: "/saved", label: "Saved calculations", description: "Team-wide snapshots", group: "Go to", iconKey: "saved" }
-    );
+function buildItems(access: Access): PaletteItem[] {
+  const items: PaletteItem[] = [];
+  if (hasWorkspace(access)) {
+    items.push({ href: "/", label: "Dashboard", description: "Home — featured tools & shortcuts", group: "Go to", iconKey: "dashboard" });
   }
-  if (showCrm) {
+  const showCalculators = canSee(access, "calculators");
+  if (showCalculators) {
+    items.push({ href: "/calculators", label: "Calculators", description: "Full catalog, filterable by category", group: "Go to", iconKey: "calculators" });
+  }
+  if (canSee(access, "saved")) {
+    items.push({ href: "/saved", label: "Saved calculations", description: "Team-wide snapshots", group: "Go to", iconKey: "saved" });
+  }
+  if (canSee(access, "crm")) {
     items.push(
       { href: "/crm", label: "Lead funnel", description: "CRM pipeline", group: "Go to", iconKey: "crm" },
       { href: "/crm/import", label: "Import leads", description: "Bring leads into the CRM", group: "Go to", iconKey: "crm-import" }
     );
   }
-  items.push({ href: "/tasks", label: "Projects & boards", description: "Task management", group: "Go to", iconKey: "tasks" });
+  if (canSee(access, "tasks")) {
+    items.push({ href: "/tasks", label: "Projects & boards", description: "Task management", group: "Go to", iconKey: "tasks" });
+  }
 
-  if (showCalculators) {
-    for (const t of TOOLS) {
+  for (const t of TOOLS) {
+    const key = toolSection(t.id);
+    if (key !== null && canSee(access, key)) {
       items.push({ href: t.path, label: t.name, description: t.description, group: "Tools", iconKey: t.icon });
     }
+  }
+  if (showCalculators) {
     for (const c of ALL_CALCULATORS) {
       items.push({
         href: calculatorPath(c),
@@ -53,20 +61,14 @@ function buildItems(showCalculators: boolean, showCrm: boolean): PaletteItem[] {
   return items;
 }
 
-export function CommandPalette({
-  showCalculators,
-  showCrm,
-}: {
-  showCalculators: boolean;
-  showCrm: boolean;
-}) {
+export function CommandPalette({ access }: { access: Access }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const items = useMemo(() => buildItems(showCalculators, showCrm), [showCalculators, showCrm]);
+  const items = useMemo(() => buildItems(access), [access]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
