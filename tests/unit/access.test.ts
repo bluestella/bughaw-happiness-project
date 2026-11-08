@@ -9,6 +9,7 @@ import {
   decideSection,
   hasWorkspace,
   landingPath,
+  legacyAccess,
   parseAccess,
   resolveSections,
   routeRedirect,
@@ -225,5 +226,18 @@ describe("routing", () => {
     expect(canSee(access(null, ["crm"]), "crm")).toBe(false);
     expect(canSee(crmOnly, "crm")).toBe(true);
     expect(canSee(crmOnly, "tasks")).toBe(false);
+  });
+});
+
+describe("legacyAccess (before 0010 is applied)", () => {
+  it("reproduces the pre-0010 role rules", () => {
+    expect(legacyAccess("super_admin").sections.size).toBe(SECTION_KEYS.length);
+    expect(legacyAccess("member").sections.size).toBe(SECTION_KEYS.length);
+    expect(Array.from(legacyAccess("contractor").sections)).toEqual(["tasks"]);
+  });
+
+  it("gives an unknown or missing role nothing", () => {
+    expect(legacyAccess(null)).toBe(NO_ACCESS);
+    expect(legacyAccess("owner")).toBe(NO_ACCESS);
   });
 });

@@ -61,6 +61,21 @@ export interface Access {
 
 export const NO_ACCESS: Access = { role: null, sections: new Set() };
 
+/**
+ * Access under the pre-0010 hard-coded rules (member = everything, contractor =
+ * tasks only). Used only when current_user_access() does not exist yet — i.e.
+ * the app was deployed before 0010_section_access.sql was run — so the app
+ * keeps working instead of treating everyone as having no role. Matches the
+ * seeded defaults, and RLS was role-based at that point too.
+ */
+export function legacyAccess(role: unknown): Access {
+  if (role === "super_admin" || role === "member") {
+    return { role, sections: new Set(SECTION_KEYS) };
+  }
+  if (role === "contractor") return { role, sections: new Set<SectionKey>(["tasks"]) };
+  return NO_ACCESS;
+}
+
 /** Parse the jsonb returned by the current_user_access() RPC. */
 export function parseAccess(raw: unknown): Access {
   if (!raw || typeof raw !== "object") return NO_ACCESS;

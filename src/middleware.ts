@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/middleware";
-import { landingPath, parseAccess, routeRedirect } from "@/lib/access";
+import { landingPath, routeRedirect } from "@/lib/access";
+import { getCurrentUserAccess } from "@/utils/supabase/access";
 
 // /api/crm/ingest authenticates with a shared secret checked inside Postgres,
 // not with a user session — see supabase/migrations/0003_crm.sql.
@@ -74,8 +75,7 @@ export async function middleware(request: NextRequest) {
   // Role + visible sections in one RPC. The rules live in the DB
   // (0010_section_access.sql) and RLS enforces them again on the data; this
   // redirect is the page-level layer on top.
-  const { data: rawAccess } = await supabase.rpc("current_user_access");
-  const access = parseAccess(rawAccess);
+  const access = await getCurrentUserAccess(supabase);
 
   if (isLoginPath) {
     const url = request.nextUrl.clone();
