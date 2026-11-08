@@ -74,6 +74,23 @@ All `created_by_email` / `added_by_email` / `author_email` columns default to
   `event`, `target` (clicks only), `source` (`link`/`qr`/`nfc`/`email`), `device`,
   `occurred_at`. No IP or visitor identifier, by design.
 
+### Page access (0010)
+
+```
+app_sections            (key PK, label, group_label, sort_order)   ← seeded; keys = SECTIONS in src/lib/access.ts
+role_section_defaults   (role, section → app_sections, allowed)    PK (role, section)
+user_section_overrides  (email → allowed_emails ON DELETE CASCADE, section, allowed,
+                         updated_at, updated_by_email)              PK (email, section)
+```
+
+All three have RLS on and **no policies**: read through `current_user_access()` /
+`admin_get_section_access()`, written only through the `admin_set_*` RPCs.
+Effective access = super_admin → all; no allowlist row → none; else the person's
+override, else their role's default, else none. The seed reproduces the
+pre-0010 rules (member = all, contractor = `tasks`). **Adding a section** = a
+new migration inserting into `app_sections` + `role_section_defaults`, the same
+key in `SECTIONS` (the unit test diffs the two), and an RLS check on its tables.
+
 ### CRM (0003)
 
 ```
@@ -108,9 +125,13 @@ One **lead row per submission**; contacts and accounts are deduped (FORMS_AUDIT
 | Function | Returns | Purpose |
 |---|---|---|
 | `current_user_role()` | `app_role` | Role of the caller's JWT email; the only way clients read `allowed_emails` |
-| `has_project_access(uuid)` | bool | Caller is a `project_contributors` row (email, case-insensitive) |
-| `has_mini_project_access(uuid)` | bool | Direct mini-project contributor OR contributor on the parent project |
+| `has_project_access(uuid)` | bool | Caller has the `tasks` section (0010) AND is a `project_contributors` row (email, case-insensitive) |
+| `has_mini_project_access(uuid)` | bool | Caller has the `tasks` section (0010) AND is a direct mini-project contributor OR contributor on the parent project |
 
+| `has_section(text)` | bool | Caller can see that section: super_admin always; else override ?? role default ?? false (0010) |
+| `current_user_access()` | `jsonb` | `{role, sections[]}` for the caller — the one RPC the middleware and app layout make (0010) |
+| `app_state_section(text)` / `has_app_state_access(text)` | text / bool | Which section owns an `app_state` key (`cost-calc` → `tool:cost-calculator`, `pipeline-*` → `tool:pipeline`, unknown → super_admin only) (0010) |
+| `admin_get_section_access()` / `admin_set_user_section(text, text, bool)` / `admin_set_role_section_default(app_role, text, bool)` | — | super_admin: read the matrix; set/clear (`null`) a person's override; set a role default (0010) |
 | `ingest_form_submission(text, jsonb)` | `jsonb` | Lead intake from the marketing site — **granted to `anon` too**; authorises on a shared secret, drops honeypot hits, upserts account+contact, inserts lead+activity |
 | `admin_list_allowed_emails()` / `admin_add_allowed_email(…)` / `admin_remove_allowed_email(text)` | — | Allowlist management (0007). super_admin guard made null-safe and anon EXECUTE revoked in 0008 |
 | `get_public_card(text)` | table | **Granted to `anon`.** One published card's display-safe columns by token (0009) |
@@ -163,9 +184,13 @@ A paste-ready brief for whoever wires up the marketing site is in
 | app_state | any | any | any | any |
 | saved_calculations | any | any | **no policy → denied** | any |
 
-Note: `saved_calculations` has no update policy on purpose — saved runs are
-immutable snapshots (re-save instead). Contractors *can* reach these tables at the
-API level even though the routes are blocked — see [security.md](security.md) §5.
+**Superseded by 0010** — these tables now check `has_section()`:
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| pipeline_accounts | `tool:pipeline` or `crm` | `tool:pipeline` or `crm` | `tool:pipeline` | SA |
+| app_state | section for the key | same | same | SA |
+| saved_calculations | `saved` | `calculators` or `saved` | `saved` | SA |
 
 ### Task tables (0002)
 
@@ -183,23 +208,26 @@ Legend: SA = super_admin, M = member, C = contractor; "access" = the relevant
 
 "Own" for contractors = `lower(created_by_email) = lower(auth.jwt()->>'email')`.
 
-### CRM tables (0003) — role-gated, unlike the 0001 workspace tables
+### CRM tables (0003, section-gated since 0010)
 
 | Table | select | insert | update | delete |
 |---|---|---|---|---|
-| crm_accounts | SA, M | SA, M | SA, M | SA |
-| crm_contacts | SA, M | SA, M | SA, M | SA |
-| crm_leads | SA, M | SA, M | SA, M | SA |
-| crm_lead_activities | SA, M | SA, M | **none** | **none** |
+| crm_accounts | `crm` | `crm` | `crm` | SA |
+| crm_contacts | `crm` | `crm` | `crm` | SA |
+| crm_leads | `crm` | `crm` | `crm` | SA |
+| crm_lead_activities | `crm` | `crm` | **none** | **none** |
 | crm_ingest_secrets | **none** | **none** | **none** | **none** |
 
-Contractors get nothing here — at the database level, not just the route. Writes
+`crm` = `has_section('crm')`. By default contractors don't have it, so they get
+nothing here, at the database level and not just the route. Writes
 from the marketing site bypass these policies through
 `ingest_form_submission()` (security definer), which is why that function is the
 only thing granted to `anon`.
 
-These policies are mirrored (UI-only) by `src/lib/permissions.ts` and asserted in
-`tests/unit/permissions.test.ts`. **Change all three together.**
+These policies are mirrored (UI-only) by `src/lib/permissions.ts` (what a role does
+inside a section) and `src/lib/access.ts` (which sections a person sees), asserted
+in `tests/unit/permissions.test.ts` and `tests/unit/access.test.ts`. **Change the
+migration, the mirror and the test together.**
 
 ### Card tables (0009) — super_admin only, plus two anon functions
 

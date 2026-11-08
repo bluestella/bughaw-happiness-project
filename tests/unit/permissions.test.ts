@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  canAccessCalculators,
-  canAccessCrm,
   canAddContributor,
   canCreateMiniProject,
   canCreateProject,
@@ -12,6 +10,7 @@ import {
   canEditOrDeleteTask,
   canManageAllowlist,
   canManageCards,
+  canManageAccess,
   canRemoveContributor,
   type Role,
 } from "@/lib/permissions";
@@ -64,21 +63,16 @@ describe("role capability matrix", () => {
       nullExpected: false,
     },
     {
-      fn: canAccessCalculators,
-      name: "canAccessCalculators",
-      expected: { super_admin: true, member: true, contractor: false },
-      nullExpected: true,
-    },
-    {
-      fn: canAccessCrm,
-      name: "canAccessCrm",
-      expected: { super_admin: true, member: true, contractor: false },
+      // 0010: CRM writes follow the 'crm' section, so any role that can see it
+      fn: canEditLead,
+      name: "canEditLead",
+      expected: { super_admin: true, member: true, contractor: true },
       nullExpected: false,
     },
     {
-      fn: canEditLead,
-      name: "canEditLead",
-      expected: { super_admin: true, member: true, contractor: false },
+      fn: canManageAccess,
+      name: "canManageAccess",
+      expected: { super_admin: true, member: false, contractor: false },
       nullExpected: false,
     },
     {

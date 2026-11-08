@@ -1,18 +1,18 @@
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/utils/supabase/role";
+import { getCurrentUserAccess } from "@/utils/supabase/access";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getCurrentUserRole(supabase);
+  const access = await getCurrentUserAccess(supabase);
 
   return (
     <div className="lg:flex min-h-screen">
-      <Sidebar role={role} email={user?.email} />
+      <Sidebar role={access.role} sections={Array.from(access.sections)} email={user?.email} />
       <div className="flex-1 min-w-0">
         <header className="hidden lg:flex print:hidden sticky top-0 z-10 items-center justify-end gap-3 border-b border-line bg-paper/90 px-6 py-2.5 backdrop-blur">
           <span className="truncate text-xs text-ink-soft">{user?.email}</span>

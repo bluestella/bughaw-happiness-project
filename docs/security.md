@@ -28,11 +28,14 @@ reach exactly two narrow security-definer functions and no table.
    `auth.getUser()` on every non-static request; signed-out users are redirected to
    `/login?next=…`. Only `/login`, `/auth/*`, the secret-authed `/api/crm/ingest`
    and the public card route `/c/*` (§8) skip the login redirect.
-3. **Role routing**: signed-in contractors are redirected off `/`, `/calculators/*`,
-   `/tools/*`, `/saved` to `/tasks`. **This is navigation control, not data
-   control** (see §5.1).
-4. **RLS** (see [database.md](database.md) §4): the actual boundary. Task-management
-   policies enforce the role matrix; workspace tables allow any authenticated user.
+3. **Section routing** (0010): the middleware reads `current_user_access()` (role +
+   visible sections) once per request and redirects any route owned by a section the
+   person cannot see (`sectionForPath` / `routeRedirect` in `src/lib/access.ts`).
+   This is navigation control; the data control is step 4.
+4. **RLS** (see [database.md](database.md) §4): the actual boundary. The crm_*,
+   pipeline_accounts, app_state, saved_calculations and task tables check
+   `has_section()`; task policies additionally enforce the role matrix and
+   contributor grants.
 5. **DB-set provenance**: `created_by_email` etc. default to `auth.jwt()->>'email'`
    server-side — a client cannot forge authorship on insert. (Caveat §5.4.)
 
@@ -74,13 +77,16 @@ is right. **Never "fix" a permission bug in TypeScript only.**
 
 ## 5. Known gaps (accepted risks — do not silently "discover" these as new)
 
-1. **Contractors can reach workspace data at the API level.** RLS on
-   `pipeline_accounts`, `app_state`, `saved_calculations` is role-blind
-   (`to authenticated using (true)`). The contractor lockout is only middleware
-   routing; a contractor using the anon key + their JWT directly can read/write the
-   CRM pipeline and calculator state. Accepted because contractors are trusted
-   invitees; **tighten by adding `current_user_role() <> 'contractor'` policies** if
-   contractor trust drops.
+1. **Some sections have no data to protect, so routing is their only gate.** Since
+   0010, every table behind a section checks `has_section()`, so hiding a section
+   also blocks its data at the API. But Calculators, Unit Economics, P&L, Funding and
+   QR Studio compute in the browser (localStorage, no table): denying them hides and
+   redirects the page, and someone who loads the JS bundle could still run the
+   math. That is acceptable because the formulas are not secret. Shared-data caveats:
+   `pipeline_accounts` is readable/insertable with **either** `tool:pipeline` or
+   `crm` (the CRM's "promote to pipeline" writes there). An `app_state` key that
+   is not mapped in `app_state_section()` is super_admin-only, so a new tool that
+   stores state there must add its key in a migration.
 2. **Contributor grants accept arbitrary emails** (no allowlist FK) — a typo grants
    nobody, but also nobody notices. Low risk (grant, not data), fix in DB if needed.
 3. **No rate limiting / abuse controls** beyond Supabase's defaults on auth

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/utils/supabase/role";
-import { canAccessCrm } from "@/lib/permissions";
+import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { canSee, landingPath } from "@/lib/access";
 import type { CrmLeadRow } from "@/lib/crm";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { CrmBoard } from "./CrmBoard";
@@ -19,11 +19,12 @@ export const metadata: Metadata = {
 
 export default async function CrmPage() {
   const supabase = createClient();
-  const role = await getCurrentUserRole(supabase);
+  const access = await getCurrentUserAccess(supabase);
+  const role = access.role;
 
-  // Middleware already redirects contractors; this is the belt-and-braces check
-  // for anyone the middleware misses. RLS is the real boundary.
-  if (!canAccessCrm(role)) redirect("/tasks");
+  // Middleware already redirects anyone without the 'crm' section; this is the
+  // belt-and-braces check. RLS (has_section('crm')) is the real boundary.
+  if (!canSee(access, "crm")) redirect(landingPath(access));
 
   const { data, error } = await supabase
     .from("crm_leads")

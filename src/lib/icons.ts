@@ -18,6 +18,7 @@ import {
   Scale,
   ShieldCheck,
   IdCard,
+  KeyRound,
   SlidersHorizontal,
   Tag,
   Target,
@@ -59,6 +60,7 @@ export const ICONS = {
   timer: Timer,
   "shield-check": ShieldCheck,
   "id-card": IdCard,
+  "key-round": KeyRound,
   "qr-code": QrCode,
 } as const satisfies Record<string, LucideIcon>;
 
