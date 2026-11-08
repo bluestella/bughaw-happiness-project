@@ -65,6 +65,22 @@ export function AllowlistManager({
     router.refresh();
   }
 
+  async function changeRole(target: string, next: AllowedEmailRow["role"]) {
+    const prev = rows;
+    setRows((rs) => rs.map((r) => (r.email === target ? { ...r, role: next } : r)));
+    const { error } = await supabase.rpc("admin_set_allowed_role", {
+      p_email: target,
+      p_role: next,
+    });
+    if (error) {
+      setRows(prev);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${target} is now ${ROLE_LABEL[next]}.`);
+    router.refresh();
+  }
+
   async function removeEmail(target: string) {
     const { error } = await supabase.rpc("admin_remove_allowed_email", { p_email: target });
     if (error) {
@@ -153,7 +169,17 @@ export function AllowlistManager({
             {rows.map((r) => (
               <tr key={r.email} className="border-b border-line last:border-b-0">
                 <td className="px-4 py-2.5 font-mono text-[12px] text-ink">{r.email}</td>
-                <td className="px-4 py-2.5 text-ink-soft">{ROLE_LABEL[r.role]}</td>
+                <td className="px-4 py-2.5 text-ink-soft">
+                  <Select
+                    aria-label={`Role for ${r.email}`}
+                    value={r.role}
+                    onChange={(e) => changeRole(r.email, e.target.value as AllowedEmailRow["role"])}
+                  >
+                    <option value="member">Member</option>
+                    <option value="contractor">Contractor</option>
+                    <option value="super_admin">Super admin</option>
+                  </Select>
+                </td>
                 <td className="px-4 py-2.5 text-ink-soft">{r.note || "—"}</td>
                 <td className="px-4 py-2.5 text-right">
                   <Button
