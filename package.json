@@ -10,7 +10,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "vercel-build": "npm run test:coverage && next build"
+    "vercel-build": "npm run test:coverage && next build",
+    "e2e": "playwright test",
+    "e2e:smoke": "playwright test --grep @smoke --project=chromium",
+    "e2e:ui": "playwright test --ui",
+    "e2e:db": "supabase start && supabase db reset && ./scripts/e2e/env.sh",
+    "e2e:clean": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/e2e/clean.ts",
+    "e2e:visual:update": "docker run --rm --network host -v \"$PWD\":/work -w /work mcr.microsoft.com/playwright:v1.64.1-noble npx playwright test --project=visual --update-snapshots",
+    "typecheck:e2e": "tsc -p tests/e2e/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

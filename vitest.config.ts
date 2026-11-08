@@ -17,6 +17,7 @@ const COVERAGE_INCLUDE = [
   "src/lib/pnl.ts",
   "src/lib/tasks.ts",
   "src/lib/tools.ts",
+  "src/lib/securityHeaders.js",
   "src/app/(app)/crm/leadSelect.ts",
 ];
 

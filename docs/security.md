@@ -64,6 +64,18 @@ is right. **Never "fix" a permission bug in TypeScript only.**
   ever becomes necessary, it must only be read in route handlers/server code and
   reviewed here first.
 - CI builds with placeholder Supabase values — builds must never require real creds.
+- **E2E test tooling (local only).** The Playwright suite reads the **local** Supabase
+  stack's service-role key from `.env.e2e` (gitignored, written by
+  `scripts/e2e/env.sh` from `supabase status`). Only `tests/e2e/support/admin.ts`
+  reads it, to seed fixtures and clean up after the run. It is never passed to the
+  Next.js server under test, `src/**` is ESLint-blocked from importing `tests/**`, and
+  `tests/e2e/support/env.ts` refuses to run against any non-loopback Supabase URL.
+  That key belongs to a throwaway Docker stack, so this doesn't relax the ban above
+  for the app or for any hosted project. See docs/ui-testing.md §1.1.
+- **CSP for local http Supabase.** `src/lib/securityHeaders.js` builds the headers.
+  Only when `NEXT_PUBLIC_SUPABASE_URL` is `http:` (the local stack) does it add that
+  origin to `connect-src` and drop `upgrade-insecure-requests` and HSTS. For an https
+  URL the output is byte-identical to before (`tests/unit/securityHeaders.test.ts`).
 - **Wallet signing keys (optional, server-only)** — `APPLE_PASS_*`, `APPLE_TEAM_ID`,
   `APPLE_WWDR_CERT_PEM`, `GOOGLE_WALLET_*`. These are the app's only non-public
   secrets. They are read solely by `src/lib/wallet.ts` from the
