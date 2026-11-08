@@ -68,8 +68,13 @@ function LoginForm() {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         console.warn("[auth] signup failed", error.status);
+        // The allowlist trigger raises inside the auth.users insert. Depending on the
+        // GoTrue version that surfaces as "Database error saving new user" or as a bare
+        // HTTP 500 that supabase-js reports with an empty message ("{}"), so match both.
         const isInviteOnly =
-          error.message.includes("invite-only") || error.message.includes("Database error");
+          error.status === 500 ||
+          error.message.includes("invite-only") ||
+          error.message.includes("Database error");
         setError(
           isInviteOnly
             ? "Signups are invite-only. Ask a Bughaw admin to add your email to the allowlist."
