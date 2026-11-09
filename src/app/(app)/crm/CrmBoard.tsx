@@ -359,6 +359,20 @@ export function CrmBoard({
     setOpenLead(lead);
   }
 
+  function handleLeadDeleted(leadId: string) {
+    setLeadsById((prev) => {
+      const next = { ...prev };
+      delete next[leadId];
+      return next;
+    });
+    setColumns((prev) => {
+      const next = { ...prev };
+      for (const s of LEAD_STATUSES) next[s] = prev[s].filter((id) => id !== leadId);
+      return next;
+    });
+    setOpenLead(null);
+  }
+
   function handleLeadCreated(lead: CrmLeadRow) {
     setLeadsById((prev) => ({ ...prev, [lead.id]: lead }));
     setColumns((prev) => ({ ...prev, [lead.status]: [...prev[lead.status], lead.id] }));
@@ -581,6 +595,7 @@ export function CrmBoard({
           role={role}
           onClose={() => setOpenLead(null)}
           onUpdated={handleLeadUpdated}
+          onDeleted={handleLeadDeleted}
         />
       )}
     </div>
