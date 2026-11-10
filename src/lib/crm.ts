@@ -69,24 +69,27 @@ export function productLabel(id: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Row types (mirror supabase/migrations/0003_crm.sql)
+// Row types (mirror supabase/migrations/0003_crm.sql, as amended by 0013)
+//
+// Optional text columns are `string | null`: null means "no value" and the
+// database rejects '' (0013). Never write '' to one of them.
 // ---------------------------------------------------------------------------
 
 export type CrmAccount = {
   id: string;
   name: string;
   kind: "hotel" | "company";
-  industry: string;
-  hotel_star_rating: string;
-  hotel_room_count_band: string;
+  industry: string | null;
+  hotel_star_rating: string | null;
+  hotel_room_count_band: string | null;
 };
 
 export type CrmContact = {
   id: string;
   account_id: string | null;
-  full_name: string;
+  full_name: string | null;
   email: string;
-  job_title: string;
+  job_title: string | null;
 };
 
 export type CrmLead = {
@@ -97,12 +100,12 @@ export type CrmLead = {
   lead_type: LeadType;
   status: LeadStatus;
   position: number;
-  source: string;
+  source: string | null;
   product_interests: string[];
-  product_of_interest: string;
-  estimated_volume: string;
-  description: string;
-  engagement_tier: string;
+  product_of_interest: string | null;
+  estimated_volume: string | null;
+  description: string | null;
+  engagement_tier: string | null;
   ga_client_id: string | null;
   attribution: unknown;
   engagement: unknown;
@@ -135,20 +138,20 @@ export type NormalizedSubmission = {
   account: {
     name: string;
     kind: "hotel" | "company";
-    industry: string;
-    hotel_star_rating: string;
-    hotel_room_count_band: string;
+    industry: string | null;
+    hotel_star_rating: string | null;
+    hotel_room_count_band: string | null;
   } | null;
-  contact: { full_name: string; email: string; job_title: string };
+  contact: { full_name: string | null; email: string; job_title: string | null };
   lead: {
     origin_form: OriginForm;
     lead_type: LeadType;
-    source: string;
+    source: string | null;
     product_interests: string[];
-    product_of_interest: string;
-    estimated_volume: string;
-    description: string;
-    engagement_tier: string;
+    product_of_interest: string | null;
+    estimated_volume: string | null;
+    description: string | null;
+    engagement_tier: string | null;
     ga_client_id: string | null;
     attribution: unknown;
     engagement: unknown;
@@ -195,6 +198,12 @@ function str(v: unknown): string {
 
 function trimmed(body: SubmissionBody, key: string): string {
   return str(body[key]).trim();
+}
+
+/** Trimmed value, or null when blank — the shape optional columns are stored in. */
+function trimmedOrNull(body: SubmissionBody, key: string): string | null {
+  const v = trimmed(body, key);
+  return v === "" ? null : v;
 }
 
 function checkText(
@@ -282,12 +291,13 @@ function nested(body: SubmissionBody, key: string): unknown {
   return v === undefined ? null : v;
 }
 
-function nestedString(body: SubmissionBody, outer: string, inner: string): string {
+function nestedString(body: SubmissionBody, outer: string, inner: string): string | null {
   const o = body[outer];
   if (o && typeof o === "object" && !Array.isArray(o)) {
-    return str((o as Record<string, unknown>)[inner]);
+    const v = str((o as Record<string, unknown>)[inner]).trim();
+    return v === "" ? null : v;
   }
-  return "";
+  return null;
 }
 
 /**
@@ -304,7 +314,7 @@ export function normalizeSubmission(
 
   const common = {
     engagement_tier: tier,
-    ga_client_id: gaClientId === "" ? null : gaClientId,
+    ga_client_id: gaClientId,
     attribution: nested(body, "_attribution"),
     engagement: nested(body, "_engagement"),
     geo: nested(body, "_geo"),
@@ -320,22 +330,22 @@ export function normalizeSubmission(
               name: hotelName,
               kind: "hotel",
               industry: "Hospitality",
-              hotel_star_rating: trimmed(body, "starRating"),
-              hotel_room_count_band: trimmed(body, "roomCount"),
+              hotel_star_rating: trimmedOrNull(body, "starRating"),
+              hotel_room_count_band: trimmedOrNull(body, "roomCount"),
             },
       contact: {
-        full_name: trimmed(body, "fullName"),
+        full_name: trimmedOrNull(body, "fullName"),
         email: trimmed(body, "email"),
-        job_title: "",
+        job_title: null,
       },
       lead: {
         origin_form: originForm ?? "for_hotels",
         lead_type: "hotel_pilot",
-        source: trimmed(body, "source"),
+        source: trimmedOrNull(body, "source"),
         product_interests: normalizeInterests(body.interests),
-        product_of_interest: "",
-        estimated_volume: "",
-        description: trimmed(body, "message"),
+        product_of_interest: null,
+        estimated_volume: null,
+        description: trimmedOrNull(body, "message"),
         ...common,
       },
     };
@@ -350,23 +360,23 @@ export function normalizeSubmission(
           : {
               name: company,
               kind: "company",
-              industry: "",
-              hotel_star_rating: "",
-              hotel_room_count_band: "",
+              industry: null,
+              hotel_star_rating: null,
+              hotel_room_count_band: null,
             },
       contact: {
-        full_name: company,
+        full_name: company === "" ? null : company,
         email: trimmed(body, "email"),
-        job_title: "",
+        job_title: null,
       },
       lead: {
         origin_form: originForm ?? "inquiry_api",
         lead_type: "inquiry",
-        source: trimmed(body, "source"),
+        source: trimmedOrNull(body, "source"),
         product_interests: [],
-        product_of_interest: trimmed(body, "product"),
-        estimated_volume: trimmed(body, "quantity"),
-        description: trimmed(body, "additionalInfo"),
+        product_of_interest: trimmedOrNull(body, "product"),
+        estimated_volume: trimmedOrNull(body, "quantity"),
+        description: trimmedOrNull(body, "additionalInfo"),
         ...common,
       },
     };
@@ -380,23 +390,23 @@ export function normalizeSubmission(
         : {
             name: company,
             kind: "company",
-            industry: "",
-            hotel_star_rating: "",
-            hotel_room_count_band: "",
+            industry: null,
+            hotel_star_rating: null,
+            hotel_room_count_band: null,
           },
     contact: {
-      full_name: trimmed(body, "name"),
+      full_name: trimmedOrNull(body, "name"),
       email: trimmed(body, "email"),
-      job_title: trimmed(body, "role"),
+      job_title: trimmedOrNull(body, "role"),
     },
     lead: {
       origin_form: originForm ?? "contact",
       lead_type: "general",
-      source: trimmed(body, "source"),
+      source: trimmedOrNull(body, "source"),
       product_interests: [],
-      product_of_interest: "",
-      estimated_volume: "",
-      description: trimmed(body, "message"),
+      product_of_interest: null,
+      estimated_volume: null,
+      description: trimmedOrNull(body, "message"),
       ...common,
     },
   };

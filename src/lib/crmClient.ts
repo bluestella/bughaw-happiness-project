@@ -36,9 +36,9 @@ async function upsertAccount(
   if (existing) {
     // Only fill in blanks — never overwrite what the team has curated.
     const patch: Record<string, string> = {};
-    if (existing.industry === "" && account.industry !== "") patch.industry = account.industry;
-    if (account.hotel_star_rating !== "") patch.hotel_star_rating = account.hotel_star_rating;
-    if (account.hotel_room_count_band !== "")
+    if (existing.industry === null && account.industry !== null) patch.industry = account.industry;
+    if (account.hotel_star_rating !== null) patch.hotel_star_rating = account.hotel_star_rating;
+    if (account.hotel_room_count_band !== null)
       patch.hotel_room_count_band = account.hotel_room_count_band;
     if (existing.kind === "company" && account.kind === "hotel") patch.kind = account.kind;
     if (Object.keys(patch).length > 0) {
@@ -77,8 +77,8 @@ async function upsertContact(
 
   if (existing) {
     const patch: Record<string, string> = {};
-    if (contact.full_name !== "" && existing.full_name === "") patch.full_name = contact.full_name;
-    if (contact.job_title !== "" && existing.job_title === "") patch.job_title = contact.job_title;
+    if (contact.full_name !== null && existing.full_name === null) patch.full_name = contact.full_name;
+    if (contact.job_title !== null && existing.job_title === null) patch.job_title = contact.job_title;
     if (accountId && !existing.account_id) patch.account_id = accountId;
     if (Object.keys(patch).length > 0) {
       const { error } = await supabase.from("crm_contacts").update(patch).eq("id", existing.id);

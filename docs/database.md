@@ -91,13 +91,16 @@ pre-0010 rules (member = all, contractor = `tasks`). **Adding a section** = a
 new migration inserting into `app_sections` + `role_section_defaults`, the same
 key in `SECTIONS` (the unit test diffs the two), and an RLS check on its tables.
 
-### CRM (0003)
+### CRM (0003, amended by 0013)
+
+Optional text columns use **NULL for "no value"** — never `''` (0013 adds `*_not_blank`
+CHECKs). Required columns (`name`, `email`, `kind`, `status`, …) are unchanged.
 
 ```
 crm_accounts   (name, name_key GENERATED lower(btrim(name)) UNIQUE  ← dedupe key,
                 kind 'hotel'|'company', industry,
-                hotel_star_rating ''|3-Star|4-Star|5-Star|Unrated,
-                hotel_room_count_band ''|<50|50–100|101–200|200+)
+                hotel_star_rating 3-Star|4-Star|5-Star|Unrated|null,
+                hotel_room_count_band <50|50–100|101–200|200+|null)
 crm_contacts   (account_id FK set null, full_name, email,
                 email_key GENERATED lower(btrim(email)) UNIQUE  ← primary dedupe key,
                 job_title)
@@ -110,7 +113,8 @@ crm_leads      (contact_id FK, account_id FK,
                 estimated_volume, description, engagement_tier, ga_client_id,
                 attribution/engagement/geo/raw jsonb,
                 pipeline_account_id FK → pipeline_accounts  ← "promote" link,
-                owner_email  ← reserved, no UI reads it yet,
+                owner_email FK → allowed_emails(email) (0013; cascade on rename,
+                             set null on removal) ← reserved, no UI reads it yet,
                 submitted_at)
 crm_lead_activities (lead_id FK cascade, kind note|status_change|system, body,
                      from_status, to_status, author_email) — append-only

@@ -218,7 +218,7 @@ export function CrmBoard({
   const allLeads = useMemo(() => Object.values(leadsById), [leadsById]);
 
   const tierOptions = useMemo(() => {
-    const set = new Set(allLeads.map((l) => l.engagement_tier).filter((t) => t !== ""));
+    const set = new Set(allLeads.map((l) => l.engagement_tier).filter((t): t is string => !!t));
     return Array.from(set).sort();
   }, [allLeads]);
 

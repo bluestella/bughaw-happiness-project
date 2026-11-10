@@ -110,6 +110,7 @@ supabase/migrations/
   0008_fix_admin_role_checks.sql  # SECURITY: null-safe admin guards, revoke anon EXECUTE
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
   0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
+  0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
 tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
 tests/e2e/                      # Playwright UI tests (docs/ui-testing.md); LOCAL Supabase only
 playwright.config.ts            # E2E projects, webServer on :3100, global setup/teardown
@@ -244,7 +245,7 @@ npm run e2e:clean  # E2E: remove leftovers after an interrupted run
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order
-(`0001_init.sql` … `0010_section_access.sql`) in the SQL editor (0003 has an
+(`0001_init.sql` … `0013_crm_nulls_and_owner_fk.sql`) in the SQL editor (0003 has an
 ACTION REQUIRED header: insert an ingest secret before the marketing site can post
 leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.

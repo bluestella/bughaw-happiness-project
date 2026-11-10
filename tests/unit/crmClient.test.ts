@@ -137,13 +137,13 @@ describe("createLeadFromSubmission — existing account/contact patch rules", ()
     const supabase = makeMockSupabase({
       crm_accounts: [
         {
-          data: { id: "acc1", industry: "", hotel_star_rating: "", hotel_room_count_band: "", kind: "company" },
+          data: { id: "acc1", industry: null, hotel_star_rating: null, hotel_room_count_band: null, kind: "company" },
           error: null,
         },
         { data: null, error: null }, // update
       ],
       crm_contacts: [
-        { data: { id: "con1", full_name: "Existing Name", job_title: "", account_id: null }, error: null },
+        { data: { id: "con1", full_name: "Existing Name", job_title: null, account_id: null }, error: null },
         { data: null, error: null }, // update
       ],
       crm_leads: [{ data: { id: "lead1" }, error: null }],
@@ -241,7 +241,7 @@ describe("createLeadFromSubmission — error propagation", () => {
   it("throws when the account update errors", async () => {
     const supabase = makeMockSupabase({
       crm_accounts: [
-        { data: { id: "acc1", industry: "", hotel_star_rating: "", hotel_room_count_band: "", kind: "company" }, error: null },
+        { data: { id: "acc1", industry: null, hotel_star_rating: null, hotel_room_count_band: null, kind: "company" }, error: null },
         { data: null, error: { message: "account update failed" } },
       ],
     });
@@ -287,7 +287,7 @@ describe("createLeadFromSubmission — error propagation", () => {
     const supabase = makeMockSupabase({
       crm_accounts: [{ data: null, error: null }, { data: { id: "acc1" }, error: null }],
       crm_contacts: [
-        { data: { id: "con1", full_name: "", job_title: "", account_id: null }, error: null },
+        { data: { id: "con1", full_name: null, job_title: null, account_id: null }, error: null },
         { data: null, error: { message: "contact update failed" } },
       ],
     });

@@ -173,8 +173,8 @@ export function LeadPanel({
         contact: [contact?.full_name, contact?.job_title]
           .filter(Boolean)
           .join(" — "),
-        notes: lead.description,
-        referred_by: lead.source,
+        notes: lead.description ?? "",
+        referred_by: lead.source ?? "",
       })
       .select("id")
       .single();

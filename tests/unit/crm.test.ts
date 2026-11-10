@@ -208,9 +208,9 @@ describe("normalizeSubmission (audit §10.1)", () => {
     expect(out.account).toEqual({
       name: "Grand Hyatt Manila",
       kind: "company",
-      industry: "",
-      hotel_star_rating: "",
-      hotel_room_count_band: "",
+      industry: null,
+      hotel_star_rating: null,
+      hotel_room_count_band: null,
     });
     expect(out.contact).toEqual({
       full_name: "Denise Samson",
@@ -267,7 +267,29 @@ describe("normalizeSubmission (audit §10.1)", () => {
     expect(out.lead.attribution).toBeNull();
     expect(out.lead.engagement).toBeNull();
     expect(out.lead.ga_client_id).toBeNull();
-    expect(out.lead.engagement_tier).toBe("");
+    expect(out.lead.engagement_tier).toBeNull();
+  });
+
+  it("stores blank or whitespace-only optional fields as null, never ''", () => {
+    const out = normalizeSubmission("for_hotels", {
+      ...validHotel,
+      starRating: "  ",
+      roomCount: "",
+      source: " ",
+      message: "",
+      _engagement: { tier: "  " },
+    });
+    expect(out.account?.hotel_star_rating).toBeNull();
+    expect(out.account?.hotel_room_count_band).toBeNull();
+    expect(out.contact.job_title).toBeNull();
+    expect(out.lead.source).toBeNull();
+    expect(out.lead.description).toBeNull();
+    expect(out.lead.product_of_interest).toBeNull();
+    expect(out.lead.estimated_volume).toBeNull();
+    expect(out.lead.engagement_tier).toBeNull();
+
+    const nameless = normalizeSubmission("contact", { ...validContact, name: " " });
+    expect(nameless.contact.full_name).toBeNull();
   });
 
   it("leaves the account null when the company field is blank", () => {
