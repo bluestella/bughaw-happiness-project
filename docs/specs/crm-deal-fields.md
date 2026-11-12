@@ -1,6 +1,6 @@
 # Spec — CRM deal fields and follow-ups
 
-**Wave:** 1 · **Migration:** 0015 · **Section:** `crm` · **Status:** draft for owner review
+**Wave:** 1 · **Migration:** 0014 · **Section:** `crm` · **Status:** built 2026-11-12 (see "As built" at the end)
 Follows [standards/database.md](../standards/database.md) and
 [decision 0002](../standards/decisions/0002-one-customer-record.md).
 
@@ -71,3 +71,20 @@ Unchanged: anyone with `crm` reads and writes; delete is super_admin only.
 - [ ] Follow-ups view lists an overdue lead and drops it when the date moves forward.
 - [ ] Contractor without `crm` cannot read the new columns (access test).
 - [ ] Existing ingest and import paths still pass their tests.
+
+## As built (2026-11-12)
+
+Differences from the text above:
+
+- **CSV import does not read the new columns.** Import goes through the same
+  normalisation as the website forms, which has no deal fields. Export includes
+  them. Importing deals is left for when someone has a file that needs it.
+- **Dropping a card on Closed Lost** puts the card back and opens the lead panel
+  with the reason prompt, instead of a separate picker dialog.
+- **Deal edits are logged as one `system` activity** listing what changed. Segment
+  changes are not logged, because the segment belongs to the account, not the lead.
+- **Existing Closed Lost leads were given the reason `other`** by the migration so
+  later edits to them are not refused.
+- A due date without a next action is allowed (the database allows it too).
+- Proof: `tests/unit/crmDeals.test.ts`, `tests/integration/access/crm-rules.itest.ts`,
+  `tests/e2e/specs/crm-deals.spec.ts`.

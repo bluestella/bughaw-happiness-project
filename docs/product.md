@@ -50,6 +50,10 @@ access** (`/admin/access`). Super admins always see everything.
   Won/Lost) with an append-only activity log, notes, CSV export, manual entry, CSV
   import, and one-click promotion into the Pipeline Simulator. Intake is a
   secret-authenticated endpoint the marketing site mirrors submissions to.
+  Each lead carries a deal: value, expected close, next action with a due date,
+  sample dates, and a required reason when it is lost. The board shows open and
+  stage-weighted pipeline totals and a Follow-ups tab (overdue, today, next 7 days).
+  Accounts have a buyer segment (hotel, resort, spa, other business).
 
 **Outreach**
 - Digital business cards (`/admin/cards`, super_admin only): branded cards with

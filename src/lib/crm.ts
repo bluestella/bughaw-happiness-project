@@ -18,6 +18,51 @@ export const LEAD_STATUSES = [
 ] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
+// --- Deal fields (0014_crm_deal_fields.sql; keep both lists in step with its CHECKs) ---
+
+export const BUYER_SEGMENTS = ["hotel", "resort", "spa", "other_business"] as const;
+export type BuyerSegment = (typeof BUYER_SEGMENTS)[number];
+export const BUYER_SEGMENT_LABELS: Record<BuyerSegment, string> = {
+  hotel: "Hotel",
+  resort: "Resort",
+  spa: "Spa",
+  other_business: "Other business",
+};
+
+export const LOST_REASONS = [
+  "price",
+  "timing",
+  "no_response",
+  "chose_competitor",
+  "not_a_fit",
+  "other",
+] as const;
+export type LostReason = (typeof LOST_REASONS)[number];
+export const LOST_REASON_LABELS: Record<LostReason, string> = {
+  price: "Price",
+  timing: "Timing",
+  no_response: "No response",
+  chose_competitor: "Chose a competitor",
+  not_a_fit: "Not a fit",
+  other: "Other",
+};
+
+export const NEXT_ACTION_MAX = 200;
+
+/**
+ * Chance of closing by stage, for the weighted pipeline total. PLACEHOLDERS:
+ * nobody has measured Bughaw's real conversion rates yet. Replace them once
+ * there are enough closed deals to compute them.
+ */
+export const STAGE_WEIGHTS: Record<LeadStatus, number> = {
+  New: 0.05,
+  Acknowledged: 0.1,
+  Qualified: 0.3,
+  "Pilot Scoping": 0.6,
+  "Closed Won": 1,
+  "Closed Lost": 0,
+};
+
 export const ORIGIN_FORMS = [
   "contact",
   "for_hotels",
@@ -79,6 +124,7 @@ export type CrmAccount = {
   id: string;
   name: string;
   kind: "hotel" | "company";
+  segment: BuyerSegment | null;
   industry: string | null;
   hotel_star_rating: string | null;
   hotel_room_count_band: string | null;
@@ -112,6 +158,13 @@ export type CrmLead = {
   geo: unknown;
   raw: unknown;
   pipeline_account_id: string | null;
+  deal_value: number | null;
+  expected_close_on: string | null;
+  next_action: string | null;
+  next_action_due_on: string | null;
+  sample_sent_on: string | null;
+  sample_feedback_on: string | null;
+  lost_reason: LostReason | null;
   submitted_at: string;
   created_at: string;
   updated_at: string;
@@ -120,7 +173,7 @@ export type CrmLead = {
 /** A lead as the board reads it — joined with its contact and account. */
 export type CrmLeadRow = CrmLead & {
   crm_contacts: Pick<CrmContact, "id" | "full_name" | "email" | "job_title"> | null;
-  crm_accounts: Pick<CrmAccount, "id" | "name" | "kind" | "hotel_star_rating" | "hotel_room_count_band"> | null;
+  crm_accounts: Pick<CrmAccount, "id" | "name" | "kind" | "segment" | "hotel_star_rating" | "hotel_room_count_band"> | null;
 };
 
 export type CrmActivity = {
@@ -437,6 +490,14 @@ const CSV_COLUMNS = [
   "estimated_volume",
   "engagement_tier",
   "description",
+  "segment",
+  "deal_value",
+  "expected_close_on",
+  "next_action",
+  "next_action_due_on",
+  "sample_sent_on",
+  "sample_feedback_on",
+  "lost_reason",
 ] as const;
 
 export function csvEscape(value: unknown): string {
@@ -466,6 +527,14 @@ export function leadsToCsv(leads: CrmLeadRow[]): string {
         lead.estimated_volume,
         lead.engagement_tier,
         lead.description,
+        lead.crm_accounts?.segment ?? "",
+        lead.deal_value,
+        lead.expected_close_on,
+        lead.next_action,
+        lead.next_action_due_on,
+        lead.sample_sent_on,
+        lead.sample_feedback_on,
+        lead.lost_reason,
       ]
         .map(csvEscape)
         .join(",")
@@ -553,4 +622,194 @@ export function csvToBodies(text: string): SubmissionBody[] {
     out.push(body);
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Deals and follow-ups (docs/specs/crm-deal-fields.md)
+// ---------------------------------------------------------------------------
+
+type DealLead = Pick<
+  CrmLead,
+  "status" | "deal_value" | "next_action" | "next_action_due_on"
+>;
+
+/** Calendar date in Manila as YYYY-MM-DD, the format Postgres `date` columns use. */
+export function manilaDate(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+/** `days` after an ISO date (negative for before). */
+export function addDays(isoDate: string, days: number): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+export function isOpenLead(lead: Pick<CrmLead, "status">): boolean {
+  return lead.status !== "Closed Won" && lead.status !== "Closed Lost";
+}
+
+/** An open lead whose next action was due before `today`. Due today is not overdue. */
+export function isOverdue(lead: DealLead, today: string): boolean {
+  return isOpenLead(lead) && !!lead.next_action_due_on && lead.next_action_due_on < today;
+}
+
+export type FollowUpBuckets<T> = { overdue: T[]; today: T[]; thisWeek: T[]; later: T[] };
+
+/**
+ * Open leads that have a next action, grouped by when it is due and sorted
+ * oldest first. "This week" is the next 7 days after today.
+ */
+export function followUpBuckets<T extends DealLead>(leads: T[], today: string): FollowUpBuckets<T> {
+  const weekEnd = addDays(today, 7);
+  const out: FollowUpBuckets<T> = { overdue: [], today: [], thisWeek: [], later: [] };
+  const due = leads
+    .filter((l) => isOpenLead(l) && !!l.next_action_due_on)
+    .sort((a, b) => a.next_action_due_on!.localeCompare(b.next_action_due_on!));
+  for (const lead of due) {
+    const on = lead.next_action_due_on!;
+    if (on < today) out.overdue.push(lead);
+    else if (on === today) out.today.push(lead);
+    else if (on <= weekEnd) out.thisWeek.push(lead);
+    else out.later.push(lead);
+  }
+  return out;
+}
+
+const finiteValue = (v: number | null | undefined): number => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+/** Sum of deal values on open leads. */
+export function openPipelineValue(leads: DealLead[]): number {
+  return leads.filter(isOpenLead).reduce((sum, l) => sum + finiteValue(l.deal_value), 0);
+}
+
+/** Open deal values multiplied by each stage's weight. Never NaN or Infinity. */
+export function weightedPipelineValue(
+  leads: DealLead[],
+  weights: Record<LeadStatus, number> = STAGE_WEIGHTS,
+): number {
+  return leads.filter(isOpenLead).reduce((sum, l) => {
+    const w = Number(weights[l.status]);
+    return sum + finiteValue(l.deal_value) * (Number.isFinite(w) && w > 0 ? w : 0);
+  }, 0);
+}
+
+/** What the deal form edits. Dates are YYYY-MM-DD or "". */
+export type DealDraft = {
+  deal_value: string;
+  expected_close_on: string;
+  next_action: string;
+  next_action_due_on: string;
+  sample_sent_on: string;
+  sample_feedback_on: string;
+};
+
+export type DealPatch = Pick<
+  CrmLead,
+  | "deal_value"
+  | "expected_close_on"
+  | "next_action"
+  | "next_action_due_on"
+  | "sample_sent_on"
+  | "sample_feedback_on"
+>;
+
+export function dealDraftFrom(lead: DealPatch): DealDraft {
+  return {
+    deal_value: lead.deal_value === null || lead.deal_value === undefined ? "" : String(lead.deal_value),
+    expected_close_on: lead.expected_close_on ?? "",
+    next_action: lead.next_action ?? "",
+    next_action_due_on: lead.next_action_due_on ?? "",
+    sample_sent_on: lead.sample_sent_on ?? "",
+    sample_feedback_on: lead.sample_feedback_on ?? "",
+  };
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Validates the deal form against the same rules as the CHECK constraints in
+ * 0014 and returns the row patch (blank becomes NULL).
+ */
+export function validateDeal(
+  draft: DealDraft,
+): { ok: true; patch: DealPatch } | { ok: false; errors: Partial<Record<keyof DealDraft, string>> } {
+  const errors: Partial<Record<keyof DealDraft, string>> = {};
+  const date = (key: keyof DealDraft): string | null => {
+    const v = draft[key].trim();
+    if (v === "") return null;
+    if (!ISO_DATE_RE.test(v) || Number.isNaN(Date.parse(`${v}T00:00:00Z`))) {
+      errors[key] = "Enter a valid date.";
+      return null;
+    }
+    return v;
+  };
+
+  let dealValue: number | null = null;
+  const rawValue = draft.deal_value.trim().replace(/,/g, "");
+  if (rawValue !== "") {
+    const n = Number(rawValue);
+    if (!Number.isFinite(n) || n < 0) errors.deal_value = "Enter an amount of 0 or more.";
+    else if (n >= 1e12) errors.deal_value = "That amount is too large.";
+    else dealValue = Math.round(n * 100) / 100;
+  }
+
+  const nextAction = draft.next_action.trim() || null;
+  if (nextAction && nextAction.length > NEXT_ACTION_MAX) {
+    errors.next_action = `Keep it under ${NEXT_ACTION_MAX} characters.`;
+  }
+  const due = date("next_action_due_on");
+  if (nextAction && !due && !errors.next_action_due_on) {
+    errors.next_action_due_on = "Set a due date for the next action.";
+  }
+
+  const sent = date("sample_sent_on");
+  const feedback = date("sample_feedback_on");
+  if (feedback && !sent && !errors.sample_sent_on) {
+    errors.sample_feedback_on = "Record when the sample was sent first.";
+  } else if (feedback && sent && feedback < sent) {
+    errors.sample_feedback_on = "Feedback cannot be before the sample was sent.";
+  }
+  const close = date("expected_close_on");
+
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+  return {
+    ok: true,
+    patch: {
+      deal_value: dealValue,
+      expected_close_on: close,
+      next_action: nextAction,
+      next_action_due_on: due,
+      sample_sent_on: sent,
+      sample_feedback_on: feedback,
+    },
+  };
+}
+
+/** One line for the activity log describing what a deal edit changed; "" if nothing did. */
+export function describeDealChange(before: DealPatch, after: DealPatch): string {
+  const labels: Record<keyof DealPatch, string> = {
+    deal_value: "Deal value",
+    expected_close_on: "Expected close",
+    next_action: "Next action",
+    next_action_due_on: "Next action due",
+    sample_sent_on: "Sample sent",
+    sample_feedback_on: "Sample feedback",
+  };
+  const parts: string[] = [];
+  for (const key of Object.keys(labels) as (keyof DealPatch)[]) {
+    const a = before[key] ?? null;
+    const b = after[key] ?? null;
+    if (String(a) === String(b)) continue;
+    parts.push(`${labels[key]}: ${a ?? "none"} → ${b ?? "none"}`);
+  }
+  return parts.join("; ");
 }

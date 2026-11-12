@@ -91,7 +91,25 @@ pre-0010 rules (member = all, contractor = `tasks`). **Adding a section** = a
 new migration inserting into `app_sections` + `role_section_defaults`, the same
 key in `SECTIONS` (the unit test diffs the two), and an RLS check on its tables.
 
-### CRM (0003, amended by 0013)
+### CRM (0003, amended by 0013 and 0014)
+
+**Deal fields (0014)** — all nullable:
+
+```
+crm_accounts   + segment hotel|resort|spa|other_business|null   (kind is unchanged)
+crm_leads      + deal_value numeric(14,2) >= 0, expected_close_on date,
+                 next_action (<= 200 chars, not blank), next_action_due_on date
+                   ← required whenever next_action is set,
+                 sample_sent_on, sample_feedback_on (>= sample_sent_on),
+                 lost_reason price|timing|no_response|chose_competitor|not_a_fit|other
+pipeline_accounts + crm_account_id FK → crm_accounts (set null)   ← decision 0002
+```
+
+Trigger `crm_leads_lost_reason` (before insert/update): a lead cannot be
+`Closed Lost` without `lost_reason`, and `lost_reason` is cleared on any other
+status. The TypeScript mirror is `LOST_REASONS` / `BUYER_SEGMENTS` in
+`src/lib/crm.ts`; `tests/unit/crmDeals.test.ts` compares them with the migration.
+
 
 Optional text columns use **NULL for "no value"** — never `''` (0013 adds `*_not_blank`
 CHECKs). Required columns (`name`, `email`, `kind`, `status`, …) are unchanged.

@@ -4,7 +4,8 @@ export const LEAD_ROW_SELECT = `
   id, contact_id, account_id, origin_form, lead_type, status, position, source,
   product_interests, product_of_interest, estimated_volume, description,
   engagement_tier, ga_client_id, attribution, engagement, geo, raw,
-  pipeline_account_id, submitted_at, created_at, updated_at,
+  pipeline_account_id, deal_value, expected_close_on, next_action, next_action_due_on,
+  sample_sent_on, sample_feedback_on, lost_reason, submitted_at, created_at, updated_at,
   crm_contacts ( id, full_name, email, job_title ),
-  crm_accounts ( id, name, kind, hotel_star_rating, hotel_room_count_band )
+  crm_accounts ( id, name, kind, segment, hotel_star_rating, hotel_room_count_band )
 `;

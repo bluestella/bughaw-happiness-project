@@ -114,6 +114,7 @@ supabase/migrations/
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
   0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
+  0014_crm_deal_fields.sql        # CRM: deal value, next action, samples, lost reason (trigger), buyer segment; pipeline → CRM account link
 tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
 tests/e2e/                      # Playwright UI tests (docs/ui-testing.md); LOCAL Supabase only
 tests/integration/access/       # Real-RLS access matrix, every role (docs/testing.md §5); LOCAL only
@@ -255,7 +256,7 @@ npm run e2e:perf   # Performance baseline on a production build
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order
-(`0001_init.sql` … `0013_crm_nulls_and_owner_fk.sql`) in the SQL editor (0003 has an
+(`0001_init.sql` … `0014_crm_deal_fields.sql`) in the SQL editor (0003 has an
 ACTION REQUIRED header: insert an ingest secret before the marketing site can post
 leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.
