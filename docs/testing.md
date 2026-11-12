@@ -7,9 +7,12 @@
 - **Runner:** Vitest (`vitest.config.ts`, `@` alias to `src`). No network, no DOM,
   no Supabase required — tests are pure-logic and run in <1s.
 - **Suites** (`tests/unit/`):
-  - `calculators.test.ts` — formula assertions for all 11 calculator configs +
+  - `calculators.test.ts` — formula assertions for the 15 original calculator configs +
     `computePnl`, including divide-by-zero safety and a registry-integrity sweep
-    (unique ids, valid categories).
+    (unique ids, valid categories) over all 26.
+  - `startupCalculators.test.ts` — the 11 Wave 2 planning calculators and
+    `pricing.ts`: hand-checked numbers, every verdict branch, and a sweep proving
+    none returns NaN or Infinity for default, zero, negative, huge or missing inputs.
   - `permissions.test.ts` — full role × capability matrix for every helper in
     `src/lib/permissions.ts` (including the `null` role), plus
     `computeNewPosition` / `sortByPosition` ordering math.
