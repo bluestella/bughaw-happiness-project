@@ -31,5 +31,8 @@ export const FUNCTIONS: Record<string, string> = {
   sales_create_order: "sales-rules.itest.ts",
   sales_next_number: "internal; sales-rules.itest.ts proves nobody can call it",
   set_row_audit: "internal trigger function; sales-rules.itest.ts proves nobody can call it",
+  people_can_see_intern: "people-rules.itest.ts, through RLS",
+  people_week_start: "pure date helper; holds no data",
+  people_week_hours: "people-rules.itest.ts: asking about someone else's week returns 0",
   ct_equal: "pure comparison helper; holds no data",
 };

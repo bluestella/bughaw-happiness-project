@@ -227,6 +227,72 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"people_daily_logs": {
+                  Row: {
+                    "created_at": string,"created_by_email": string,"hours": number,"id": string,"intern_email": string,"summary": string,"task_ids": (string)[],"updated_at": string,"work_date": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by_email"?: string,"hours": number,"id"?: string,"intern_email": string,"summary": string,"task_ids"?: (string)[],"updated_at"?: string,"work_date": string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by_email"?: string,"hours"?: number,"id"?: string,"intern_email"?: string,"summary"?: string,"task_ids"?: (string)[],"updated_at"?: string,"work_date"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "people_daily_logs_intern_email_fkey"
+      columns: ["intern_email"]
+isOneToOne: false
+      referencedRelation: "allowed_emails"
+      referencedColumns: ["email"]
+    }
+                  ]
+                },"people_interns": {
+                  Row: {
+                    "created_at": string,"created_by_email": string,"discipline": string,"email": string,"ends_on": string | null,"full_name": string | null,"id": string,"is_active": boolean,"program": string | null,"required_hours": number,"school": string | null,"starts_on": string | null,"supervisor_email": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by_email"?: string,"discipline": string,"email": string,"ends_on"?: string | null,"full_name"?: string | null,"id"?: string,"is_active"?: boolean,"program"?: string | null,"required_hours"?: number,"school"?: string | null,"starts_on"?: string | null,"supervisor_email"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by_email"?: string,"discipline"?: string,"email"?: string,"ends_on"?: string | null,"full_name"?: string | null,"id"?: string,"is_active"?: boolean,"program"?: string | null,"required_hours"?: number,"school"?: string | null,"starts_on"?: string | null,"supervisor_email"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "people_interns_email_fkey"
+      columns: ["email"]
+isOneToOne: false
+      referencedRelation: "allowed_emails"
+      referencedColumns: ["email"]
+    },{
+      foreignKeyName: "people_interns_supervisor_email_fkey"
+      columns: ["supervisor_email"]
+isOneToOne: false
+      referencedRelation: "allowed_emails"
+      referencedColumns: ["email"]
+    }
+                  ]
+                },"people_weekly_reports": {
+                  Row: {
+                    "accomplishments": string | null,"blockers": string | null,"created_at": string,"created_by_email": string,"id": string,"intern_email": string,"learnings": string | null,"next_week_plan": string | null,"review_comment": string | null,"reviewed_at": string | null,"reviewed_by_email": string | null,"status": string,"submitted_at": string | null,"total_hours": number,"updated_at": string,"week_start": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "accomplishments"?: string | null,"blockers"?: string | null,"created_at"?: string,"created_by_email"?: string,"id"?: string,"intern_email": string,"learnings"?: string | null,"next_week_plan"?: string | null,"review_comment"?: string | null,"reviewed_at"?: string | null,"reviewed_by_email"?: string | null,"status"?: string,"submitted_at"?: string | null,"total_hours"?: number,"updated_at"?: string,"week_start": string
+                  }
+                  Update: {
+                    "accomplishments"?: string | null,"blockers"?: string | null,"created_at"?: string,"created_by_email"?: string,"id"?: string,"intern_email"?: string,"learnings"?: string | null,"next_week_plan"?: string | null,"review_comment"?: string | null,"reviewed_at"?: string | null,"reviewed_by_email"?: string | null,"status"?: string,"submitted_at"?: string | null,"total_hours"?: number,"updated_at"?: string,"week_start"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "people_weekly_reports_intern_email_fkey"
+      columns: ["intern_email"]
+isOneToOne: false
+      referencedRelation: "allowed_emails"
+      referencedColumns: ["email"]
+    }
+                  ]
                 },"pipeline_accounts": {
                   Row: {
                     "contact": string,"created_at": string,"crm_account_id": string | null,"generated_referral": boolean,"id": string,"name": string,"notes": string,"property": string,"reason": string,"referred_by": string,"segment": string,"stage": string,"updated_at": string
@@ -662,6 +728,15 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "email": string,"note": string
             }[]
+                           },
+"people_can_see_intern":
+{ Args: { "p_email": string }; Returns: boolean
+                           },
+"people_week_hours":
+{ Args: { "p_email": string,"p_week": string }; Returns: number
+                           },
+"people_week_start":
+{ Args: { "p_day": string }; Returns: string
                            },
 "record_card_event":
 { Args: { "p_device"?: string,"p_event": string,"p_source"?: string,"p_target"?: string,"p_token": string }; Returns: undefined

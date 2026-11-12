@@ -30,6 +30,12 @@ interface TableSpec {
 // Every table exposed by PostgREST must be listed here or in IGNORED_RELATIONS;
 // assertCoversSchema() fails the run when a migration adds an unknown table.
 export const TABLES: TableSpec[] = [
+  // People (0018). Reports and logs before profiles; logs of a submitted week are locked
+  // against direct deletes, so the profile (cascade) is not used to clear them: the
+  // guard allows a nested delete only, so delete the report rows first, then logs.
+  { table: "people_weekly_reports", key: ["id"] },
+  { table: "people_daily_logs", key: ["id"] },
+  { table: "people_interns", key: ["id"] },
   // Sales (0015-0017). Orders and quotations go before their lines: issued documents
   // refuse direct line deletes (that is the rule being protected), and deleting the
   // document removes its lines. Adjustments and levels go before orders and products.
