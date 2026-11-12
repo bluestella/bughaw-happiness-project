@@ -21,6 +21,9 @@ function fmt(format: OutputFormat | undefined, v: number): string {
   return v.toLocaleString();
 }
 
+/** Two decimals: whole pesos stay whole, while 73.3% is not shown as 73%. */
+const roundForChart = (v: number) => (Number.isFinite(v) ? Math.round(v * 100) / 100 : 0);
+
 /**
  * Builds a themed ECharts option from a calculator ChartSpec.
  * `polarity` colors each bar by sign (green ≥ 0, clay < 0) — sign is also
@@ -100,8 +103,11 @@ export function specToOption(
             name: s.name,
             barMaxWidth: 40,
             barGap: "12%",
+            // Series-level colour so the legend marker matches the bars; each bar
+            // below may still override it (polarity).
+            itemStyle: { color: s.color },
             data: s.values.map((v) => {
-              const value = Math.round(v);
+              const value = roundForChart(v);
               const color = opts?.polarity ? (value < 0 ? CHART.clay : CHART.green) : s.color;
               return {
                 value,
@@ -115,7 +121,7 @@ export function specToOption(
         : {
             type: "line" as const,
             name: s.name,
-            data: s.values.map((v) => Math.round(v)),
+            data: s.values.map(roundForChart),
             showSymbol: false,
             smooth: 0.2,
             emphasis: { focus: multi ? ("series" as const) : ("none" as const) },

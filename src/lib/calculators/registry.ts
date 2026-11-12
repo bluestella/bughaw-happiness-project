@@ -3,12 +3,14 @@ import { unitEconomicsCalculators } from "./configs/unitEconomics";
 import { goToMarketCalculators } from "./configs/goToMarket";
 import { productMgmtCalculators } from "./configs/productMgmt";
 import { financialCalculators } from "./configs/financial";
+import { startupCalculators } from "./configs/startup";
 
 export const ALL_CALCULATORS: CalculatorConfig[] = [
   ...unitEconomicsCalculators,
   ...goToMarketCalculators,
   ...productMgmtCalculators,
   ...financialCalculators,
+  ...startupCalculators,
 ];
 
 export function getCalculator(category: string, id: string): CalculatorConfig | undefined {

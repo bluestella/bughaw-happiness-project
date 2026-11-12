@@ -89,7 +89,7 @@ Role defaults for `sales`: member allowed, contractor denied.
 
 ## Pure logic (`src/lib/sales.ts`, unit-tested)
 
-- `priceForQty(tiers, qty)` — highest matching tier; `null` when none applies
+- `priceForQty(tiers, qty)` — **already built** in `src/lib/pricing.ts` (Wave 2 Volume Price Tiers calculator); highest matching tier, `null` when none applies. Import it; do not rewrite it.
 - `quoteTotals(lines, discount)` — 0 for empty input; never negative, `NaN` or `Infinity`
 - `availableToSell(level)` — `on_hand - reserved`
 - `canTransition(kind, from, to)` — mirrors the trigger

@@ -287,10 +287,10 @@ describe("Reorder point", () => {
 });
 
 describe("registry", () => {
-  it("has 15 calculators with unique category/id pairs", () => {
-    expect(ALL_CALCULATORS).toHaveLength(15);
+  it("has 26 calculators with unique category/id pairs", () => {
+    expect(ALL_CALCULATORS).toHaveLength(26);
     const keys = new Set(ALL_CALCULATORS.map((c) => `${c.category}/${c.id}`));
-    expect(keys.size).toBe(15);
+    expect(keys.size).toBe(26);
   });
 
   it("every calculator computes finite defaults", () => {
