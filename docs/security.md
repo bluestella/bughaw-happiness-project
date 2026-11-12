@@ -24,7 +24,7 @@ reach exactly two narrow security-definer functions and no table.
    Supabase surfaces the raised exception as a generic "Database error saving new
    user"; `login/page.tsx` maps that to a friendly invite-only message. Keep that
    mapping.
-2. **Session middleware** (`src/middleware.ts`): refreshes the session cookie via
+2. **Session middleware** (`src/proxy.ts`): refreshes the session cookie via
    `auth.getUser()` on every non-static request; signed-out users are redirected to
    `/login?next=…`. Only `/login`, `/auth/*`, the secret-authed `/api/crm/ingest`
    and the public card route `/c/*` (§8) skip the login redirect.
@@ -217,9 +217,8 @@ Only a trigger writes it; only a super_admin reads it; nobody edits it. There is
 yet: read it in the Supabase table editor. Tasks, calculators, saved calculations and digital cards
 are not audited.
 
-**Open advisory: Next 14.** `npm audit --omit=dev` reports a critical advisory on `next` (and a high
-one on its bundled `postcss`) whose fix is Next 16, a major upgrade. `passkit-generator` (Apple/Google
-Wallet, dormant until keys exist) and its `joi` dependency also report high advisories that need a
-major change. Non-breaking transitive fixes were applied. The upgrade is a separate piece of work:
-test the app on Next 15 or 16 before deciding. Until then the CI audit step reports but does not
-fail the build.
+**Dependency advisories.** The critical advisory on Next 14 (and the high one on its bundled
+`postcss`) was resolved by the upgrade to Next 16 and React 19. What `npm audit --omit=dev` still
+reports is `passkit-generator` (Apple/Google Wallet, dormant until keys exist) and its `joi`
+dependency, whose fix is a major change. Non-breaking transitive fixes were applied. The CI audit
+step reports but does not fail the build; make it blocking once those two are resolved or removed.

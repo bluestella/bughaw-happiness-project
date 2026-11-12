@@ -75,7 +75,7 @@ export function CalculatorShell({ config }: { config: CalculatorConfig }) {
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveLabel, setSaveLabel] = useState("");
   const [savingToTeam, setSavingToTeam] = useState(false);
-  const persistTimer = useRef<ReturnType<typeof setTimeout>>();
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {

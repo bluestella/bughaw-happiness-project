@@ -40,7 +40,7 @@ security-definer RPC and no table ([docs/digital-cards.md](docs/digital-cards.md
 
 ## 2. Tech stack
 
-- **Next.js 14 (App Router) + React 18 + TypeScript 5** — mixed server components
+- **Next.js 16 (App Router) + React 19 + TypeScript 5** — mixed server components
   (data fetching) and client components (interactivity)
 - **Tailwind CSS 3** with a custom earth-tone token palette (see design-system doc)
 - **Supabase** — Postgres + Auth + RLS, accessed with `@supabase/ssr` (anon key only;
@@ -52,7 +52,7 @@ security-definer RPC and no table ([docs/digital-cards.md](docs/digital-cards.md
 
 ```
 src/
-  middleware.ts                 # Auth gate + per-section route redirects (every request)
+  proxy.ts                      # Auth gate (Next 16 name for middleware) + per-section route redirects (every request)
   app/
     layout.tsx, globals.css     # Root layout, fonts, Tailwind
     login/page.tsx              # Email/password + Google OAuth sign-in (client)
@@ -293,8 +293,8 @@ Deploy: Vercel, auto from `main`. CI must be green.
   anything else and lower-cases what it stores.
 - **`audit_log`** (0019) records who changed roles, page access, sales documents, interns
   and report status, and CRM leads. Super_admin read only; see docs/security.md §11.
-- **Open advisory:** Next 14 has a critical advisory whose fix is a major upgrade
-  (docs/security.md §11).
+- **Open advisory:** `passkit-generator` / `joi` (Wallet passes, dormant) report high
+  advisories whose fix is a major change (docs/security.md §11).
 - **Middleware runs an RPC per request** (`current_user_role`) for signed-in users —
   a known latency cost; if it becomes a problem, cache the role in the JWT
   (custom claims) rather than trusting a client-stored value.
@@ -304,3 +304,13 @@ Deploy: Vercel, auto from `main`. CI must be green.
   to a friendly invite-only message; keep that mapping if you touch signup.
 - No E2E/integration tests, no error tracking (Sentry), no rate limiting — see
   docs/testing.md and docs/security.md for the recommended order of improvement.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

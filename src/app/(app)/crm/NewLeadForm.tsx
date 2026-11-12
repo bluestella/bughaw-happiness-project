@@ -68,7 +68,7 @@ function Field({
         {label}
       </label>
       {React.Children.map(children, (child) => {
-        if (!React.isValidElement(child)) return child;
+        if (!React.isValidElement<{ id?: string }>(child)) return child;
         const extra: Record<string, string | boolean | undefined> = {};
         if (error) {
           extra["aria-invalid"] = true;

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const ROLLUP_DAYS = 90;
 
 export default async function CardsAdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const role = await getCurrentUserRole(supabase);
   if (!canManageCards(role)) redirect("/tasks");
 

@@ -11,7 +11,8 @@ import { MyReports } from "./MyReports";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "My reports — People" };
 
-export default async function MyReportsPage({ searchParams }: { searchParams: { week?: string } }) {
+export default async function MyReportsPage(props: { searchParams: Promise<{ week?: string }> }) {
+  const searchParams = await props.searchParams;
   const p = await requirePeople();
   if (!p.own) redirect("/people");
   const [reports, logs] = await Promise.all([

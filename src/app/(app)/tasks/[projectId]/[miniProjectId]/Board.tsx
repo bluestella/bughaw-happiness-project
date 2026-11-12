@@ -446,6 +446,7 @@ export function Board({
       </div>
 
       <DndContext
+        id="task-board"
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}

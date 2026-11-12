@@ -11,7 +11,7 @@ import { INTERN_COLUMNS, type InternRow } from "@/lib/people";
  * tell us which role they play here.
  */
 export async function requirePeople() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const access = await getCurrentUserAccess(supabase);
   if (!canSee(access, "people")) redirect(landingPath(access));
   const {

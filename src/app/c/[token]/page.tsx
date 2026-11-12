@@ -12,9 +12,10 @@ import { CardClickTracker } from "./CardClickTracker";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: { token: string }; searchParams: { s?: string } };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ s?: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const card = await getPublicCard(params.token);
   const robots = { index: false, follow: false, nocache: true };
   if (!card) return { title: { absolute: COMPANY_NAME }, robots };
@@ -29,7 +30,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PublicCardPage({ params, searchParams }: Props) {
+export default async function PublicCardPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const card = await getPublicCard(params.token);
   if (!card) notFound();
 
