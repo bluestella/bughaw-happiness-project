@@ -47,6 +47,10 @@ jobs:
       - run: supabase db reset
       - run: ./scripts/e2e/env.sh
       - run: npm run typecheck:e2e
+      # Real RLS policies and function guards, every role (docs/testing.md §5).
+      - run: npm run test:access
+      # Fails when a migration changed the schema but the generated types were not refreshed.
+      - run: npm run db:types && git diff --exit-code -- src/lib/supabase/types.ts
       - run: npm run e2e:smoke
       - uses: actions/upload-artifact@v4
         if: always()

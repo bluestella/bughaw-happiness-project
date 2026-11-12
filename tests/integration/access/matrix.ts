@@ -1,0 +1,199 @@
+// The access matrix: for every table, who may SELECT / INSERT / UPDATE / DELETE.
+//
+// This is the proof behind docs/standards/database.md §10: a table is not done
+// until it has a row here. coverage.itest.ts fails when the database exposes a
+// table that is missing from this file, so a new migration cannot skip it.
+//
+// Each list names the actors that are ALLOWED. Every other actor must be refused.
+// Expectations describe the seeded role defaults (member: everything; contractor:
+// task boards only). Row-level rules that depend on who owns a row are in
+// scoped.itest.ts.
+import { FIXTURES, SIGNOUT_USER, USERS } from "../../e2e/support/seed.ts";
+import type { Actor } from "./actors.ts";
+
+export type Row = Record<string, unknown>;
+export type Op = "select" | "insert" | "update" | "delete";
+
+export interface TableCase {
+  /** Label shown in test names; defaults to `table`. */
+  name?: string;
+  table: string;
+  /** Primary-key columns. */
+  key: string[];
+  /** A valid new row. `tag` is unique per attempt. */
+  make: (tag: string) => Row;
+  /** Extra columns only the service-role fixture insert needs (JWT-derived defaults). */
+  adminExtra?: Row | ((tag: string) => Row);
+  /** A harmless change to a non-key column. */
+  patch: Row;
+  /** Rows the fixture depends on; created before and deleted after each attempt. */
+  parents?: (tag: string) => { table: string; key: string[]; row: Row }[];
+  allowed: Record<Op, readonly Actor[]>;
+}
+
+const NOBODY: readonly Actor[] = [];
+const ADMIN: readonly Actor[] = ["super_admin"];
+/** Seeded defaults give members every section and contractors none of these. */
+const TEAM: readonly Actor[] = ["member", "super_admin"];
+/** Contributors on the fixture project: the member and the contractor. */
+const BOARD: readonly Actor[] = ["contractor", "member", "super_admin"];
+
+const all = (who: readonly Actor[]): Record<Op, readonly Actor[]> => ({
+  select: who, insert: who, update: who, delete: who,
+});
+const adminEmail = USERS.super_admin.email;
+
+export const TABLES: TableCase[] = [
+  // --- Service-role only: RLS on, no policies ---------------------------------
+  {
+    table: "allowed_emails", key: ["email"],
+    make: (t) => ({ email: `${t}@test.local`, note: "access test", role: "member" }),
+    patch: { note: "changed" },
+    allowed: all(NOBODY),
+  },
+  {
+    table: "crm_ingest_secrets", key: ["name"],
+    make: (t) => ({ name: t, secret: "access-test-secret" }),
+    patch: { secret: "changed" },
+    allowed: all(NOBODY),
+  },
+  {
+    table: "app_sections", key: ["key"],
+    make: (t) => ({ key: t, label: "Access test", group_label: "Sections" }),
+    patch: { label: "changed" },
+    allowed: all(NOBODY),
+  },
+  {
+    table: "role_section_defaults", key: ["role", "section"],
+    parents: (t) => [{ table: "app_sections", key: ["key"], row: { key: t, label: "Access test", group_label: "Sections" } }],
+    make: (t) => ({ role: "contractor", section: t, allowed: false }),
+    patch: { allowed: true },
+    allowed: all(NOBODY),
+  },
+  {
+    // Uses the sign-out user so no actor's own access changes mid-run.
+    table: "user_section_overrides", key: ["email", "section"],
+    parents: (t) => [{ table: "app_sections", key: ["key"], row: { key: t, label: "Access test", group_label: "Sections" } }],
+    make: (t) => ({ email: SIGNOUT_USER.email, section: t, allowed: false }),
+    patch: { allowed: true },
+    allowed: all(NOBODY),
+  },
+
+  // --- Shared workspace --------------------------------------------------------
+  {
+    name: "app_state (key mapped to a tool)", table: "app_state", key: ["key"],
+    make: () => ({ key: "cost-calc", value: { accessTest: true } }),
+    patch: { value: { accessTest: "changed" } },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    name: "app_state (unmapped key)", table: "app_state", key: ["key"],
+    make: (t) => ({ key: `unmapped-${t}`, value: { accessTest: true } }),
+    patch: { value: { accessTest: "changed" } },
+    allowed: all(ADMIN),
+  },
+  {
+    table: "pipeline_accounts", key: ["id"],
+    make: (t) => ({ name: `[access] ${t}` }),
+    patch: { notes: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    table: "saved_calculations", key: ["id"],
+    make: (t) => ({ calculator_id: "cogs", label: `[access] ${t}`, inputs: {}, outputs: {} }),
+    patch: { label: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+
+  // --- CRM ---------------------------------------------------------------------
+  {
+    table: "crm_accounts", key: ["id"],
+    make: (t) => ({ name: `[access] ${t}` }),
+    patch: { industry: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    table: "crm_contacts", key: ["id"],
+    make: (t) => ({ email: `${t}@lead.test`, full_name: `[access] ${t}` }),
+    patch: { full_name: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    table: "crm_leads", key: ["id"],
+    make: (t) => ({ origin_form: "manual", description: `[access] ${t}` }),
+    patch: { description: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    // Append-only by design.
+    table: "crm_lead_activities", key: ["id"],
+    make: (t) => ({ lead_id: FIXTURES.leads[0].id, kind: "note", body: `[access] ${t}` }),
+    patch: { body: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: NOBODY, delete: NOBODY },
+  },
+
+  // --- Digital cards -----------------------------------------------------------
+  {
+    table: "business_cards", key: ["id"],
+    make: (t) => ({ full_name: `[access] ${t}` }),
+    // The token default calls generate_card_token(), which service_role cannot run.
+    adminExtra: (t) => ({ token: `Tok${t}`.slice(-12), created_by_email: adminEmail }),
+    patch: { job_title: "changed" },
+    allowed: all(ADMIN),
+  },
+  {
+    // Written only by record_card_event().
+    table: "business_card_events", key: ["id"],
+    make: () => ({ card_id: FIXTURES.publishedCard.id, event: "view" }),
+    patch: { event: "click" },
+    allowed: { select: ADMIN, insert: NOBODY, update: NOBODY, delete: NOBODY },
+  },
+
+  // --- Task management (rows inside the fixture project) -----------------------
+  {
+    // A new project has no contributors, so only a super_admin sees it.
+    table: "projects", key: ["id"],
+    make: (t) => ({ name: `[access] ${t}` }),
+    adminExtra: { created_by_email: adminEmail },
+    patch: { name: "[access] changed" },
+    allowed: all(ADMIN),
+  },
+  {
+    table: "mini_projects", key: ["id"],
+    make: (t) => ({ project_id: FIXTURES.project.id, name: `[access] ${t}` }),
+    adminExtra: { created_by_email: adminEmail },
+    patch: { name: "[access] changed" },
+    allowed: { select: BOARD, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    table: "project_contributors", key: ["project_id", "user_email"],
+    make: (t) => ({ project_id: FIXTURES.project.id, user_email: `${t}@test.local` }),
+    adminExtra: { added_by_email: adminEmail },
+    patch: { added_by_email: "changed@test.local" },
+    allowed: { select: BOARD, insert: TEAM, update: NOBODY, delete: ADMIN },
+  },
+  {
+    table: "mini_project_contributors", key: ["mini_project_id", "user_email"],
+    make: (t) => ({ mini_project_id: FIXTURES.miniProject.id, user_email: `${t}@test.local` }),
+    adminExtra: { added_by_email: adminEmail },
+    patch: { added_by_email: "changed@test.local" },
+    allowed: { select: BOARD, insert: TEAM, update: NOBODY, delete: ADMIN },
+  },
+  {
+    // The fixture row is created by the super_admin, so the contractor's
+    // "own tasks only" rule refuses update and delete here.
+    table: "tasks", key: ["id"],
+    make: (t) => ({ mini_project_id: FIXTURES.miniProject.id, title: `[access] ${t}` }),
+    adminExtra: { created_by_email: adminEmail },
+    patch: { title: "[access] changed" },
+    allowed: { select: BOARD, insert: BOARD, update: TEAM, delete: TEAM },
+  },
+  {
+    // Append-only by design.
+    table: "task_comments", key: ["id"],
+    make: (t) => ({ task_id: FIXTURES.memberTask.id, body: `[access] ${t}` }),
+    adminExtra: { author_email: adminEmail },
+    patch: { body: "changed" },
+    allowed: { select: BOARD, insert: BOARD, update: NOBODY, delete: NOBODY },
+  },
+];
