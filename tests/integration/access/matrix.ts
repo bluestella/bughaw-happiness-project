@@ -43,6 +43,9 @@ export const uuidFor = (tag: string, n: number): string => {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
 };
 
+const categoryParent = (t: string) => ({
+  table: "fin_categories", key: ["id"], row: { id: uuidFor(t, 4), name: `[access] category ${t}` },
+});
 const allowedEmailParent = (t: string) => ({
   table: "allowed_emails", key: ["email"], row: { email: `${t}@test.local`, note: "access test", role: "member" },
 });
@@ -279,6 +282,34 @@ export const TABLES: TableCase[] = [
     make: (t) => ({ intern_email: `${t}@test.local`, week_start: mondayOf(manilaToday()) }),
     patch: { accomplishments: "changed" },
     allowed: { select: ADMIN, insert: ADMIN, update: NOBODY, delete: NOBODY },
+  },
+
+  // --- Finance (0020): off by default for members and contractors -----------------
+  {
+    table: "fin_categories", key: ["id"],
+    make: (t) => ({ name: `[access] ${t}` }),
+    patch: { is_active: false },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: NOBODY },
+  },
+  {
+    table: "fin_expenses", key: ["id"],
+    parents: (t) => [categoryParent(t)],
+    make: (t) => ({ spent_on: manilaToday(), amount: 100, category_id: uuidFor(t, 4), description: "[access] expense" }),
+    patch: { vendor: "changed" },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: NOBODY },
+  },
+  {
+    table: "fin_cash_balances", key: ["id"],
+    make: () => ({ as_of: manilaToday(), amount: 1000 }),
+    patch: { amount: 2000 },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: NOBODY },
+  },
+  {
+    table: "fin_budgets", key: ["id"],
+    parents: (t) => [categoryParent(t)],
+    make: (t) => ({ month_start: `${manilaToday().slice(0, 7)}-01`, category_id: uuidFor(t, 4), amount: 500 }),
+    patch: { amount: 600 },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: NOBODY },
   },
 
   // --- Audit log (0019) -----------------------------------------------------------

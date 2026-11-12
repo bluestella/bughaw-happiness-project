@@ -17,6 +17,7 @@ const COVERAGE_INCLUDE = [
   "src/lib/pricing.ts",
   "src/lib/sales.ts",
   "src/lib/people.ts",
+  "src/lib/finance.ts",
   "src/lib/pnl.ts",
   "src/lib/tasks.ts",
   "src/lib/tools.ts",

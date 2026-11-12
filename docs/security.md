@@ -210,7 +210,7 @@ applies regardless.
 **Audit log (0019).** `audit_log` has one row per change on: `allowed_emails`,
 `user_section_overrides`, `role_section_defaults`, `sales_products`, `sales_price_tiers`,
 `sales_quotations`, `sales_orders`, `people_interns`, `people_weekly_reports` (text columns left
-out) and `crm_leads` (raw submission and message left out). Each row has the actor's email (NULL
+out), `crm_leads` (raw submission and message left out) and the four `fin_*` tables (0020). Each row has the actor's email (NULL
 for the service role), the table, the row's key, the operation and the changes: the new row for an
 insert, the old row for a delete, `{column: {old, new}}` for an update. No-op updates write nothing.
 Only a trigger writes it; only a super_admin reads it; nobody edits it. There is no screen for it

@@ -78,6 +78,13 @@ access** (`/admin/access`). Super admins always see everything.
   signature spaces. Interns see only their own records. No screen, location or activity
   tracking: only reviewed output.
 
+**Finance** (`/finance`, section `finance`, off by default for members and contractors)
+- Cash on hand (dated snapshots), expenses with a category, vendor, receipt number and a
+  void-with-reason (never deleted), a monthly budget per category compared with what was
+  spent, the average monthly spending over the last three complete months, and the months of
+  runway that gives. A CSV export for the accountant. It is a working view, not bookkeeping:
+  there is no ledger and no tax treatment.
+
 **Outreach**
 - Digital business cards (`/admin/cards`, super_admin only): branded cards with
   link, QR, NFC, email-signature and `.vcf` sharing, Apple/Google Wallet passes

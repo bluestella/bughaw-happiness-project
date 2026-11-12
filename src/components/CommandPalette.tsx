@@ -47,6 +47,9 @@ function buildItems(access: Access): PaletteItem[] {
   if (canSee(access, "people")) {
     items.push({ href: "/people", label: "Intern logs", description: "Daily hours and weekly reports", group: "Go to", iconKey: "users" });
   }
+  if (canSee(access, "finance")) {
+    items.push({ href: "/finance", label: "Cash and spending", description: "Expenses, budget, runway", group: "Go to", iconKey: "wallet" });
+  }
   if (canSee(access, "tasks")) {
     items.push({ href: "/tasks", label: "Projects & boards", description: "Task management", group: "Go to", iconKey: "tasks" });
   }

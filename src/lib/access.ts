@@ -12,6 +12,7 @@ export type SectionKey =
   | "crm"
   | "sales"
   | "people"
+  | "finance"
   | "tasks"
   | "calculators"
   | "saved"
@@ -36,6 +37,7 @@ export const SECTIONS: SectionDef[] = [
   { key: "crm", label: "CRM (lead funnel + import)", group: "Sections", paths: ["/crm"] },
   { key: "sales", label: "Sales (quotes, orders, stock)", group: "Sections", paths: ["/sales"] },
   { key: "people", label: "People (intern logs and reports)", group: "Sections", paths: ["/people"] },
+  { key: "finance", label: "Finance (expenses, cash, budget)", group: "Sections", paths: ["/finance"] },
   { key: "tasks", label: "Projects & boards", group: "Sections", paths: ["/tasks"] },
   { key: "calculators", label: "Calculators", group: "Sections", paths: ["/calculators"] },
   { key: "saved", label: "Saved calculations", group: "Sections", paths: ["/saved"] },
