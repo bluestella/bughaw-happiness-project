@@ -12,10 +12,10 @@
 --    and page access, sales documents, interns and reports, CRM leads). Written only
 --    by a trigger; read only by a super_admin. An UPDATE stores just the columns that
 --    changed. Large or personal text columns are left out on purpose.
--- 4. people_week_start() was granted only to `authenticated` in 0018, but the daily-log
+-- 4. people_week_start() and people_week_hours() were granted only to `authenticated` in 0018, but the daily-log
 --    trigger is SECURITY INVOKER and calls it, so any write as service_role (test
 --    cleanup, admin scripts) failed with "permission denied for function" wherever
---    default privileges do not already allow it (CI). It reads no data, so an explicit
+--    default privileges do not already allow it (CI). They only read, so an explicit
 --    grant is safe. anon and PUBLIC stay revoked.
 --
 -- Verify:
@@ -24,9 +24,10 @@
 begin;
 
 -- ============================================================
--- 0. people_week_start() for service_role (see item 4 above)
+-- 0. people helpers for service_role (see item 4 above)
 -- ============================================================
 grant execute on function public.people_week_start(date) to service_role;
+grant execute on function public.people_week_hours(text, date) to service_role;
 
 -- ============================================================
 -- 1. Team directory
