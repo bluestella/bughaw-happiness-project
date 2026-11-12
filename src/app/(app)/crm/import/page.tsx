@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CrmImportPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const access = await getCurrentUserAccess(supabase);
   if (!canSee(access, "crm")) redirect(landingPath(access));
 

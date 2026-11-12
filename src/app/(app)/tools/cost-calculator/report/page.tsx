@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Unit cost report" };
 
 /** Server wrapper: resolves "Prepared by" from the signed-in account. */
 export default async function CostReportPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

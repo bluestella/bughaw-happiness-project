@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 const EMPTY: AccessSnapshot = { sections: [], defaults: [], overrides: [], people: [] };
 
 export default async function AccessPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const role = await getCurrentUserRole(supabase);
   if (!canManageAccess(role)) redirect("/");
 

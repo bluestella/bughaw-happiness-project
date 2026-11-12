@@ -104,14 +104,14 @@ npm run db:types      # regenerate src/lib/supabase/types.ts after a migration
 | `functions.itest.ts` | Admin functions refuse non-admins and change nothing; public functions return only safe data. |
 | `sales-rules.itest.ts` | The sales rules: numbering, locked documents, every status pair against the real triggers, stock reserve / release / deliver, overselling, cancel permissions, forged values. |
 | `people-rules.itest.ts` | The intern rules: own-rows-only, the 7-day window, the week lock, every report status pair against the real triggers, review rights, recomputed hours. |
+| `audit-rules.itest.ts` | The audit log (read by super_admin only, written by triggers only, no-op updates skipped, text columns left out) and the contributor invite-list check. |
 | `coverage.itest.ts` | Fails when the database has a table or function with no test. This is the merge gate in [standards/database.md](standards/database.md) §10. |
 
 CI runs it in the `e2e-smoke` job, followed by a check that the generated types
 are up to date.
 
-Known gap recorded as a test (2026-11-12): `list_team_directory()` has no role
-check, so a signed-in user removed from the allowlist can still list invited
-emails. The test asserts today's behaviour and says to flip it when fixed.
+The `list_team_directory()` gap recorded here on 2026-11-12 was fixed in 0019; its test now
+asserts the caller with no role is refused.
 
 ## 6. Performance baseline
 

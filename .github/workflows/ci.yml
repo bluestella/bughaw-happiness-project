@@ -16,6 +16,11 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      # Known-vulnerability check on production dependencies. It reports but does not fail the
+      # build yet: passkit-generator/joi (dormant Wallet passes) have an open advisory whose fix
+      # is a major change (docs/security.md §11). Make this blocking once that is resolved.
+      - run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
       - run: npm run lint
       - run: npm run test
       - run: npm run build

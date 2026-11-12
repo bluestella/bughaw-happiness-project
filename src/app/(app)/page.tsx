@@ -49,7 +49,7 @@ function QuickLink({
 
 export default async function Dashboard() {
   // Each card only renders for people who can open it (0010_section_access.sql).
-  const access = await getCurrentUserAccess(createClient());
+  const access = await getCurrentUserAccess(await createClient());
   const visibleTools = TOOLS.filter((t) => {
     const key = toolSection(t.id);
     return key !== null && canSee(access, key);

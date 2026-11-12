@@ -7,7 +7,8 @@ import { DocumentPrint } from "../../../DocumentPrint";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Sales order — print" };
 
-export default async function OrderPrintPage({ params }: { params: { id: string } }) {
+export default async function OrderPrintPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase } = await requireSales();
   const { data } = await supabase.from("sales_orders").select(ORDER_COLUMNS).eq("id", params.id).maybeSingle();
   if (!data) notFound();

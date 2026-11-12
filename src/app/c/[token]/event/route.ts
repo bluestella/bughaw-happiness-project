@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 const MAX_BODY = 512;
 
-export async function POST(request: Request, { params }: { params: { token: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   const empty = new NextResponse(null, { status: 204 });
   if (!isValidCardToken(params.token)) return empty;
 

@@ -281,6 +281,15 @@ export const TABLES: TableCase[] = [
     allowed: { select: ADMIN, insert: ADMIN, update: NOBODY, delete: NOBODY },
   },
 
+  // --- Audit log (0019) -----------------------------------------------------------
+  {
+    // Written only by triggers; read only by a super_admin; nobody edits history.
+    table: "audit_log", key: ["id"],
+    make: (t) => ({ table_name: `access_${t}`, op: "INSERT", changes: {} }),
+    patch: { table_name: "changed" },
+    allowed: { select: ADMIN, insert: NOBODY, update: NOBODY, delete: NOBODY },
+  },
+
   // --- Task management (rows inside the fixture project) -----------------------
   {
     // A new project has no contributors, so only a super_admin sees it.
@@ -299,6 +308,8 @@ export const TABLES: TableCase[] = [
   },
   {
     table: "project_contributors", key: ["project_id", "user_email"],
+    // New grants must name someone on the invite list (0019).
+    parents: (t) => [allowedEmailParent(t)],
     make: (t) => ({ project_id: FIXTURES.project.id, user_email: `${t}@test.local` }),
     adminExtra: { added_by_email: adminEmail },
     patch: { added_by_email: "changed@test.local" },
@@ -306,6 +317,8 @@ export const TABLES: TableCase[] = [
   },
   {
     table: "mini_project_contributors", key: ["mini_project_id", "user_email"],
+    // New grants must name someone on the invite list (0019).
+    parents: (t) => [allowedEmailParent(t)],
     make: (t) => ({ mini_project_id: FIXTURES.miniProject.id, user_email: `${t}@test.local` }),
     adminExtra: { added_by_email: adminEmail },
     patch: { added_by_email: "changed@test.local" },

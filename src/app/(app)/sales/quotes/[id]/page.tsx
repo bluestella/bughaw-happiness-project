@@ -8,7 +8,8 @@ import { QuoteEditor } from "./QuoteEditor";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Quotation — Sales" };
 
-export default async function QuotePage({ params }: { params: { id: string } }) {
+export default async function QuotePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase, role } = await requireSales();
   const { data: quote } = await supabase.from("sales_quotations").select(QUOTE_COLUMNS).eq("id", params.id).maybeSingle();
   if (!quote) notFound();

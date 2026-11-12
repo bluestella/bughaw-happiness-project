@@ -599,6 +599,7 @@ export function CrmBoard({
       <TabPanel idBase="crm-view" value="funnel" current={tab}>
         {allLeads.length > 0 && (
           <DndContext
+            id="crm-board"
             sensors={sensors}
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}

@@ -24,7 +24,7 @@ reach exactly two narrow security-definer functions and no table.
    Supabase surfaces the raised exception as a generic "Database error saving new
    user"; `login/page.tsx` maps that to a friendly invite-only message. Keep that
    mapping.
-2. **Session middleware** (`src/middleware.ts`): refreshes the session cookie via
+2. **Session middleware** (`src/proxy.ts`): refreshes the session cookie via
    `auth.getUser()` on every non-static request; signed-out users are redirected to
    `/login?next=…`. Only `/login`, `/auth/*`, the secret-authed `/api/crm/ingest`
    and the public card route `/c/*` (§8) skip the login redirect.
@@ -99,14 +99,16 @@ is right. **Never "fix" a permission bug in TypeScript only.**
    `crm` (the CRM's "promote to pipeline" writes there). An `app_state` key that
    is not mapped in `app_state_section()` is super_admin-only, so a new tool that
    stores state there must add its key in a migration.
-2. **Contributor grants accept arbitrary emails** (no allowlist FK) — a typo grants
-   nobody, but also nobody notices. Low risk (grant, not data), fix in DB if needed.
+2. ~~Contributor grants accept arbitrary emails.~~ **Fixed in 0019:** a new grant must
+   name someone on the invite list and is stored lower-cased. Existing rows were not touched.
 3. **No rate limiting / abuse controls** beyond Supabase's defaults on auth
    endpoints.
 4. **`assignee_email` and grant emails are client-supplied strings** (only
    `created_by_*` fields are DB-derived). Spoofing assignment display is possible by
    any user who can edit tasks; provenance fields remain trustworthy.
-5. **No audit log** beyond `created_*` columns and append-only `task_comments`.
+5. ~~No audit log.~~ **Partly fixed in 0019:** `audit_log` records changes to roles, page access, the
+   invite list, sales documents, interns and report status, and CRM leads (§11). Tasks, calculators,
+   saved calculations and cards are not audited.
 6. **No error tracking / security monitoring** (no Sentry, no alerting).
 7. **XSS surface**: all user text is rendered through React (auto-escaped); there is
    no `dangerouslySetInnerHTML` in the app. Keep it that way — if rich text is ever
@@ -180,15 +182,15 @@ here. "Planned" rows are not controls yet. Owners and waves are in
 
 | Category | Control today | Proof today | Planned |
 |---|---|---|---|
-| A01 Broken Access Control | RLS on every table; `has_section()`; null-safe role guards (§3, §6) | `tests/integration/access` runs each role against the real policies and functions (`npm run test:access`) | Validate contributor emails against the allowlist; access tests for every new table before merge |
+| A01 Broken Access Control | RLS on every table; `has_section()`; null-safe role guards (§3, §6) | `tests/integration/access` runs each role against the real policies and functions (`npm run test:access`) | Access tests for every new table before merge. Fixed in 0019: contributor emails validated against the invite list; `list_team_directory()` refuses a caller with no role |
 | A02 Security Misconfiguration | Security headers and CSP (`src/lib/securityHeaders.js`); `poweredByHeader` off | `tests/unit/securityHeaders.test.ts` | Document Supabase Auth dashboard settings; turn on leaked-password protection |
-| A03 Software Supply Chain Failures | Lockfile; `npm ci` in CI | none | `npm audit` gate, Dependabot, GitHub Actions pinned by commit, secret scanning |
+| A03 Software Supply Chain Failures | Lockfile; `npm ci` in CI; Dependabot weekly (0019 PR); `npm audit` runs in CI, report only | none | Make the audit blocking once Next is upgraded (§11); GitHub Actions pinned by commit; secret scanning |
 | A04 Cryptographic Failures | TLS from Vercel and Supabase; constant-time secret compare (`ct_equal`) | ingest tests in E2E plan | Store a hash of the ingest secret, not the plaintext (§5, AGENTS.md §7) |
 | A05 Injection | React text rendering only; Supabase client parameterises queries; URL and phone check constraints on cards | card and CRM unit tests | Lint rule banning `dangerouslySetInnerHTML`; CSV formula-injection test on import and export |
 | A06 Insecure Design | Three-layer permission contract (§3); public layer behind two functions (§8) | permission matrix unit tests | Document state transitions and immutability enforced by triggers ([standards/database.md](standards/database.md) §6) |
 | A07 Authentication Failures | Allowlist trigger; Supabase Auth; session refresh in middleware (§2) | `tests/e2e/specs/auth.spec.ts` | Review auth rate limits; optional MFA for super_admin |
-| A08 Software or Data Integrity Failures | Provenance columns set by the database; append-only comments and activities | access tests assert no update/delete on append-only tables | Audit log on sales and finance tables; issued documents read-only |
-| A09 Security Logging and Alerting Failures | none (§5.5, §5.6) | none | Error tracking; alert on repeated failed ingest auth; Supabase log review routine |
+| A08 Software or Data Integrity Failures | Provenance columns set by the database; append-only comments and activities | access tests assert no update/delete on append-only tables; sales documents lock when issued | `audit_log` (0019) on the tables listed in §11; extend it to finance tables when they exist |
+| A09 Security Logging and Alerting Failures | `audit_log` answers "who changed this" (§11). No error tracking or alerting yet | `tests/integration/access/audit-rules.itest.ts` | Error tracking (needs an account: owner decision); alert on repeated failed ingest auth; Supabase log review routine |
 | A10 Mishandling of Exceptional Conditions | Functions refuse a NULL role (0008); optimistic UI rolls back on error | access tests include the anonymous and no-role callers | Error boundary per section; malformed-input tests for every function |
 
 ## 10. Intern records (personal data)
@@ -202,3 +204,21 @@ ends, then delete on request or archive. Tell each intern what is recorded when 
 NPC registration is not expected at this size (threshold: 250 employees or sensitive data of
 1,000 people), but confirm against NPC Circular 2022-04; breach notification within 72 hours
 applies regardless.
+
+## 11. Audit log and the dependency advisory (Wave 2)
+
+**Audit log (0019).** `audit_log` has one row per change on: `allowed_emails`,
+`user_section_overrides`, `role_section_defaults`, `sales_products`, `sales_price_tiers`,
+`sales_quotations`, `sales_orders`, `people_interns`, `people_weekly_reports` (text columns left
+out) and `crm_leads` (raw submission and message left out). Each row has the actor's email (NULL
+for the service role), the table, the row's key, the operation and the changes: the new row for an
+insert, the old row for a delete, `{column: {old, new}}` for an update. No-op updates write nothing.
+Only a trigger writes it; only a super_admin reads it; nobody edits it. There is no screen for it
+yet: read it in the Supabase table editor. Tasks, calculators, saved calculations and digital cards
+are not audited.
+
+**Dependency advisories.** The critical advisory on Next 14 (and the high one on its bundled
+`postcss`) was resolved by the upgrade to Next 16 and React 19. What `npm audit --omit=dev` still
+reports is `passkit-generator` (Apple/Google Wallet, dormant until keys exist) and its `joi`
+dependency, whose fix is a major change. Non-breaking transitive fixes were applied. The CI audit
+step reports but does not fail the build; make it blocking once those two are resolved or removed.

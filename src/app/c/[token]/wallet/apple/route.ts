@@ -14,7 +14,8 @@ async function fetchAsset(origin: string, path: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
-export async function GET(request: Request, { params }: { params: { token: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   const config = appleWalletConfig();
   if (!config) return new NextResponse("Not found", { status: 404 });
 
@@ -31,7 +32,7 @@ export async function GET(request: Request, { params }: { params: { token: strin
     ]);
     pkpass = await buildApplePass(card, {
       config,
-      cardUrl: cardUrl(requestOrigin(request), card.token),
+      cardUrl: cardUrl(await requestOrigin(request), card.token),
       icon,
       logo,
     });
