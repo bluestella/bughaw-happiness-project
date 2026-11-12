@@ -68,6 +68,9 @@ export const TABLES: TableSpec[] = [
   { table: "role_section_defaults", key: ["role", "section"] },
   { table: "app_sections", key: ["key"] },
   { table: "allowed_emails", key: ["email"] },
+  // The audit log (0019) is written by triggers on the tables above, so cleaning those
+  // tables adds rows to it. It goes last, and restore() sweeps it again after step 2.
+  { table: "audit_log", key: ["id"], noRestore: true },
 ];
 
 /** Views and other read-only relations PostgREST exposes; nothing to clean. */
@@ -220,6 +223,12 @@ export async function restore(db: SupabaseClient, base: Baseline): Promise<numbe
       .upsert(toWrite, { onConflict: spec.key.join(",") });
     if (error) throw new Error(`[e2e cleanup] restore ${spec.table}: ${error.message}`);
   }
+
+  // 2b. Steps 1 and 2 changed audited tables, so the audit log has new rows too.
+  const audit = TABLES.find((t) => t.table === "audit_log")!;
+  const keepAudit = new Set((base.tables[audit.table] ?? []).map((r) => keyOf(audit, r)));
+  const extraAudit = (await selectAll(db, audit.table)).filter((r) => !keepAudit.has(keyOf(audit, r)));
+  await deleteRows(db, audit, extraAudit);
 
   // 3. Delete auth users created during the run.
   const baseUsers = new Set(base.authUserIds);

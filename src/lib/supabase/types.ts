@@ -69,6 +69,36 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          actor_email: string | null
+          at: string
+          changes: Json
+          id: number
+          op: string
+          row_key: string | null
+          table_name: string
+        }
+        Insert: {
+          actor_email?: string | null
+          at?: string
+          changes: Json
+          id?: never
+          op: string
+          row_key?: string | null
+          table_name: string
+        }
+        Update: {
+          actor_email?: string | null
+          at?: string
+          changes?: Json
+          id?: never
+          op?: string
+          row_key?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       business_card_events: {
         Row: {
           card_id: string

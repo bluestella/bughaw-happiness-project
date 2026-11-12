@@ -130,14 +130,11 @@ describe("directory", () => {
     expect((data ?? []).length).toBeGreaterThan(0);
     for (const row of data ?? []) expect(Object.keys(row).sort()).toEqual(["email", "note"]);
   });
-  // KNOWN GAP (reported 2026-11-12, not fixed): list_team_directory() has no role
-  // check, so a signed-in user who was removed from the allowlist can still read
-  // every invited email and note until their session expires. When a migration
-  // adds the guard, flip this expectation to "refused".
-  it("KNOWN GAP: a signed-in user with no role can still list the team", async () => {
+  // Fixed in 0019: this was a known gap, recorded by a test that asserted the old behaviour.
+  it("refuses a signed-in user with no role (removed from the invite list)", async () => {
     const { data, error } = await (await clientFor("no_role")).rpc("list_team_directory");
-    expect(error).toBeNull();
-    expect((data ?? []).length).toBeGreaterThan(0);
+    expect(error).not.toBeNull();
+    expect(data).toBeNull();
   });
 });
 

@@ -119,6 +119,7 @@ supabase/migrations/
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
   0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
+  0019_hardening_audit.sql        # Team-directory role guard, contributor email validation, audit_log + triggers
   0018_people_interns.sql         # People: intern profiles, daily logs, weekly reports (own-rows RLS, week lock, review flow)
   0015–0017 sales_*.sql          # Sales: products, tiers, stock; quotations; orders (numbering, locking, stock triggers)
   0014_crm_deal_fields.sql        # CRM: deal value, next action, samples, lost reason (trigger), buyer segment; pipeline → CRM account link
@@ -263,7 +264,7 @@ npm run e2e:perf   # Performance baseline on a production build
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order
-(`0001_init.sql` … `0018_people_interns.sql`) in the SQL editor (0003 has an
+(`0001_init.sql` … `0019_hardening_audit.sql`) in the SQL editor (0003 has an
 ACTION REQUIRED header: insert an ingest secret before the marketing site can post
 leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.
@@ -285,9 +286,12 @@ Deploy: Vercel, auto from `main`. CI must be green.
   `allowed_emails`). Rotating it means updating that row and the marketing site's
   env var together. `ingest_form_submission()` is the only function granted to
   `anon`; keep it that way.
-- **Contributor emails are free text** — adding a contributor does not validate the
-  email against `allowed_emails`; a typo'd grant silently does nothing until that
-  email is invited.
+- **Contributor emails** must be on the invite list (0019); the database refuses
+  anything else and lower-cases what it stores.
+- **`audit_log`** (0019) records who changed roles, page access, sales documents, interns
+  and report status, and CRM leads. Super_admin read only; see docs/security.md §11.
+- **Open advisory:** Next 14 has a critical advisory whose fix is a major upgrade
+  (docs/security.md §11).
 - **Middleware runs an RPC per request** (`current_user_role`) for signed-in users —
   a known latency cost; if it becomes a problem, cache the role in the JWT
   (custom claims) rather than trusting a client-stored value.
