@@ -1,6 +1,6 @@
 # 0002 — The CRM account is the one customer record
 
-**Date:** 2026-11-12 · **Status:** proposed (board recommendation; owner has not confirmed)
+**Date:** 2026-11-12 · **Status:** accepted by the owner, 2026-11-12
 
 ## Decision
 
@@ -16,7 +16,7 @@ moved later, and whoever sends a quote would not know which record is current.
 
 ## Consequences
 
-- Migration 0015 adds the link and backfills it where names match exactly
+- Migration 0014 adds the link and backfills it where names match exactly
   (case-insensitive). Unmatched pipeline rows stay unlinked and are listed for the
   owner to resolve by hand; nothing is merged or deleted automatically.
 - A buyer segment column on `crm_accounts` covers hotels, resorts, spas and other

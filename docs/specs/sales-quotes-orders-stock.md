@@ -1,6 +1,6 @@
 # Spec — Products, stock, quotations and sales orders
 
-**Wave:** 1 · **Migrations:** 0014, 0016, 0017, 0018 · **Section:** `sales` · **Status:** draft for owner review
+**Wave:** 1 · **Migrations:** 0015, 0016, 0017, 0018 · **Section:** `sales` · **Status:** draft for owner review
 Follows [standards/database.md](../standards/database.md),
 [decision 0001](../standards/decisions/0001-official-invoicing-deferred.md) and
 [decision 0002](../standards/decisions/0002-one-customer-record.md).

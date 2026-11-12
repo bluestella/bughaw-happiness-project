@@ -1,6 +1,6 @@
 # 0003 — Interns use the contractor role plus per-person page access
 
-**Date:** 2026-11-12 · **Status:** proposed (board recommendation; owner has not confirmed)
+**Date:** 2026-11-12 · **Status:** accepted by the owner, 2026-11-12
 
 ## Decision
 

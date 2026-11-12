@@ -192,6 +192,7 @@ export type Database = {
           kind: string
           name: string
           name_key: string | null
+          segment: string | null
           updated_at: string
         }
         Insert: {
@@ -203,6 +204,7 @@ export type Database = {
           kind?: string
           name: string
           name_key?: string | null
+          segment?: string | null
           updated_at?: string
         }
         Update: {
@@ -214,6 +216,7 @@ export type Database = {
           kind?: string
           name?: string
           name_key?: string | null
+          segment?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -324,14 +327,19 @@ export type Database = {
           attribution: Json | null
           contact_id: string | null
           created_at: string
+          deal_value: number | null
           description: string | null
           engagement: Json | null
           engagement_tier: string | null
           estimated_volume: string | null
+          expected_close_on: string | null
           ga_client_id: string | null
           geo: Json | null
           id: string
           lead_type: string
+          lost_reason: string | null
+          next_action: string | null
+          next_action_due_on: string | null
           origin_form: string
           owner_email: string | null
           pipeline_account_id: string | null
@@ -339,6 +347,8 @@ export type Database = {
           product_interests: string[]
           product_of_interest: string | null
           raw: Json | null
+          sample_feedback_on: string | null
+          sample_sent_on: string | null
           source: string | null
           status: string
           submitted_at: string
@@ -349,14 +359,19 @@ export type Database = {
           attribution?: Json | null
           contact_id?: string | null
           created_at?: string
+          deal_value?: number | null
           description?: string | null
           engagement?: Json | null
           engagement_tier?: string | null
           estimated_volume?: string | null
+          expected_close_on?: string | null
           ga_client_id?: string | null
           geo?: Json | null
           id?: string
           lead_type?: string
+          lost_reason?: string | null
+          next_action?: string | null
+          next_action_due_on?: string | null
           origin_form: string
           owner_email?: string | null
           pipeline_account_id?: string | null
@@ -364,6 +379,8 @@ export type Database = {
           product_interests?: string[]
           product_of_interest?: string | null
           raw?: Json | null
+          sample_feedback_on?: string | null
+          sample_sent_on?: string | null
           source?: string | null
           status?: string
           submitted_at?: string
@@ -374,14 +391,19 @@ export type Database = {
           attribution?: Json | null
           contact_id?: string | null
           created_at?: string
+          deal_value?: number | null
           description?: string | null
           engagement?: Json | null
           engagement_tier?: string | null
           estimated_volume?: string | null
+          expected_close_on?: string | null
           ga_client_id?: string | null
           geo?: Json | null
           id?: string
           lead_type?: string
+          lost_reason?: string | null
+          next_action?: string | null
+          next_action_due_on?: string | null
           origin_form?: string
           owner_email?: string | null
           pipeline_account_id?: string | null
@@ -389,6 +411,8 @@ export type Database = {
           product_interests?: string[]
           product_of_interest?: string | null
           raw?: Json | null
+          sample_feedback_on?: string | null
+          sample_sent_on?: string | null
           source?: string | null
           status?: string
           submitted_at?: string
@@ -496,6 +520,7 @@ export type Database = {
         Row: {
           contact: string
           created_at: string
+          crm_account_id: string | null
           generated_referral: boolean
           id: string
           name: string
@@ -510,6 +535,7 @@ export type Database = {
         Insert: {
           contact?: string
           created_at?: string
+          crm_account_id?: string | null
           generated_referral?: boolean
           id?: string
           name: string
@@ -524,6 +550,7 @@ export type Database = {
         Update: {
           contact?: string
           created_at?: string
+          crm_account_id?: string | null
           generated_referral?: boolean
           id?: string
           name?: string
@@ -535,7 +562,15 @@ export type Database = {
           stage?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_accounts_crm_account_id_fkey"
+            columns: ["crm_account_id"]
+            isOneToOne: false
+            referencedRelation: "crm_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_contributors: {
         Row: {

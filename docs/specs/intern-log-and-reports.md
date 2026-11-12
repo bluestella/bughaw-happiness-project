@@ -1,6 +1,6 @@
 # Spec — Intern daily log and weekly reports
 
-**Wave:** 1 (evaluations and school export formats: Wave 2) · **Migrations:** 0014, 0019 · **Section:** `people` · **Status:** draft for owner review
+**Wave:** 1 (evaluations and school export formats: Wave 2) · **Migrations:** 0015, 0019 · **Section:** `people` · **Status:** draft for owner review
 Follows [standards/database.md](../standards/database.md) and
 [decision 0003](../standards/decisions/0003-interns-use-contractor-role.md).
 

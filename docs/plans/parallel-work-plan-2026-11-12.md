@@ -111,8 +111,8 @@ Wave 2
 
 | Number | Content | Wave |
 |---|---|---|
-| 0014 | Sections `sales`, `people`; role defaults | 1 |
-| 0015 | CRM deal fields; link from `pipeline_accounts` to the CRM account | 1 |
+| 0014 | CRM deal fields; link from `pipeline_accounts` to the CRM account — **done** | 1 |
+| 0015 | Sections `sales`, `people`; role defaults | 1 |
 | 0016 | Products, price tiers, stock and adjustments | 1 |
 | 0017 | Quotations and lines; numbering; immutability | 1 |
 | 0018 | Sales orders; stock reservation; payment and invoice-number fields | 1 |

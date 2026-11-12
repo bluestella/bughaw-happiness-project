@@ -23,15 +23,24 @@ import { createClient } from "@/lib/supabase/client";
 import { canEditLead, type Role } from "@/lib/permissions";
 import { computeNewPosition, sortByPosition } from "@/lib/tasks";
 import {
+  BUYER_SEGMENTS,
+  BUYER_SEGMENT_LABELS,
   LEAD_STATUSES,
   ORIGIN_FORMS,
   ORIGIN_FORM_LABELS,
+  followUpBuckets,
+  isOverdue,
   leadsToCsv,
+  manilaDate,
+  openPipelineValue,
   productLabel,
+  weightedPipelineValue,
+  type BuyerSegment,
   type CrmLeadRow,
   type LeadStatus,
   type OriginForm,
 } from "@/lib/crm";
+import { pesoRound } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -72,6 +81,7 @@ function leadSearchText(lead: CrmLeadRow): string {
     lead.description,
     lead.product_of_interest,
     lead.source,
+    lead.next_action,
     ...(lead.product_interests ?? []).map(productLabel),
   ]
     .filter(Boolean)
@@ -79,15 +89,22 @@ function leadSearchText(lead: CrmLeadRow): string {
     .toLowerCase();
 }
 
+function leadName(lead: CrmLeadRow): string {
+  return lead.crm_accounts?.name || lead.crm_contacts?.full_name || "Unnamed lead";
+}
+
 function LeadCard({
   lead,
   draggable,
+  today,
   onOpen,
 }: {
   lead: CrmLeadRow;
   draggable: boolean;
+  today: string;
   onOpen: () => void;
 }) {
+  const overdue = isOverdue(lead, today);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lead.id,
     disabled: !draggable,
@@ -95,9 +112,10 @@ function LeadCard({
 
   const accountName = lead.crm_accounts?.name || lead.crm_contacts?.full_name || "Unnamed lead";
   const contactName = lead.crm_contacts?.full_name || lead.crm_contacts?.email;
-  const ariaLabel = contactName
-    ? `${accountName} — ${contactName}. Lead status: ${lead.status}.`
-    : `${accountName}. Lead status: ${lead.status}.`;
+  const ariaLabel =
+    (contactName
+      ? `${accountName} — ${contactName}. Lead status: ${lead.status}.`
+      : `${accountName}. Lead status: ${lead.status}.`) + (overdue ? " Follow-up overdue." : "");
 
   return (
     <button
@@ -135,7 +153,23 @@ function LeadCard({
             {lead.engagement_tier.replace("_", " ")}
           </span>
         )}
+        {lead.deal_value !== null && (
+          <span className="rounded-full border border-coir/50 px-1.5 py-0.5 font-mono text-[10px] text-coir-dark">
+            {pesoRound(Number(lead.deal_value))}
+          </span>
+        )}
+        {overdue && (
+          <span className="rounded-full border border-danger/50 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-danger">
+            Overdue
+          </span>
+        )}
       </div>
+      {lead.next_action && (
+        <p className="mt-1.5 truncate text-[11px] text-ink-soft">
+          Next: {lead.next_action}
+          {lead.next_action_due_on ? ` · ${lead.next_action_due_on}` : ""}
+        </p>
+      )}
       {lead.product_interests.length > 0 && (
         <p className="mt-1.5 truncate font-mono text-[10px] text-ink-soft">
           {lead.product_interests.join(" · ")}
@@ -150,12 +184,14 @@ function Column({
   leadIds,
   leadsById,
   draggable,
+  today,
   onOpenLead,
 }: {
   status: LeadStatus;
   leadIds: string[];
   leadsById: Record<string, CrmLeadRow>;
   draggable: boolean;
+  today: string;
   onOpenLead: (lead: CrmLeadRow) => void;
 }) {
   const { setNodeRef } = useDroppable({ id: status });
@@ -176,6 +212,7 @@ function Column({
                 key={id}
                 lead={lead}
                 draggable={draggable}
+                today={today}
                 onOpen={() => onOpenLead(lead)}
               />
             );
@@ -205,7 +242,10 @@ export function CrmBoard({
   const [columns, setColumns] = useState<Columns>(() => buildColumns(initialLeads));
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [openLead, setOpenLead] = useState<CrmLeadRow | null>(null);
-  const [tab, setTab] = useState<"funnel" | "list">("funnel");
+  const [askLostReason, setAskLostReason] = useState(false);
+  const [tab, setTab] = useState<"funnel" | "followups" | "list">("funnel");
+  const [segmentFilter, setSegmentFilter] = useState<"all" | BuyerSegment>("all");
+  const today = useMemo(() => manilaDate(), []);
   const [search, setSearch] = useState("");
   const [formFilter, setFormFilter] = useState<"all" | OriginForm>("all");
   const [tierFilter, setTierFilter] = useState("all");
@@ -227,15 +267,25 @@ export function CrmBoard({
     return (lead: CrmLeadRow) => {
       if (formFilter !== "all" && lead.origin_form !== formFilter) return false;
       if (tierFilter !== "all" && lead.engagement_tier !== tierFilter) return false;
+      if (segmentFilter !== "all" && lead.crm_accounts?.segment !== segmentFilter) return false;
       if (q !== "" && !leadSearchText(lead).includes(q)) return false;
       return true;
     };
-  }, [search, formFilter, tierFilter]);
+  }, [search, formFilter, tierFilter, segmentFilter]);
 
   const filteredLeads = useMemo(
     () => sortByPosition(allLeads.filter(matchesFilters)),
     [allLeads, matchesFilters]
   );
+
+  const followUps = useMemo(() => followUpBuckets(filteredLeads, today), [filteredLeads, today]);
+  const openValue = useMemo(() => openPipelineValue(filteredLeads), [filteredLeads]);
+  const weightedValue = useMemo(() => weightedPipelineValue(filteredLeads), [filteredLeads]);
+
+  function openPanel(lead: CrmLeadRow) {
+    setAskLostReason(false);
+    setOpenLead(lead);
+  }
 
   function findContainer(id: UniqueIdentifier): LeadStatus | null {
     if (LEAD_STATUSES.includes(id as LeadStatus)) return id as LeadStatus;
@@ -284,6 +334,16 @@ export function CrmBoard({
 
     const container = findContainer(active.id);
     if (!container) return;
+
+    // Closing a deal as lost needs a reason (0014). Put the card back and ask in
+    // the panel; cancelling there leaves the lead where it was.
+    const dragged = dragSnapshot.current?.leadsById[active.id as string];
+    if (container === "Closed Lost" && dragged && dragged.status !== "Closed Lost") {
+      rollbackDrag();
+      setAskLostReason(true);
+      setOpenLead(dragged);
+      return;
+    }
 
     let finalColumns = columns;
     const overContainer = findContainer(over.id);
@@ -417,6 +477,13 @@ export function CrmBoard({
           idBase="crm-view"
           tabs={[
             { id: "funnel" as const, label: "Funnel" },
+            {
+              id: "followups" as const,
+              label:
+                followUps.overdue.length > 0
+                  ? `Follow-ups (${followUps.overdue.length} overdue)`
+                  : "Follow-ups",
+            },
             { id: "list" as const, label: "All leads" },
           ]}
           value={tab}
@@ -471,10 +538,53 @@ export function CrmBoard({
             </option>
           ))}
         </Select>
+        <Select
+          className="max-w-[10rem]"
+          value={segmentFilter}
+          onChange={(e) => setSegmentFilter(e.target.value as "all" | BuyerSegment)}
+          aria-label="Filter by buyer segment"
+        >
+          <option value="all">All segments</option>
+          {BUYER_SEGMENTS.map((seg) => (
+            <option key={seg} value={seg}>
+              {BUYER_SEGMENT_LABELS[seg]}
+            </option>
+          ))}
+        </Select>
         <span className="font-mono text-[10px] text-ink-soft">
           {filteredLeads.length} of {allLeads.length}
         </span>
       </div>
+
+      {allLeads.length > 0 && (
+        <dl className="mb-5 grid gap-3 sm:grid-cols-3" aria-label="Pipeline totals">
+          <div className="rounded-xl border border-line bg-white p-3 shadow-card">
+            <dt className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-soft">
+              Open pipeline
+            </dt>
+            <dd className="mt-1 text-lg font-semibold text-ink">{pesoRound(openValue)}</dd>
+          </div>
+          <div className="rounded-xl border border-line bg-white p-3 shadow-card">
+            <dt className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-soft">
+              Weighted by stage
+            </dt>
+            <dd className="mt-1 text-lg font-semibold text-ink">{pesoRound(weightedValue)}</dd>
+            <dd className="text-[10px] text-ink-soft">Stage weights are placeholders.</dd>
+          </div>
+          <div className="rounded-xl border border-line bg-white p-3 shadow-card">
+            <dt className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-soft">
+              Follow-ups overdue
+            </dt>
+            <dd
+              className={`mt-1 text-lg font-semibold ${
+                followUps.overdue.length > 0 ? "text-danger" : "text-ink"
+              }`}
+            >
+              {followUps.overdue.length}
+            </dd>
+          </div>
+        </dl>
+      )}
 
       {allLeads.length === 0 && (
         <div className="rounded-xl border border-dashed border-line p-10 text-center text-sm text-ink-soft">
@@ -501,7 +611,8 @@ export function CrmBoard({
                   leadIds={visibleColumns[s]}
                   leadsById={leadsById}
                   draggable={editable}
-                  onOpenLead={setOpenLead}
+                  today={today}
+                  onOpenLead={openPanel}
                 />
               ))}
             </div>
@@ -518,13 +629,60 @@ export function CrmBoard({
         )}
       </TabPanel>
 
+      <TabPanel idBase="crm-view" value="followups" current={tab}>
+        {allLeads.length > 0 && (
+          <div className="space-y-5">
+            {(
+              [
+                ["Overdue", followUps.overdue, "text-danger"],
+                ["Due today", followUps.today, "text-ink"],
+                ["Due in the next 7 days", followUps.thisWeek, "text-ink"],
+                ["Later", followUps.later, "text-ink-soft"],
+              ] as const
+            ).map(([title, leads, tone]) => (
+              <section key={title} aria-label={title}>
+                <h3 className={`mb-2 text-sm font-semibold ${tone}`}>
+                  {title} <span className="font-mono text-[11px]">({leads.length})</span>
+                </h3>
+                {leads.length === 0 ? (
+                  <p className="text-[12px] text-ink-soft">Nothing here.</p>
+                ) : (
+                  <ul className="divide-y divide-line/60 rounded-xl border border-line bg-white shadow-card">
+                    {leads.map((lead) => (
+                      <li key={lead.id}>
+                        <button
+                          type="button"
+                          onClick={() => openPanel(lead)}
+                          className="flex w-full flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2 text-left hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30"
+                        >
+                          <span className="font-mono text-[11px] text-ink-soft">
+                            {lead.next_action_due_on}
+                          </span>
+                          <span className="text-[13px] font-medium text-ink">{leadName(lead)}</span>
+                          <span className="min-w-0 flex-1 truncate text-[13px] text-ink-soft">
+                            {lead.next_action ?? "No action written"}
+                          </span>
+                          <span className="font-mono text-[10px] uppercase tracking-wide text-ink-soft">
+                            {lead.status}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
+      </TabPanel>
+
       <TabPanel idBase="crm-view" value="list" current={tab}>
         {allLeads.length > 0 && (
           <div className="overflow-x-auto rounded-xl border border-line bg-white shadow-card">
-            <table className="w-full min-w-[52rem] text-left text-[13px]" aria-label="All leads list">
+            <table className="w-full min-w-[64rem] text-left text-[13px]" aria-label="All leads list">
               <thead>
                 <tr className="border-b border-line">
-                  {["Submitted", "Account", "Contact", "Form", "Status", "Interests"].map((h) => (
+                  {["Submitted", "Account", "Contact", "Form", "Status", "Value", "Next action", "Interests"].map((h) => (
                     <th
                       key={h}
                       scope="col"
@@ -547,11 +705,11 @@ export function CrmBoard({
                       tabIndex={0}
                       role="button"
                       aria-label={rowLabel}
-                      onClick={() => setOpenLead(lead)}
+                      onClick={() => openPanel(lead)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          setOpenLead(lead);
+                          openPanel(lead);
                         }
                       }}
                       className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-coir/30 focus-visible:bg-paper"
@@ -575,6 +733,19 @@ export function CrmBoard({
                           {lead.status}
                         </span>
                       </td>
+                      <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] text-ink">
+                        {lead.deal_value !== null ? pesoRound(Number(lead.deal_value)) : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-ink-soft">
+                        {lead.next_action ? (
+                          <span className={isOverdue(lead, today) ? "text-danger" : undefined}>
+                            {lead.next_action}
+                            {lead.next_action_due_on ? ` · ${lead.next_action_due_on}` : ""}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-ink-soft">
                         {lead.product_interests.length > 0
                           ? lead.product_interests.map(productLabel).join(", ")
@@ -591,9 +762,14 @@ export function CrmBoard({
 
       {openLead && (
         <LeadPanel
+          key={`${openLead.id}:${askLostReason ? "lost" : "view"}`}
           lead={openLead}
           role={role}
-          onClose={() => setOpenLead(null)}
+          askLostReason={askLostReason}
+          onClose={() => {
+            setOpenLead(null);
+            setAskLostReason(false);
+          }}
           onUpdated={handleLeadUpdated}
           onDeleted={handleLeadDeleted}
         />
