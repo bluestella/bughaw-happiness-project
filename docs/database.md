@@ -345,3 +345,27 @@ All of it also needs `has_section('people')`. SA = super_admin. Triggers enforce
 window (Manila), the lock on a submitted or approved week, the report status flow, review
 rights, and the recomputed `total_hours`. `people_can_see_intern()` is the access helper the
 policies call.
+
+
+## Finance (0020)
+
+Not bookkeeping: no ledger, no tax treatment. The `finance` section is **off by default** for
+members and contractors; a super_admin always sees it and can grant it per person.
+
+```
+fin_categories    (name unique lower(btrim), is_active)                      ← default categories seeded in the migration
+fin_expenses      (spent_on not in the future, amount > 0 and < 1e9, category_id FK restrict, vendor,
+                   description <= 500 chars, reference, voided_at + void_reason together or neither)
+fin_cash_balances (as_of unique, amount >= 0, note)                          ← dated snapshots
+fin_budgets       (month_start always the 1st, category_id FK restrict, amount >= 0; unique month+category)
+```
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| fin_categories | `finance` | SA | SA | **none** |
+| fin_expenses | `finance` | `finance` | `finance` (locked once voided) | **none** |
+| fin_cash_balances | `finance` | `finance` | SA | **none** |
+| fin_budgets | `finance` | `finance` | `finance` | **none** |
+
+A trigger stamps `voided_at` when a reason is first written, and refuses any change to a voided
+expense. All four tables are in `audit_log`.

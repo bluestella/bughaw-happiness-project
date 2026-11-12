@@ -30,6 +30,11 @@ interface TableSpec {
 // Every table exposed by PostgREST must be listed here or in IGNORED_RELATIONS;
 // assertCoversSchema() fails the run when a migration adds an unknown table.
 export const TABLES: TableSpec[] = [
+  // Finance (0020): expenses and budgets point at categories (restrict), so they go first.
+  { table: "fin_expenses", key: ["id"] },
+  { table: "fin_budgets", key: ["id"] },
+  { table: "fin_cash_balances", key: ["id"] },
+  { table: "fin_categories", key: ["id"] },
   // People (0018). Reports and logs before profiles; logs of a submitted week are locked
   // against direct deletes, so the profile (cascade) is not used to clear them: the
   // guard allows a nested delete only, so delete the report rows first, then logs.

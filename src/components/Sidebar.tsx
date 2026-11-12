@@ -135,6 +135,7 @@ export function Sidebar({
     const showCrm = canSee(access, "crm");
     const showSales = canSee(access, "sales");
     const showPeople = canSee(access, "people");
+    const showFinance = canSee(access, "finance");
     const showTasks = canSee(access, "tasks");
     const tools = TOOLS.filter((t) => {
       const key = toolSection(t.id);
@@ -195,6 +196,15 @@ export function Sidebar({
               <SectionLabel>People</SectionLabel>
               <NavLink href="/people" iconKey="users" onNavigate={onNavigate} pathname={pathname}>
                 Intern logs
+              </NavLink>
+            </>
+          )}
+
+          {showFinance && (
+            <>
+              <SectionLabel>Finance</SectionLabel>
+              <NavLink href="/finance" iconKey="wallet" onNavigate={onNavigate} pathname={pathname}>
+                Cash and spending
               </NavLink>
             </>
           )}

@@ -479,6 +479,154 @@ export type Database = {
           },
         ]
       }
+      fin_budgets: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          created_by_email: string
+          id: string
+          month_start: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          month_start: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          month_start?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_budgets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "fin_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_cash_balances: {
+        Row: {
+          amount: number
+          as_of: string
+          created_at: string
+          created_by_email: string
+          id: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          as_of: string
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          as_of?: string
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_categories: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_expenses: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          created_by_email: string
+          description: string
+          id: string
+          reference: string | null
+          spent_on: string
+          updated_at: string
+          vendor: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by_email?: string
+          description: string
+          id?: string
+          reference?: string | null
+          spent_on: string
+          updated_at?: string
+          vendor?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by_email?: string
+          description?: string
+          id?: string
+          reference?: string | null
+          spent_on?: string
+          updated_at?: string
+          vendor?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "fin_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mini_project_contributors: {
         Row: {
           added_by_email: string | null

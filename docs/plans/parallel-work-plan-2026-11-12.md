@@ -116,7 +116,9 @@ Wave 2
 | 0016 | Quotations and lines; numbering; immutability — **done** | 1 |
 | 0017 | Sales orders; stock reservation; payment and invoice-number fields — **done** | 1 |
 | 0018 | Section `people`; intern profiles, daily logs, weekly reports — **done** | 1 |
-| 0020–0025 | Audit log, production, finance, evaluations, worksheets, ingest rate limit | 2 |
+| 0019 | Hardening: team-directory guard, contributor validation, audit log — **done** | 2 |
+| 0020 | Finance: categories, expenses, cash snapshots, budgets — **done** | 2 |
+| 0021–0025 | Production and R&D, intern evaluations, worksheets, ingest secret hash and rate limit | 2 |
 
 ## 5. Database standards (summary for `docs/standards/database.md`)
 

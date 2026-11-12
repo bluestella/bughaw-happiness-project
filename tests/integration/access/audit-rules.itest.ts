@@ -67,9 +67,9 @@ describe("what is recorded", () => {
     const email = USERS.contractor.email;
     expect((await admin.rpc("admin_set_user_section", { p_email: email, p_section: "crm", p_allowed: true })).error).toBeNull();
     try {
-      const rows = (await db.from("audit_log").select("op, actor_email, changes").eq("table_name", "user_section_overrides").like("row_key", `${email}%`)).data ?? [];
+      const rows = (await db.from("audit_log").select("op, actor_email, changes").eq("table_name", "user_section_overrides").eq("row_key", `${email}/crm`).eq("actor_email", emailOf("super_admin"))).data ?? [];
       expect(rows.length).toBeGreaterThan(0);
-      expect(rows[rows.length - 1]).toMatchObject({ actor_email: emailOf("super_admin") });
+      expect(rows[rows.length - 1]).toMatchObject({ op: "INSERT", actor_email: emailOf("super_admin") });
     } finally {
       await db.from("user_section_overrides").delete().match({ email, section: "crm" });
     }
