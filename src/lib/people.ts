@@ -157,3 +157,54 @@ export function reportActions(status: ReportStatus, who: ReportViewer): ReportAc
   if (status === "approved" || who.isOwner || who.isSupervisor || who.isAdmin) out.push("print");
   return out;
 }
+
+// --- Row shapes the screens read (columns of 0018) --------------------------------------
+
+export type InternRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  discipline: Discipline;
+  school: string | null;
+  program: string | null;
+  required_hours: number;
+  starts_on: string | null;
+  ends_on: string | null;
+  supervisor_email: string | null;
+  is_active: boolean;
+};
+
+export type DailyLogRow = {
+  id: string;
+  intern_email: string;
+  work_date: string;
+  hours: number;
+  summary: string;
+};
+
+export type WeeklyReportRow = {
+  id: string;
+  intern_email: string;
+  week_start: string;
+  status: ReportStatus;
+  accomplishments: string | null;
+  learnings: string | null;
+  blockers: string | null;
+  next_week_plan: string | null;
+  total_hours: number;
+  submitted_at: string | null;
+  reviewed_by_email: string | null;
+  reviewed_at: string | null;
+  review_comment: string | null;
+};
+
+export const INTERN_COLUMNS =
+  "id, email, full_name, discipline, school, program, required_hours, starts_on, ends_on, supervisor_email, is_active";
+export const LOG_COLUMNS = "id, intern_email, work_date, hours, summary";
+export const REPORT_COLUMNS =
+  "id, intern_email, week_start, status, accomplishments, learnings, blockers, next_week_plan, total_hours, submitted_at, reviewed_by_email, reviewed_at, review_comment";
+
+/** A person's name for display: the profile name, else the part of the email before the @. */
+export function internName(p: { full_name: string | null; email: string }): string {
+  return p.full_name?.trim() || p.email.split("@")[0];
+}

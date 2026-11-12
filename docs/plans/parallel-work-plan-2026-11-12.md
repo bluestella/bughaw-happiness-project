@@ -115,7 +115,7 @@ Wave 2
 | 0015 | Section `sales`; products, price tiers, stock — **done** | 1 |
 | 0016 | Quotations and lines; numbering; immutability — **done** | 1 |
 | 0017 | Sales orders; stock reservation; payment and invoice-number fields — **done** | 1 |
-| 0018 | Section `people`; intern profiles, daily logs, weekly reports | 1 |
+| 0018 | Section `people`; intern profiles, daily logs, weekly reports — **done** | 1 |
 | 0020–0025 | Audit log, production, finance, evaluations, worksheets, ingest rate limit | 2 |
 
 ## 5. Database standards (summary for `docs/standards/database.md`)

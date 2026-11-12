@@ -15,6 +15,7 @@ import {
   dayLabel,
   draftAccomplishments,
   hoursProgress,
+  internName,
   reportActions,
   validateLog,
   weekDays,
@@ -209,5 +210,14 @@ describe("reportActions", () => {
     expect(reportActions("draft", stranger)).toEqual([]);
     expect(reportActions("submitted", stranger)).toEqual([]);
     expect(reportActions("approved", stranger)).toEqual(["print"]);
+  });
+});
+
+describe("internName", () => {
+  it("prefers the profile name, then the start of the email", () => {
+    expect(internName({ full_name: "Casey Cruz", email: "casey@school.edu.ph" })).toBe("Casey Cruz");
+    expect(internName({ full_name: "  Casey Cruz  ", email: "casey@school.edu.ph" })).toBe("Casey Cruz");
+    expect(internName({ full_name: null, email: "casey@school.edu.ph" })).toBe("casey");
+    expect(internName({ full_name: "   ", email: "casey@school.edu.ph" })).toBe("casey");
   });
 });

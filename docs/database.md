@@ -320,3 +320,28 @@ sales_order_lines    (same shape as quotation lines)
 Internal and not callable through the API: `sales_next_number()`, `set_row_audit()`, and the
 trigger functions. Triggers enforce numbering, totals, locking, legal status changes and the
 stock effects described in the migration headers.
+
+
+## People (0018)
+
+Spec: [specs/intern-log-and-reports.md](specs/intern-log-and-reports.md).
+
+```
+people_interns        (email FK allowed_emails, unique lower(email); discipline chemical_engineering|marketing|graphics|other;
+                       school, program, required_hours, starts_on, ends_on, supervisor_email FK allowed_emails set null, is_active)
+people_daily_logs     (intern_email, work_date, hours > 0 and <= 12, summary <= 1000 chars, task_ids; unique intern+day)
+people_weekly_reports (intern_email, week_start always a Monday; unique intern+week;
+                       status draft|submitted|approved|returned; accomplishments, learnings, blockers, next_week_plan;
+                       total_hours, submitted_at, reviewed_by_email, reviewed_at, review_comment)
+```
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| people_interns | own row, their supervisor, SA | SA | SA | **none** |
+| people_daily_logs | own, their supervisor, SA | own, SA | own, SA | own, SA |
+| people_weekly_reports | own, their supervisor, SA | own, SA | whoever can see it (trigger decides what) | **none** |
+
+All of it also needs `has_section('people')`. SA = super_admin. Triggers enforce the 7-day
+window (Manila), the lock on a submitted or approved week, the report status flow, review
+rights, and the recomputed `total_hours`. `people_can_see_intern()` is the access helper the
+policies call.

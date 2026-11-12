@@ -70,6 +70,14 @@ access** (`/admin/access`). Super admins always see everything.
   super_admin adjusts it by hand, and only a super_admin can confirm an order beyond
   free stock or cancel an order.
 
+**People** (`/people`, section `people`)
+- Interns record hours and what they did each day (last 7 days, never ahead), build a
+  weekly report from the log, and submit it. Their supervisor approves it or returns it
+  with a comment; a super_admin sees every intern's hours, progress against the school's
+  required hours, and report status. Approved reports print for the school with
+  signature spaces. Interns see only their own records. No screen, location or activity
+  tracking: only reviewed output.
+
 **Outreach**
 - Digital business cards (`/admin/cards`, super_admin only): branded cards with
   link, QR, NFC, email-signature and `.vcf` sharing, Apple/Google Wallet passes
