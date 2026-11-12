@@ -13,6 +13,9 @@ first. Deeper detail lives in the child docs under [`docs/`](docs/):
 | [docs/design-system.md](docs/design-system.md) | Colors, typography, component patterns, UX rules |
 | [docs/product.md](docs/product.md) | What the app is for, users, roles, feature inventory, roadmap |
 | [docs/digital-cards.md](docs/digital-cards.md) | Digital business cards: plan, decisions, public-layer security, analytics |
+| [docs/standards/database.md](docs/standards/database.md) | **Rules for every new table, function and migration** (0014 onward) + decision records |
+| [docs/specs/](docs/specs/) | Feature specs (contract first): CRM deal fields, sales, intern logs |
+| [docs/plans/](docs/plans/) | Advisory board verdict and the five-role parallel work plan |
 
 ---
 
@@ -113,6 +116,7 @@ supabase/migrations/
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
 tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
 tests/e2e/                      # Playwright UI tests (docs/ui-testing.md); LOCAL Supabase only
+tests/integration/access/       # Real-RLS access matrix, every role (docs/testing.md §5); LOCAL only
 playwright.config.ts            # E2E projects, webServer on :3100, global setup/teardown
 scripts/e2e/                    # env.sh (.env.e2e from `supabase status`), clean.ts
 supabase/config.toml, seed.sql  # LOCAL stack for E2E only (ports 554xx); never prod
@@ -204,6 +208,9 @@ Don't replace this with reindex-the-column writes.
   `createBrowserClient`/`createServerClient` directly.
 - New DB changes = **new numbered migration file** (`0003_...`), never edit shipped
   migrations. Every new table gets RLS enabled + explicit policies in the same file.
+  Follow [docs/standards/database.md](docs/standards/database.md), and add the table
+  to `tests/integration/access/matrix.ts`: `npm run test:access` fails on any table
+  or function without an access test.
 - Use the Tailwind design tokens (`paper`, `panel`, `ink`, `ink-soft`, `coir`,
   `coir-dark`, `coir-bg`, `clay`, `line`, `danger`, `amber`) — no raw hex in JSX
   except the few chart-only colors already established.
@@ -242,6 +249,9 @@ npm run build      # works with placeholder env vars (CI does this)
 npm run e2e:db     # E2E: local Supabase (Docker) on ports 554xx + .env.e2e
 npm run e2e:smoke  # E2E @smoke subset; app on :3100; leaves no data behind
 npm run e2e:clean  # E2E: remove leftovers after an interrupted run
+npm run test:access # Real RLS + function guards for every role (needs e2e:db)
+npm run db:types   # Regenerate src/lib/supabase/types.ts after a migration
+npm run e2e:perf   # Performance baseline on a production build
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order

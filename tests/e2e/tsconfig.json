@@ -10,6 +10,8 @@
   },
   "include": [
     "./**/*.ts",
+    "../integration/**/*.ts",
+    "../../vitest.integration.config.ts",
     "../../playwright.config.ts",
     "../../scripts/e2e/**/*.ts"
   ],

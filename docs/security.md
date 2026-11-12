@@ -170,3 +170,23 @@ Accepted residual risks: anyone holding a card link can see that card (by
 design). A motivated actor can inflate a card's counters up to the throttle.
 Photos load from whatever https host the admin pasted, so that host sees the
 visitor's IP (`referrerPolicy="no-referrer"` limits what else it learns).
+
+## 9. OWASP Top 10:2025 control map
+
+There is no 2026 edition; 2025 is the current list. A category counts as covered
+only when it has a control, a test that fails if the control is removed, and a row
+here. "Planned" rows are not controls yet. Owners and waves are in
+[plans/parallel-work-plan-2026-11-12.md](plans/parallel-work-plan-2026-11-12.md).
+
+| Category | Control today | Proof today | Planned |
+|---|---|---|---|
+| A01 Broken Access Control | RLS on every table; `has_section()`; null-safe role guards (§3, §6) | `tests/integration/access` runs each role against the real policies and functions (`npm run test:access`) | Validate contributor emails against the allowlist; access tests for every new table before merge |
+| A02 Security Misconfiguration | Security headers and CSP (`src/lib/securityHeaders.js`); `poweredByHeader` off | `tests/unit/securityHeaders.test.ts` | Document Supabase Auth dashboard settings; turn on leaked-password protection |
+| A03 Software Supply Chain Failures | Lockfile; `npm ci` in CI | none | `npm audit` gate, Dependabot, GitHub Actions pinned by commit, secret scanning |
+| A04 Cryptographic Failures | TLS from Vercel and Supabase; constant-time secret compare (`ct_equal`) | ingest tests in E2E plan | Store a hash of the ingest secret, not the plaintext (§5, AGENTS.md §7) |
+| A05 Injection | React text rendering only; Supabase client parameterises queries; URL and phone check constraints on cards | card and CRM unit tests | Lint rule banning `dangerouslySetInnerHTML`; CSV formula-injection test on import and export |
+| A06 Insecure Design | Three-layer permission contract (§3); public layer behind two functions (§8) | permission matrix unit tests | Document state transitions and immutability enforced by triggers ([standards/database.md](standards/database.md) §6) |
+| A07 Authentication Failures | Allowlist trigger; Supabase Auth; session refresh in middleware (§2) | `tests/e2e/specs/auth.spec.ts` | Review auth rate limits; optional MFA for super_admin |
+| A08 Software or Data Integrity Failures | Provenance columns set by the database; append-only comments and activities | access tests assert no update/delete on append-only tables | Audit log on sales and finance tables; issued documents read-only |
+| A09 Security Logging and Alerting Failures | none (§5.5, §5.6) | none | Error tracking; alert on repeated failed ingest auth; Supabase log review routine |
+| A10 Mishandling of Exceptional Conditions | Functions refuse a NULL role (0008); optimistic UI rolls back on error | access tests include the anonymous and no-role callers | Error boundary per section; malformed-input tests for every function |
