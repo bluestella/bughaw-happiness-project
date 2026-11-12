@@ -7,7 +7,8 @@ import { DocumentPrint } from "../../../DocumentPrint";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Quotation — print" };
 
-export default async function QuotePrintPage({ params }: { params: { id: string } }) {
+export default async function QuotePrintPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase } = await requireSales();
   const { data } = await supabase.from("sales_quotations").select(QUOTE_COLUMNS).eq("id", params.id).maybeSingle();
   if (!data) notFound();

@@ -7,12 +7,13 @@ import { Board } from "./Board";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { projectId: string; miniProjectId: string };
-}): Promise<Metadata> {
-  const supabase = createClient();
+export async function generateMetadata(
+  props: {
+    params: Promise<{ projectId: string; miniProjectId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
+  const supabase = await createClient();
   const [{ data: miniProject }, { data: project }] = await Promise.all([
     supabase
       .from("mini_projects")
@@ -34,12 +35,13 @@ export async function generateMetadata({
   };
 }
 
-export default async function MiniProjectPage({
-  params,
-}: {
-  params: { projectId: string; miniProjectId: string };
-}) {
-  const supabase = createClient();
+export default async function MiniProjectPage(
+  props: {
+    params: Promise<{ projectId: string; miniProjectId: string }>;
+  }
+) {
+  const params = await props.params;
+  const supabase = await createClient();
   const [{ data: miniProject }, role, userRes] = await Promise.all([
     supabase
       .from("mini_projects")

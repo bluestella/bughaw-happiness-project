@@ -6,7 +6,7 @@
 ## 1. High-level shape
 
 ```
-Browser ──▶ Next.js middleware (src/middleware.ts)
+Browser ──▶ Next.js proxy (src/proxy.ts, formerly middleware)
               │  refresh session cookie, auth gate, contractor route lockout
               ▼
         Next.js App Router (Vercel)
@@ -28,7 +28,7 @@ the DB the single source of truth for permissions.
 ## 2. Request lifecycle
 
 1. Every request (except static assets, per the middleware `matcher`) hits
-   `src/middleware.ts`, which builds a Supabase client bound to request cookies
+   `src/proxy.ts`, which builds a Supabase client bound to request cookies
    (`src/utils/supabase/middleware.ts`), calls `auth.getUser()` (refreshes the
    session), and:
    - unauthenticated + non-public path → redirect `/login?next=<path>`

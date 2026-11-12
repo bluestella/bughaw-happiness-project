@@ -12,8 +12,8 @@ function getSupabaseCredentials() {
   };
 }
 
-export function createClient(cookieStore?: Awaited<ReturnType<typeof cookies>>) {
-  const store = cookieStore ?? cookies();
+export async function createClient(cookieStore?: Awaited<ReturnType<typeof cookies>>) {
+  const store = cookieStore ?? (await cookies());
   const { url, key } = getSupabaseCredentials();
 
   if (!url || !key) {

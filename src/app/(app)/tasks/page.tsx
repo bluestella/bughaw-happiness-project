@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TasksPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const role = await getCurrentUserRole(supabase);
 
   const { data: projects } = await supabase

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AllowlistPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const role = await getCurrentUserRole(supabase);
 
   if (!canManageAllowlist(role)) redirect("/tasks");

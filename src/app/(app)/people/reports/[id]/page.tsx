@@ -11,7 +11,8 @@ import { ReportView } from "./ReportView";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Weekly report — People" };
 
-export default async function ReportPage({ params }: { params: { id: string } }) {
+export default async function ReportPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const p = await requirePeople();
   const { data } = await p.supabase.from("people_weekly_reports").select(REPORT_COLUMNS).eq("id", params.id).maybeSingle();
   if (!data) notFound();

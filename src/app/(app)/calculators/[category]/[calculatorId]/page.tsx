@@ -10,11 +10,12 @@ export function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { category: string; calculatorId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ category: string; calculatorId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const config = getCalculator(params.category, params.calculatorId);
   return {
     title: config ? config.name : "Calculator",
@@ -22,11 +23,12 @@ export async function generateMetadata({
   };
 }
 
-export default function CalculatorPage({
-  params,
-}: {
-  params: { category: string; calculatorId: string };
-}) {
+export default async function CalculatorPage(
+  props: {
+    params: Promise<{ category: string; calculatorId: string }>;
+  }
+) {
+  const params = await props.params;
   const config = getCalculator(params.category, params.calculatorId);
   if (!config) notFound();
   return <CalculatorClient category={params.category} calculatorId={params.calculatorId} />;

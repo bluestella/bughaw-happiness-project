@@ -9,7 +9,7 @@ import { canSee, landingPath } from "@/lib/access";
  * is the real boundary.
  */
 export async function requireSales() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const access = await getCurrentUserAccess(supabase);
   if (!canSee(access, "sales")) redirect(landingPath(access));
   const {
