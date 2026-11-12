@@ -103,6 +103,7 @@ npm run db:types      # regenerate src/lib/supabase/types.ts after a migration
 | `scoped.itest.ts` | Row-level rules: a contractor's own tasks, contributor-only projects, per-person section overrides. |
 | `functions.itest.ts` | Admin functions refuse non-admins and change nothing; public functions return only safe data. |
 | `sales-rules.itest.ts` | The sales rules: numbering, locked documents, every status pair against the real triggers, stock reserve / release / deliver, overselling, cancel permissions, forged values. |
+| `people-rules.itest.ts` | The intern rules: own-rows-only, the 7-day window, the week lock, every report status pair against the real triggers, review rights, recomputed hours. |
 | `coverage.itest.ts` | Fails when the database has a table or function with no test. This is the merge gate in [standards/database.md](standards/database.md) §10. |
 
 CI runs it in the `e2e-smoke` job, followed by a check that the generated types

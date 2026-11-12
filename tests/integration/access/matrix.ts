@@ -43,6 +43,17 @@ export const uuidFor = (tag: string, n: number): string => {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
 };
 
+const allowedEmailParent = (t: string) => ({
+  table: "allowed_emails", key: ["email"], row: { email: `${t}@test.local`, note: "access test", role: "member" },
+});
+/** Today in Manila as YYYY-MM-DD. */
+const manilaToday = (): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const mondayOf = (iso: string): string => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+};
 const accountParent = (t: string) => ({
   table: "crm_accounts", key: ["id"], row: { id: uuidFor(t, 1), name: `[access] account ${t}` },
 });
@@ -241,6 +252,33 @@ export const TABLES: TableCase[] = [
     make: (t) => ({ order_id: uuidFor(t, 3), product_id: uuidFor(t, 2), qty: 2, unit_price: 100 }),
     patch: { qty: 3 },
     allowed: all(TEAM),
+  },
+
+  // --- People (0018) --------------------------------------------------------------
+  {
+    // A profile for someone who is not any actor, so only a super_admin may see it.
+    table: "people_interns", key: ["id"],
+    parents: (t) => [allowedEmailParent(t)],
+    make: (t) => ({ email: `${t}@test.local`, discipline: "marketing" }),
+    patch: { school: "changed" },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: NOBODY },
+  },
+  {
+    // Rows of someone else: only a super_admin sees or writes them. The intern and
+    // supervisor cases are in people-rules.itest.ts.
+    table: "people_daily_logs", key: ["id"],
+    parents: (t) => [allowedEmailParent(t)],
+    make: (t) => ({ intern_email: `${t}@test.local`, work_date: manilaToday(), hours: 2, summary: "[access] log" }),
+    patch: { hours: 3 },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: ADMIN },
+  },
+  {
+    // A super_admin may create a report for an intern but never write its text.
+    table: "people_weekly_reports", key: ["id"],
+    parents: (t) => [allowedEmailParent(t)],
+    make: (t) => ({ intern_email: `${t}@test.local`, week_start: mondayOf(manilaToday()) }),
+    patch: { accomplishments: "changed" },
+    allowed: { select: ADMIN, insert: ADMIN, update: NOBODY, delete: NOBODY },
   },
 
   // --- Task management (rows inside the fixture project) -----------------------

@@ -1,6 +1,6 @@
 # Spec — Intern daily log and weekly reports
 
-**Wave:** 1 (evaluations and school export formats: Wave 2) · **Migrations:** 0018 · **Section:** `people` · **Status:** draft for owner review
+**Wave:** 1 (evaluations and school export formats: Wave 2) · **Migrations:** 0018 · **Section:** `people` · **Status:** built 2026-11-12 (see "As built" at the end)
 Follows [standards/database.md](../standards/database.md) and
 [decision 0003](../standards/decisions/0003-interns-use-contractor-role.md).
 
@@ -117,3 +117,32 @@ mandated.
 Purpose: supervision and school crediting. Retention: until one year after the
 internship ends, then delete on request or archive. Access: the intern, their
 supervisor, super_admins. Interns are told what is recorded when they are invited.
+
+## As built (2026-11-12)
+
+Differences from the text above:
+
+- **One migration, 0018**, adds the `people` section (members and contractors may open
+  the pages; row rules decide what anyone sees), the three tables and all rules.
+- **A log has no `weekly_report_id` and no `task_ids` screen.** A day belongs to the
+  week it falls in, and a report's lock is found by that week. `task_ids` exists in the
+  table but nothing writes it yet; linking tasks is left for when deliverables are
+  defined per discipline.
+- **Who can write:** an intern writes their own days (the session sets the email), a
+  super_admin can write for anyone and is exempt from the 7-day window but not from the
+  submitted-week lock. A supervisor can read and review but not write logs.
+- **Review:** the intern's supervisor or a super_admin; never the intern, even a
+  super_admin on their own report. A reviewer cannot change the text.
+- **`total_hours`** is recomputed from the week's logs while the report is open and
+  frozen when it is submitted.
+- **Screens:** My log (week view, progress against required hours), My reports (start
+  one, list), the report page (fill from the daily log, save, submit, approve or return),
+  Review (queue), Overview (per-intern hours and report status by week), Interns
+  (super_admin: add, edit, deactivate), and a print view with the approval line and
+  signature spaces for the school.
+- **Not built (Wave 2):** evaluations, discipline deliverable measures, the school's own
+  form formats, and a CSV or PDF export beyond the browser's print.
+- **Retention is not automated.** The note below is a policy to follow by hand.
+- Proof: `tests/unit/people.test.ts`, `tests/integration/access/people-rules.itest.ts`
+  (every report status pair is checked against the real triggers),
+  `tests/e2e/specs/people.spec.ts`.
