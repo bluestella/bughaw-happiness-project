@@ -59,6 +59,17 @@ access** (`/admin/access`). Super admins always see everything.
   stage-weighted pipeline totals and a Follow-ups tab (overdue, today, next 7 days).
   Accounts have a buyer segment (hotel, resort, spa, other business).
 
+**Sales** (`/sales`, section `sales`)
+- Quotations built from a CRM lead or account, priced from per-product volume tiers,
+  numbered (Q-2026-0001), sent, accepted or declined, and revised as new versions.
+- Sales orders created from an accepted quotation: they reserve stock, are delivered
+  (which takes the pairs out of stock) and are paid. The **official BIR invoice is
+  issued from your booklet**; its number is typed in here. Every printed document says
+  it is not an official receipt or invoice.
+- Stock: finished pairs on hand, reserved and free to sell, with a history. Only a
+  super_admin adjusts it by hand, and only a super_admin can confirm an order beyond
+  free stock or cancel an order.
+
 **Outreach**
 - Digital business cards (`/admin/cards`, super_admin only): branded cards with
   link, QR, NFC, email-signature and `.vcf` sharing, Apple/Google Wallet passes

@@ -17,6 +17,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  busyLabel = "Deleting…",
   onConfirm,
 }: {
   open: boolean;
@@ -24,6 +25,8 @@ export function ConfirmDialog({
   title: string;
   description?: string;
   confirmLabel?: string;
+  /** Shown on the button while onConfirm runs. */
+  busyLabel?: string;
   onConfirm: () => Promise<void> | void;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -48,7 +51,7 @@ export function ConfirmDialog({
           <div className="mt-4 flex justify-end gap-2">
             <DialogClose>Cancel</DialogClose>
             <Button intent="danger" size="sm" disabled={confirming} onClick={confirm}>
-              {confirming ? "Deleting…" : confirmLabel ?? "Delete"}
+              {confirming ? busyLabel : confirmLabel ?? "Delete"}
             </Button>
           </div>
         </DialogPopup>

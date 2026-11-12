@@ -283,3 +283,40 @@ migration, the mirror and the test together.**
 - Indexes exist on every FK/lookup path (`mini_projects.project_id`, contributor
   emails, `tasks(mini_project_id, status)`, `task_comments.task_id`). Match this for
   new tables.
+
+
+## Sales (0015–0017)
+
+Standards: [standards/database.md](standards/database.md). Spec: [specs/sales-quotes-orders-stock.md](specs/sales-quotes-orders-stock.md).
+
+```
+sales_products       (sku unique lower(btrim), name, unit, description, is_active)
+sales_price_tiers    (product_id FK cascade, min_qty >= 1, unit_price > 0; unique product+min_qty)
+stock_levels         (product_id PK/FK cascade, on_hand >= 0, reserved >= 0)   ← one row per product, made by a trigger
+stock_adjustments    (product_id FK, delta <> 0, reason opening_count|production|delivery|damage|correction,
+                      note, sales_order_id FK set null)                          ← append-only history
+sales_counters       (kind quotation|order, year, last_no)                       ← reached only through sales_next_number()
+sales_quotations     (number + version unique, supersedes_id, account_id FK crm_accounts restrict, lead_id,
+                      account_name_snapshot, contact_name, status draft|sent|accepted|declined|superseded|void,
+                      valid_until, terms, notes, tax_note, discount_amount, subtotal, total, sent_at, decided_at)
+sales_quotation_lines(quotation_id FK cascade, product_id FK restrict, product_name_snapshot, qty >= 1, unit_price, line_total)
+sales_orders         (number unique, quotation_id FK restrict, account_id, account_name_snapshot,
+                      status draft|confirmed|delivered|paid|cancelled, customer_po_no, delivery_due_on, delivered_on,
+                      official_invoice_no/date, amount_paid, paid_on, discount_amount, subtotal, total,
+                      oversell_override_reason)
+sales_order_lines    (same shape as quotation lines)
+```
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| sales_products, sales_price_tiers | `sales` | SA | SA | none / SA (tiers) |
+| stock_levels, stock_adjustments | `sales` | **none** | **none** | **none** |
+| sales_quotations, sales_orders | `sales` | `sales` | `sales` (trigger-limited) | **none** |
+| *_lines | `sales` | `sales` | `sales` | `sales` (draft documents only) |
+| sales_counters | **none** | **none** | **none** | **none** |
+
+`sales` = `has_section('sales')`; SA = super_admin. Functions: `stock_adjust()` (SA),
+`sales_revise_quotation()`, `sales_create_order()` (both security invoker, so RLS applies).
+Internal and not callable through the API: `sales_next_number()`, `set_row_audit()`, and the
+trigger functions. Triggers enforce numbering, totals, locking, legal status changes and the
+stock effects described in the migration headers.

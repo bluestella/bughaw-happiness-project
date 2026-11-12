@@ -112,11 +112,10 @@ Wave 2
 | Number | Content | Wave |
 |---|---|---|
 | 0014 | CRM deal fields; link from `pipeline_accounts` to the CRM account — **done** | 1 |
-| 0015 | Sections `sales`, `people`; role defaults | 1 |
-| 0016 | Products, price tiers, stock and adjustments | 1 |
-| 0017 | Quotations and lines; numbering; immutability | 1 |
-| 0018 | Sales orders; stock reservation; payment and invoice-number fields | 1 |
-| 0019 | Intern profiles, daily logs, weekly reports | 1 |
+| 0015 | Section `sales`; products, price tiers, stock — **done** | 1 |
+| 0016 | Quotations and lines; numbering; immutability — **done** | 1 |
+| 0017 | Sales orders; stock reservation; payment and invoice-number fields — **done** | 1 |
+| 0018 | Section `people`; intern profiles, daily logs, weekly reports | 1 |
 | 0020–0025 | Audit log, production, finance, evaluations, worksheets, ingest rate limit | 2 |
 
 ## 5. Database standards (summary for `docs/standards/database.md`)

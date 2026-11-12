@@ -133,6 +133,7 @@ export function Sidebar({
       primaryItems.push({ href: "/saved", iconKey: "saved", label: "Saved calculations" });
     }
     const showCrm = canSee(access, "crm");
+    const showSales = canSee(access, "sales");
     const showTasks = canSee(access, "tasks");
     const tools = TOOLS.filter((t) => {
       const key = toolSection(t.id);
@@ -169,6 +170,21 @@ export function Sidebar({
                 pathname={pathname}
               >
                 Import leads
+              </NavLink>
+            </>
+          )}
+
+          {showSales && (
+            <>
+              <SectionLabel>Sales</SectionLabel>
+              <NavLink href="/sales/quotes" iconKey="file-text" onNavigate={onNavigate} pathname={pathname}>
+                Quotations
+              </NavLink>
+              <NavLink href="/sales/orders" iconKey="clipboard-list" onNavigate={onNavigate} pathname={pathname}>
+                Orders
+              </NavLink>
+              <NavLink href="/sales/stock" iconKey="boxes" onNavigate={onNavigate} pathname={pathname}>
+                Stock
               </NavLink>
             </>
           )}

@@ -1,6 +1,6 @@
 # Spec — Products, stock, quotations and sales orders
 
-**Wave:** 1 · **Migrations:** 0015, 0016, 0017, 0018 · **Section:** `sales` · **Status:** draft for owner review
+**Wave:** 1 · **Migrations:** 0015, 0016, 0017 · **Section:** `sales` · **Status:** built 2026-11-12 (see "As built" at the end)
 Follows [standards/database.md](../standards/database.md),
 [decision 0001](../standards/decisions/0001-official-invoicing-deferred.md) and
 [decision 0002](../standards/decisions/0002-one-customer-record.md).
@@ -122,3 +122,39 @@ header, document number, and the line "This is not an official receipt or invoic
 
 Products and SKUs, price tiers, minimum order, lead time, payment and delivery
 terms, opening stock count, and the company details for the document header.
+
+## As built (2026-11-12)
+
+Differences from the text above:
+
+- **Migrations are 0015 (section, products, tiers, stock), 0016 (quotations) and
+  0017 (orders).** The `sales` section is seeded in 0015 with `members: yes,
+  contractors: no`.
+- **"Expired" is not a stored status.** A sent quotation past `valid_until` is shown as
+  expired; it cannot be accepted, only revised. This path is covered by unit tests
+  (`isExpired`, `quoteActions`) but not by a database test, because a test cannot
+  move the clock.
+- **Quotation statuses** are draft, sent, accepted, declined, superseded and void.
+  `void` abandons a draft (quotations are never deleted, so numbers never have gaps).
+- **Orders have a `draft` status** that exists only while lines are being added; the
+  "create order" function makes a draft, copies the lines and confirms it in one
+  transaction. The screens only create orders from an accepted quotation. Orders
+  without a quotation are possible in the database and tested, but have no screen.
+- **A revision keeps the quotation number** and raises the version (Q-2026-0001 v2).
+- **Stock** changes only through `stock_adjust()` (super_admin) and the order
+  triggers; there are no client write policies on `stock_levels` or
+  `stock_adjustments`.
+- **Overselling:** a member's order beyond free stock is refused and nothing is
+  written; a super_admin can confirm it with a written reason, stored on the order.
+  Delivery is still refused if the pairs are not actually on hand.
+- **Prices** are the tier suggestion, editable per line. Totals are recomputed by the
+  database from the lines.
+- **Printing** uses the browser's print dialog (print view pages). The header says only
+  "Bughaw Innovations": the company address, TIN and logo are not printed because they
+  were not supplied.
+- **The customer picker needs the `crm` section** (accounts live in the CRM). A person
+  with `sales` but not `crm` can work existing quotations but not start one.
+- The `priceForQty` and `unitsToNextTier` helpers live in `src/lib/pricing.ts`.
+- Proof: `tests/unit/sales.test.ts`, `tests/integration/access/sales-rules.itest.ts`
+  (every status pair is checked against the real triggers),
+  `tests/e2e/specs/sales.spec.ts`.

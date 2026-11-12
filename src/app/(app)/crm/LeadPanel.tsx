@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { Trash2, X } from "lucide-react";
@@ -96,6 +97,7 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
 export function LeadPanel({
   lead,
   role,
+  canQuote = false,
   askLostReason = false,
   onClose,
   onUpdated,
@@ -103,6 +105,8 @@ export function LeadPanel({
 }: {
   lead: CrmLeadRow;
   role: Role | null;
+  /** The person has the 'sales' section, so this lead can start a quotation. */
+  canQuote?: boolean;
   /** Open with the "why was it lost?" prompt showing (a card was dropped on Closed Lost). */
   askLostReason?: boolean;
   onClose: () => void;
@@ -110,6 +114,8 @@ export function LeadPanel({
   onDeleted: (leadId: string) => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+  const [quoting, setQuoting] = useState(false);
   const editable = canEditLead(role);
   const deletable = canDeleteLead(role);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -331,6 +337,27 @@ export function LeadPanel({
     });
     onUpdated({ ...lead, pipeline_account_id: pipelineId });
     toast.success("Added to the Pipeline Simulator.");
+  }
+
+  /** Starts a draft quotation for this lead's account and opens it. */
+  async function startQuotation() {
+    if (!lead.account_id) return;
+    setQuoting(true);
+    const { data, error } = await supabase
+      .from("sales_quotations")
+      .insert({
+        account_id: lead.account_id,
+        lead_id: lead.id,
+        contact_name: lead.crm_contacts?.full_name || null,
+      })
+      .select("id")
+      .single();
+    setQuoting(false);
+    if (error || !data) {
+      toast.error("Could not start the quotation: " + (error?.message ?? "unknown error"));
+      return;
+    }
+    router.push(`/sales/quotes/${data.id}`);
   }
 
   async function deleteLead() {
@@ -650,6 +677,21 @@ export function LeadPanel({
                 </div>
               )}
             </div>
+
+            {canQuote && (
+              <div className="border-b border-line p-5">
+                <h3 className="mb-2 text-sm font-semibold text-ink">Quotation</h3>
+                {lead.account_id ? (
+                  <Button intent="secondary" size="sm" disabled={!editable || quoting} onClick={startQuotation}>
+                    {quoting ? "Starting…" : "New quotation"}
+                  </Button>
+                ) : (
+                  <p className="text-[12px] text-ink-soft">
+                    This lead has no company account, so a quotation cannot be started from it.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="p-5">
               <h3 className="mb-3 text-sm font-semibold text-ink">Activity</h3>

@@ -21,10 +21,16 @@ let seq = 0;
 const uniq = () => `${Date.now().toString(36)}${(seq++).toString(36)}`;
 
 type Result<T> = PromiseLike<{ data: T; error: { message: string } | null }>;
-async function ok<T>(label: string, p: Result<T>): Promise<T> {
+async function ok<T>(label: string, p: Result<T>): Promise<NonNullable<T>> {
   const { data, error } = await p;
   if (error) throw new Error(`${label}: ${error.message}`);
-  return data;
+  if (data === null || data === undefined) throw new Error(`${label}: no data returned`);
+  return data as NonNullable<T>;
+}
+/** For writes that return nothing: throws on an error only. */
+async function exec(label: string, p: PromiseLike<{ error: { message: string } | null }>): Promise<void> {
+  const { error } = await p;
+  if (error) throw new Error(`${label}: ${error.message}`);
 }
 const client = (a: Actor) => clientFor(a);
 
@@ -192,7 +198,7 @@ describe("quotation numbering and ownership", () => {
       expect(error, actor).not.toBeNull();
     }
     const email = emailOf("contractor");
-    await ok("grant", db.from("user_section_overrides").insert({ email, section: "sales", allowed: true }));
+    await exec("grant", db.from("user_section_overrides").insert({ email, section: "sales", allowed: true }));
     try {
       const { error } = await (await client("contractor")).from("sales_quotations").insert({ account_id: acc }).select("id");
       expect(error).toBeNull();
@@ -258,7 +264,7 @@ describe("sending a quotation", () => {
     expect((await setQuote(empty.id as string, { status: "sent" })).error?.message).toMatch(/at least one line/);
 
     const noDate = await ok("nodate", m.from("sales_quotations").insert({ account_id: await account() }).select("id").single());
-    await ok("line", m.from("sales_quotation_lines").insert({ quotation_id: noDate.id, product_id: await product(), qty: 1, unit_price: 1 }));
+    await exec("line", m.from("sales_quotation_lines").insert({ quotation_id: noDate.id, product_id: await product(), qty: 1, unit_price: 1 }));
     expect((await setQuote(noDate.id as string, { status: "sent" })).error?.message).toMatch(/validity date/);
     expect((await setQuote(noDate.id as string, { status: "sent", valid_until: addDays(today, -1) })).error?.message).toMatch(/validity date/);
     expect((await row("sales_quotations", noDate.id as string)).status).toBe("draft");
@@ -529,7 +535,7 @@ describe("orders without a quotation, and forged values", () => {
     const o = await ok("order", m.from("sales_orders").insert({ account_id: await account() }).select("id").single());
     const id = o.id as string;
     expect((await setOrder(id, { status: "confirmed" })).error?.message).toMatch(/at least one line/);
-    await ok("line", m.from("sales_order_lines").insert({ order_id: id, product_id: p, qty: 3, unit_price: 50 }));
+    await exec("line", m.from("sales_order_lines").insert({ order_id: id, product_id: p, qty: 3, unit_price: 50 }));
     expect(await row("sales_orders", id)).toMatchObject({ subtotal: 150, total: 150, status: "draft" });
     expect((await setOrder(id, { status: "confirmed" })).error).toBeNull();
     expect(await level(p)).toEqual({ on_hand: 10, reserved: 3 });
@@ -569,7 +575,7 @@ describe("orders without a quotation, and forged values", () => {
       if (state === "draft") {
         const m = await client("member");
         const o = await ok("order", m.from("sales_orders").insert({ account_id: await account() }).select("id").single());
-        await ok("line", m.from("sales_order_lines").insert({ order_id: o.id, product_id: p, qty: 1, unit_price: 100 }));
+        await exec("line", m.from("sales_order_lines").insert({ order_id: o.id, product_id: p, qty: 1, unit_price: 100 }));
         return o.id as string;
       }
       const id = await confirmedOrder(p, 1);

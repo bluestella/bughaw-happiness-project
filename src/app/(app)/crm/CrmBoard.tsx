@@ -229,9 +229,12 @@ function Column({
 export function CrmBoard({
   initialLeads,
   role,
+  canQuote = false,
 }: {
   initialLeads: CrmLeadRow[];
   role: Role | null;
+  /** The person has the 'sales' section, so a lead can start a quotation. */
+  canQuote?: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const editable = canEditLead(role);
@@ -765,6 +768,7 @@ export function CrmBoard({
           key={`${openLead.id}:${askLostReason ? "lost" : "view"}`}
           lead={openLead}
           role={role}
+          canQuote={canQuote}
           askLostReason={askLostReason}
           onClose={() => {
             setOpenLead(null);

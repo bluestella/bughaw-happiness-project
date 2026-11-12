@@ -190,3 +190,84 @@ export function paymentProblem(o: {
   if (!(finite(o.amount_paid) >= finite(o.total))) return "The amount paid must be at least the order total.";
   return null;
 }
+
+// --- Row shapes the screens read (columns of 0015–0017) -------------------------------
+
+export type PriceTierRow = { id: string; min_qty: number; unit_price: number };
+
+export type ProductRow = {
+  id: string;
+  sku: string;
+  name: string;
+  unit: string;
+  description: string | null;
+  is_active: boolean;
+  sales_price_tiers?: PriceTierRow[];
+};
+
+export type QuoteRow = {
+  id: string;
+  number: string;
+  version: number;
+  supersedes_id: string | null;
+  account_id: string;
+  lead_id: string | null;
+  account_name_snapshot: string;
+  contact_name: string | null;
+  status: QuoteStatus;
+  valid_until: string | null;
+  payment_terms: string | null;
+  delivery_terms: string | null;
+  lead_time_days: number | null;
+  notes: string | null;
+  tax_note: string | null;
+  discount_amount: number;
+  subtotal: number;
+  total: number;
+  sent_at: string | null;
+  decided_at: string | null;
+  created_at: string;
+  created_by_email: string;
+};
+
+export type DocLineRow = {
+  id: string;
+  product_id: string;
+  product_name_snapshot: string;
+  qty: number;
+  unit_price: number;
+  line_total: number;
+  position: number;
+};
+
+export type OrderRow = {
+  id: string;
+  number: string;
+  quotation_id: string | null;
+  account_id: string;
+  account_name_snapshot: string;
+  status: OrderStatus;
+  customer_po_no: string | null;
+  delivery_due_on: string | null;
+  delivered_on: string | null;
+  official_invoice_no: string | null;
+  official_invoice_date: string | null;
+  amount_paid: number;
+  paid_on: string | null;
+  tax_note: string | null;
+  discount_amount: number;
+  subtotal: number;
+  total: number;
+  notes: string | null;
+  oversell_override_reason: string | null;
+  created_at: string;
+  created_by_email: string;
+};
+
+export type StockRow = { product_id: string; on_hand: number; reserved: number };
+
+export const QUOTE_COLUMNS =
+  "id, number, version, supersedes_id, account_id, lead_id, account_name_snapshot, contact_name, status, valid_until, payment_terms, delivery_terms, lead_time_days, notes, tax_note, discount_amount, subtotal, total, sent_at, decided_at, created_at, created_by_email";
+export const ORDER_COLUMNS =
+  "id, number, quotation_id, account_id, account_name_snapshot, status, customer_po_no, delivery_due_on, delivered_on, official_invoice_no, official_invoice_date, amount_paid, paid_on, tax_note, discount_amount, subtotal, total, notes, oversell_override_reason, created_at, created_by_email";
+export const LINE_COLUMNS = "id, product_id, product_name_snapshot, qty, unit_price, line_total, position";
