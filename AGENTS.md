@@ -86,7 +86,7 @@ src/
   lib/
     calculators/types.ts        # CalculatorConfig, InputField, ChartSpec, CATEGORIES
     calculators/registry.ts     # ALL_CALCULATORS + lookup helpers
-    calculators/configs/*.ts    # 11 calculator definitions (pure, declarative)
+    calculators/configs/*.ts    # 26 calculator definitions (pure, declarative); startup.ts = Wave 2 planning tools
     permissions.ts              # Pure role helpers — MIRRORS RLS, UI-gating only
     access.ts                   # Sections/pages per person — MIRRORS has_section() (0010)
     tasks.ts                    # Task types + fractional-position ordering math
@@ -98,6 +98,7 @@ src/
     pnl.ts                      # P&L Machine formula (pure)
     costCalc.ts                 # Unit Cost Calculator: units, batch/pair cost, planner, report CSV (pure)
     format.ts                   # ₱ / % / ratio / months formatters
+    pricing.ts                  # Volume price tiers: priceForQty, unitsToNextTier (pure; used by calculators, later by quotes)
     useAppState.ts              # Shared team JSONB state hook (debounced upsert)
     supabase/{client,server}.ts # Re-exports of utils/supabase (import from here)
     tools.ts                    # TOOLS nav registry

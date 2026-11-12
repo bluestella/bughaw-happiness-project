@@ -34,9 +34,13 @@ access** (`/admin/access`). Super admins always see everything.
 ## 3. Feature inventory (shipped)
 
 **Decision tools**
-- 11 config-driven calculators in 4 categories (Unit Economics, Go-to-Market,
+- 26 config-driven calculators in 4 categories (Unit Economics, Go-to-Market,
   Product Management, Financial Forecasting), each with CSV/JSON export, per-user
   input persistence, and shared **Save to team** snapshots browsable at `/saved`.
+  Added in Wave 2 for selling and fundraising: Sales Velocity, Pipeline Forecast,
+  TAM/SAM/SOM, Volume Price Tiers, Landed Cost per Delivery, Profit Sensitivity,
+  Round Dilution, SAFE Conversion, Use of Funds, Cash Conversion Cycle, and Batch
+  Yield. Their default numbers are illustrative placeholders, not Bughaw's figures.
 - Pipeline Simulator — mini-CRM over real hotel accounts (seeded with the live July
   2026 pipeline), scenario simulation, derived CAC/LTV.
 - Unit Cost Calculator — R&D costing (shared team document).
