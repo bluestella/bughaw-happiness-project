@@ -26,5 +26,10 @@ export const FUNCTIONS: Record<string, string> = {
   get_public_card: "public card below",
   record_card_event: "public card below",
   ingest_form_submission: "ingest below",
+  stock_adjust: "stock-rules.itest.ts",
+  sales_revise_quotation: "sales-rules.itest.ts",
+  sales_create_order: "sales-rules.itest.ts",
+  sales_next_number: "internal; sales-rules.itest.ts proves nobody can call it",
+  set_row_audit: "internal trigger function; sales-rules.itest.ts proves nobody can call it",
   ct_equal: "pure comparison helper; holds no data",
 };

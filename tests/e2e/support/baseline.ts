@@ -30,6 +30,18 @@ interface TableSpec {
 // Every table exposed by PostgREST must be listed here or in IGNORED_RELATIONS;
 // assertCoversSchema() fails the run when a migration adds an unknown table.
 export const TABLES: TableSpec[] = [
+  // Sales (0015-0017). Orders and quotations go before their lines: issued documents
+  // refuse direct line deletes (that is the rule being protected), and deleting the
+  // document removes its lines. Adjustments and levels go before orders and products.
+  { table: "stock_adjustments", key: ["id"], noRestore: true },
+  { table: "stock_levels", key: ["product_id"] },
+  { table: "sales_orders", key: ["id"] },
+  { table: "sales_order_lines", key: ["id"] },
+  { table: "sales_quotations", key: ["id"] },
+  { table: "sales_quotation_lines", key: ["id"] },
+  { table: "sales_price_tiers", key: ["id"] },
+  { table: "sales_products", key: ["id"] },
+  { table: "sales_counters", key: ["kind", "year"] },
   { table: "business_card_events", key: ["id"], noRestore: true },
   { table: "business_cards", key: ["id"] },
   { table: "crm_lead_activities", key: ["id"] },

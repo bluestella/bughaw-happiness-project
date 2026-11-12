@@ -37,6 +37,13 @@ function buildItems(access: Access): PaletteItem[] {
       { href: "/crm/import", label: "Import leads", description: "Bring leads into the CRM", group: "Go to", iconKey: "crm-import" }
     );
   }
+  if (canSee(access, "sales")) {
+    items.push(
+      { href: "/sales/quotes", label: "Quotations", description: "Quote a hotel and send it", group: "Go to", iconKey: "file-text" },
+      { href: "/sales/orders", label: "Orders", description: "Confirmed orders, delivery and payment", group: "Go to", iconKey: "clipboard-list" },
+      { href: "/sales/stock", label: "Stock", description: "Pairs on hand and reserved", group: "Go to", iconKey: "boxes" }
+    );
+  }
   if (canSee(access, "tasks")) {
     items.push({ href: "/tasks", label: "Projects & boards", description: "Task management", group: "Go to", iconKey: "tasks" });
   }

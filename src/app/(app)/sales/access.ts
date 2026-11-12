@@ -1,0 +1,19 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { canSee, landingPath } from "@/lib/access";
+
+/**
+ * Every sales page starts here. Middleware already redirects anyone without the
+ * 'sales' section; this is the belt-and-braces check. RLS (has_section('sales'))
+ * is the real boundary.
+ */
+export async function requireSales() {
+  const supabase = createClient();
+  const access = await getCurrentUserAccess(supabase);
+  if (!canSee(access, "sales")) redirect(landingPath(access));
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return { supabase, access, role: access.role, email: user?.email ?? null, canSeeCrm: canSee(access, "crm") };
+}

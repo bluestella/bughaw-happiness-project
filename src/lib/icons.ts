@@ -1,5 +1,8 @@
 import {
   BarChart3,
+  Boxes,
+  ClipboardList,
+  FileText,
   Bookmark,
   Calculator,
   Droplet,
@@ -62,6 +65,9 @@ export const ICONS = {
   "id-card": IdCard,
   "key-round": KeyRound,
   "qr-code": QrCode,
+  "file-text": FileText,
+  "clipboard-list": ClipboardList,
+  boxes: Boxes,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconKey = keyof typeof ICONS;

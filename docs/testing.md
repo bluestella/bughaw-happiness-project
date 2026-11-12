@@ -102,6 +102,7 @@ npm run db:types      # regenerate src/lib/supabase/types.ts after a migration
 | `tables.itest.ts` | Runs the matrix. Judges by what is in the database afterwards, since RLS refuses updates and deletes silently. |
 | `scoped.itest.ts` | Row-level rules: a contractor's own tasks, contributor-only projects, per-person section overrides. |
 | `functions.itest.ts` | Admin functions refuse non-admins and change nothing; public functions return only safe data. |
+| `sales-rules.itest.ts` | The sales rules: numbering, locked documents, every status pair against the real triggers, stock reserve / release / deliver, overselling, cancel permissions, forged values. |
 | `coverage.itest.ts` | Fails when the database has a table or function with no test. This is the merge gate in [standards/database.md](standards/database.md) §10. |
 
 CI runs it in the `e2e-smoke` job, followed by a check that the generated types

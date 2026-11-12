@@ -48,7 +48,7 @@ export default async function CrmPage() {
         </p>
       )}
 
-      <CrmBoard initialLeads={leads} role={role} />
+      <CrmBoard initialLeads={leads} role={role} canQuote={canSee(access, "sales")} />
     </div>
   );
 }

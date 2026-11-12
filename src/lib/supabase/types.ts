@@ -654,6 +654,390 @@ export type Database = {
           },
         ]
       }
+      sales_counters: {
+        Row: {
+          kind: string
+          last_no: number
+          year: number
+        }
+        Insert: {
+          kind: string
+          last_no?: number
+          year: number
+        }
+        Update: {
+          kind?: string
+          last_no?: number
+          year?: number
+        }
+        Relationships: []
+      }
+      sales_order_lines: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          order_id: string
+          position: number
+          product_id: string
+          product_name_snapshot: string
+          qty: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          order_id: string
+          position?: number
+          product_id: string
+          product_name_snapshot?: string
+          qty: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          order_id?: string
+          position?: number
+          product_id?: string
+          product_name_snapshot?: string
+          qty?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sales_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_orders: {
+        Row: {
+          account_id: string
+          account_name_snapshot: string
+          amount_paid: number
+          created_at: string
+          created_by_email: string
+          customer_po_no: string | null
+          delivered_on: string | null
+          delivery_due_on: string | null
+          discount_amount: number
+          id: string
+          notes: string | null
+          number: string
+          official_invoice_date: string | null
+          official_invoice_no: string | null
+          oversell_override_reason: string | null
+          paid_on: string | null
+          quotation_id: string | null
+          status: string
+          subtotal: number
+          tax_note: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          account_name_snapshot?: string
+          amount_paid?: number
+          created_at?: string
+          created_by_email?: string
+          customer_po_no?: string | null
+          delivered_on?: string | null
+          delivery_due_on?: string | null
+          discount_amount?: number
+          id?: string
+          notes?: string | null
+          number: string
+          official_invoice_date?: string | null
+          official_invoice_no?: string | null
+          oversell_override_reason?: string | null
+          paid_on?: string | null
+          quotation_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_note?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          account_name_snapshot?: string
+          amount_paid?: number
+          created_at?: string
+          created_by_email?: string
+          customer_po_no?: string | null
+          delivered_on?: string | null
+          delivery_due_on?: string | null
+          discount_amount?: number
+          id?: string
+          notes?: string | null
+          number?: string
+          official_invoice_date?: string | null
+          official_invoice_no?: string | null
+          oversell_override_reason?: string | null
+          paid_on?: string | null
+          quotation_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_note?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "crm_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "sales_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_price_tiers: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          id: string
+          min_qty: number
+          product_id: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          min_qty: number
+          product_id: string
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          min_qty?: number
+          product_id?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_price_tiers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sales_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_products: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sku: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sku: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sku?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sales_quotation_lines: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          position: number
+          product_id: string
+          product_name_snapshot: string
+          qty: number
+          quotation_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          position?: number
+          product_id: string
+          product_name_snapshot?: string
+          qty: number
+          quotation_id: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          position?: number
+          product_id?: string
+          product_name_snapshot?: string
+          qty?: number
+          quotation_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_quotation_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sales_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_quotation_lines_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "sales_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_quotations: {
+        Row: {
+          account_id: string
+          account_name_snapshot: string
+          contact_name: string | null
+          created_at: string
+          created_by_email: string
+          decided_at: string | null
+          delivery_terms: string | null
+          discount_amount: number
+          id: string
+          lead_id: string | null
+          lead_time_days: number | null
+          notes: string | null
+          number: string
+          payment_terms: string | null
+          sent_at: string | null
+          status: string
+          subtotal: number
+          supersedes_id: string | null
+          tax_note: string | null
+          total: number
+          updated_at: string
+          valid_until: string | null
+          version: number
+        }
+        Insert: {
+          account_id: string
+          account_name_snapshot?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by_email?: string
+          decided_at?: string | null
+          delivery_terms?: string | null
+          discount_amount?: number
+          id?: string
+          lead_id?: string | null
+          lead_time_days?: number | null
+          notes?: string | null
+          number: string
+          payment_terms?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          supersedes_id?: string | null
+          tax_note?: string | null
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+          version?: number
+        }
+        Update: {
+          account_id?: string
+          account_name_snapshot?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by_email?: string
+          decided_at?: string | null
+          delivery_terms?: string | null
+          discount_amount?: number
+          id?: string
+          lead_id?: string | null
+          lead_time_days?: number | null
+          notes?: string | null
+          number?: string
+          payment_terms?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          supersedes_id?: string | null
+          tax_note?: string | null
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_quotations_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "crm_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_quotations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_quotations_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "sales_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_calculations: {
         Row: {
           calculator_id: string
@@ -686,6 +1070,83 @@ export type Database = {
           outputs?: Json
         }
         Relationships: []
+      }
+      stock_adjustments: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          delta: number
+          id: string
+          note: string | null
+          product_id: string
+          reason: string
+          sales_order_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          delta: number
+          id?: string
+          note?: string | null
+          product_id: string
+          reason: string
+          sales_order_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          delta?: number
+          id?: string
+          note?: string | null
+          product_id?: string
+          reason?: string
+          sales_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sales_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_sales_order_id_fkey"
+            columns: ["sales_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_levels: {
+        Row: {
+          on_hand: number
+          product_id: string
+          reserved: number
+          updated_at: string
+        }
+        Insert: {
+          on_hand?: number
+          product_id: string
+          reserved?: number
+          updated_at?: string
+        }
+        Update: {
+          on_hand?: number
+          product_id?: string
+          reserved?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_levels_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "sales_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_comments: {
         Row: {
@@ -913,6 +1374,26 @@ export type Database = {
           p_source?: string
           p_target?: string
           p_token: string
+        }
+        Returns: undefined
+      }
+      sales_create_order: {
+        Args: {
+          p_customer_po_no?: string
+          p_delivery_due_on?: string
+          p_override_reason?: string
+          p_quotation_id: string
+        }
+        Returns: string
+      }
+      sales_next_number: { Args: { p_kind: string }; Returns: string }
+      sales_revise_quotation: { Args: { p_id: string }; Returns: string }
+      stock_adjust: {
+        Args: {
+          p_delta: number
+          p_note?: string
+          p_product_id: string
+          p_reason: string
         }
         Returns: undefined
       }
