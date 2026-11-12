@@ -10,6 +10,7 @@ import type { Role } from "@/lib/permissions";
 
 export type SectionKey =
   | "crm"
+  | "sales"
   | "tasks"
   | "calculators"
   | "saved"
@@ -28,9 +29,11 @@ export interface SectionDef {
   paths: string[];
 }
 
-// Keys and order must match the app_sections seed in 0010_section_access.sql.
+// Keys and order (by sort_order) must match every app_sections insert in supabase/migrations;
+// tests/unit/access.test.ts compares them.
 export const SECTIONS: SectionDef[] = [
   { key: "crm", label: "CRM (lead funnel + import)", group: "Sections", paths: ["/crm"] },
+  { key: "sales", label: "Sales (quotes, orders, stock)", group: "Sections", paths: ["/sales"] },
   { key: "tasks", label: "Projects & boards", group: "Sections", paths: ["/tasks"] },
   { key: "calculators", label: "Calculators", group: "Sections", paths: ["/calculators"] },
   { key: "saved", label: "Saved calculations", group: "Sections", paths: ["/saved"] },

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -22,10 +22,12 @@ import {
 } from "@/lib/access";
 import { TOOLS } from "@/lib/tools";
 
-const MIGRATION = readFileSync(
-  join(__dirname, "../../supabase/migrations/0010_section_access.sql"),
-  "utf8"
-);
+// Every migration that seeds app_sections: 0010 plus any later one that adds a section.
+const MIGRATIONS_DIR = join(__dirname, "../../supabase/migrations");
+const SECTION_SEED_FILES = readdirSync(MIGRATIONS_DIR)
+  .filter((f) => f.endsWith(".sql"))
+  .map((f) => readFileSync(join(MIGRATIONS_DIR, f), "utf8"))
+  .filter((sql) => /insert into public\.app_sections/.test(sql));
 
 // The seeded defaults in 0010 (member = all, contractor = tasks only).
 const SEED_DEFAULTS: RoleDefault[] = [
@@ -42,11 +44,22 @@ function access(role: Access["role"], sections: SectionKey[]): Access {
 }
 
 describe("section registry stays in sync", () => {
-  it("every key in SECTIONS is seeded in app_sections by 0010, in the same order", () => {
-    const seeded = Array.from(MIGRATION.matchAll(/^\s*\('([a-z:-]+)',\s+'[^']*',\s+'(Sections|Tools)'/gm)).map(
-      (m) => m[1]
+  it("every key in SECTIONS is seeded in app_sections by a migration, in sort_order", () => {
+    const seeded = SECTION_SEED_FILES.flatMap((sql) =>
+      Array.from(
+        sql.matchAll(/^\s*\('([a-z:-]+)',\s+'[^']*',\s+'(?:Sections|Tools)',\s*(\d+)\)/gm)
+      ).map((m) => ({ key: m[1], order: Number(m[2]) }))
     );
-    expect(seeded).toEqual(SECTION_KEYS);
+    expect(seeded.sort((a, b) => a.order - b.order).map((x) => x.key)).toEqual(SECTION_KEYS);
+  });
+
+  it("every section has a unique sort_order", () => {
+    const orders = SECTION_SEED_FILES.flatMap((sql) =>
+      Array.from(sql.matchAll(/^\s*\('[a-z:-]+',\s+'[^']*',\s+'(?:Sections|Tools)',\s*(\d+)\)/gm)).map((m) =>
+        Number(m[1])
+      )
+    );
+    expect(new Set(orders).size).toBe(orders.length);
   });
 
   it("every tool in TOOLS has a section and owns its route", () => {

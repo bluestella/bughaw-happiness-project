@@ -38,6 +38,12 @@ async function createParents(tc: TableCase, tag: string) {
 /** Service-role insert of a fixture row; returns its primary key. */
 async function createFixture(tc: TableCase, tag: string): Promise<Row> {
   await createParents(tc, tag);
+  if (tc.autoCreated) {
+    const key = pick(tc.make(tag), tc.key);
+    if (!(await exists(tc.table, key))) throw new Error(`[access] ${tc.table} row was not auto-created`);
+    cleanup.push([tc.table, key]);
+    return key;
+  }
   const { data, error } = await db
     .from(tc.table)
     .insert({

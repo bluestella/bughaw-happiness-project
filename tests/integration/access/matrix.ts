@@ -8,6 +8,7 @@
 // Expectations describe the seeded role defaults (member: everything; contractor:
 // task boards only). Row-level rules that depend on who owns a row are in
 // scoped.itest.ts.
+import { createHash } from "node:crypto";
 import { FIXTURES, SIGNOUT_USER, USERS } from "../../e2e/support/seed.ts";
 import type { Actor } from "./actors.ts";
 
@@ -26,10 +27,28 @@ export interface TableCase {
   adminExtra?: Row | ((tag: string) => Row);
   /** A harmless change to a non-key column. */
   patch: Row;
+  /**
+   * The parents already create this row (a trigger does), so the fixture is read
+   * rather than inserted.
+   */
+  autoCreated?: boolean;
   /** Rows the fixture depends on; created before and deleted after each attempt. */
   parents?: (tag: string) => { table: string; key: string[]; row: Row }[];
   allowed: Record<Op, readonly Actor[]>;
 }
+
+/** A valid UUID derived from a test tag, so `parents` and `make` agree on ids. */
+export const uuidFor = (tag: string, n: number): string => {
+  const h = createHash("md5").update(`${tag}:${n}`).digest("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
+};
+
+const accountParent = (t: string) => ({
+  table: "crm_accounts", key: ["id"], row: { id: uuidFor(t, 1), name: `[access] account ${t}` },
+});
+const productParent = (t: string) => ({
+  table: "sales_products", key: ["id"], row: { id: uuidFor(t, 2), sku: `sku-${t}`, name: `[access] product ${t}` },
+});
 
 const NOBODY: readonly Actor[] = [];
 const ADMIN: readonly Actor[] = ["super_admin"];
@@ -147,6 +166,81 @@ export const TABLES: TableCase[] = [
     make: () => ({ card_id: FIXTURES.publishedCard.id, event: "view" }),
     patch: { event: "click" },
     allowed: { select: ADMIN, insert: NOBODY, update: NOBODY, delete: NOBODY },
+  },
+
+  // --- Sales (0015-0017) -------------------------------------------------------
+  {
+    table: "sales_products", key: ["id"],
+    make: (t) => ({ sku: `sku-${t}`, name: `[access] ${t}` }),
+    patch: { description: "changed" },
+    allowed: { select: TEAM, insert: ADMIN, update: ADMIN, delete: NOBODY },
+  },
+  {
+    table: "sales_price_tiers", key: ["id"],
+    parents: (t) => [productParent(t)],
+    make: (t) => ({ product_id: uuidFor(t, 2), min_qty: 10, unit_price: 100 }),
+    patch: { unit_price: 99 },
+    allowed: { select: TEAM, insert: ADMIN, update: ADMIN, delete: ADMIN },
+  },
+  {
+    // Written only by stock_adjust() and the order triggers.
+    table: "stock_levels", key: ["product_id"],
+    autoCreated: true,
+    parents: (t) => [productParent(t)],
+    make: (t) => ({ product_id: uuidFor(t, 2) }),
+    patch: { on_hand: 5 },
+    allowed: { select: TEAM, insert: NOBODY, update: NOBODY, delete: NOBODY },
+  },
+  {
+    // Append-only history, written only by stock_adjust() and the order triggers.
+    table: "stock_adjustments", key: ["id"],
+    parents: (t) => [productParent(t)],
+    make: (t) => ({ product_id: uuidFor(t, 2), delta: 5, reason: "correction" }),
+    patch: { delta: 6 },
+    allowed: { select: TEAM, insert: NOBODY, update: NOBODY, delete: NOBODY },
+  },
+  {
+    // Reached only through sales_next_number().
+    table: "sales_counters", key: ["kind", "year"],
+    make: () => ({ kind: "quotation", year: 1999 }),
+    patch: { last_no: 5 },
+    allowed: all(NOBODY),
+  },
+  {
+    table: "sales_quotations", key: ["id"],
+    parents: (t) => [accountParent(t)],
+    make: (t) => ({ account_id: uuidFor(t, 1) }),
+    patch: { notes: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: NOBODY },
+  },
+  {
+    table: "sales_quotation_lines", key: ["id"],
+    parents: (t) => [
+      accountParent(t),
+      productParent(t),
+      { table: "sales_quotations", key: ["id"], row: { id: uuidFor(t, 3), account_id: uuidFor(t, 1) } },
+    ],
+    make: (t) => ({ quotation_id: uuidFor(t, 3), product_id: uuidFor(t, 2), qty: 2, unit_price: 100 }),
+    patch: { qty: 3 },
+    allowed: all(TEAM),
+  },
+  {
+    table: "sales_orders", key: ["id"],
+    parents: (t) => [accountParent(t)],
+    make: (t) => ({ account_id: uuidFor(t, 1) }),
+    patch: { notes: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: NOBODY },
+  },
+  {
+    table: "sales_order_lines", key: ["id"],
+    parents: (t) => [
+      accountParent(t),
+      productParent(t),
+      { table: "sales_orders", key: ["id"], row: { id: uuidFor(t, 3), account_id: uuidFor(t, 1) } },
+    ],
+    make: (t) => ({ order_id: uuidFor(t, 3), product_id: uuidFor(t, 2), qty: 2, unit_price: 100 }),
+    patch: { qty: 3 },
+    allowed: all(TEAM),
   },
 
   // --- Task management (rows inside the fixture project) -----------------------
