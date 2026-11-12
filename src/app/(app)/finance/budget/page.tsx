@@ -10,7 +10,8 @@ import { BudgetClient } from "./BudgetClient";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Budget — Finance" };
 
-export default async function BudgetPage({ searchParams }: { searchParams: { month?: string } }) {
+export default async function BudgetPage(props: { searchParams: Promise<{ month?: string }> }) {
+  const searchParams = await props.searchParams;
   const { supabase } = await requireFinance();
   const month = monthStart(/^\d{4}-\d{2}-\d{2}$/.test(searchParams.month ?? "") ? (searchParams.month as string) : manilaDate());
   const [budgets, categories, expenses] = await Promise.all([

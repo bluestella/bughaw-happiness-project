@@ -10,7 +10,8 @@ import { ExpensesClient } from "./ExpensesClient";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Expenses — Finance" };
 
-export default async function ExpensesPage({ searchParams }: { searchParams: { month?: string } }) {
+export default async function ExpensesPage(props: { searchParams: Promise<{ month?: string }> }) {
+  const searchParams = await props.searchParams;
   const { supabase, isAdmin } = await requireFinance();
   const today = manilaDate();
   const month = monthStart(/^\d{4}-\d{2}-\d{2}$/.test(searchParams.month ?? "") ? (searchParams.month as string) : today);
