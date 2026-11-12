@@ -101,9 +101,10 @@ describe("current_user_access", () => {
     const { data } = await read("no_role");
     expect(data).toEqual({ role: null, sections: [] });
   });
-  it("contractor gets task boards only", async () => {
+  it("contractor gets task boards and their own intern pages, nothing else", async () => {
     const { data } = await read("contractor");
-    expect(data).toEqual({ role: "contractor", sections: ["tasks"] });
+    // `people` only opens the pages; row rules show an intern just their own records.
+    expect(data).toEqual({ role: "contractor", sections: ["people", "tasks"] });
   });
   it("member gets the CRM, boards and calculators", async () => {
     const { data } = await read("member");

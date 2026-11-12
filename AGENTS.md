@@ -68,6 +68,7 @@ src/
         NewProjectForm.tsx
         [projectId]/            # Project detail (mini-projects + contributors)
         [projectId]/[miniProjectId]/   # Kanban Board.tsx + TaskPanel.tsx
+      people/                   # Intern logs, weekly reports, review, overview, interns (section `people`)
       sales/                    # Quotations, orders, stock, products (section `sales`)
       crm/                      # CRM
         page.tsx                # Funnel board + all-leads table
@@ -88,6 +89,7 @@ src/
     calculators/types.ts        # CalculatorConfig, InputField, ChartSpec, CATEGORIES
     calculators/registry.ts     # ALL_CALCULATORS + lookup helpers
     calculators/configs/*.ts    # 26 calculator definitions (pure, declarative); startup.ts = Wave 2 planning tools
+    people.ts                   # People: weeks, hours progress, edit window, report flow, row types (pure; mirrors 0018)
     sales.ts                    # Sales: statuses, transitions, totals, stock shortages, row types (pure; mirrors 0015–0017)
     permissions.ts              # Pure role helpers — MIRRORS RLS, UI-gating only
     access.ts                   # Sections/pages per person — MIRRORS has_section() (0010)
@@ -117,6 +119,7 @@ supabase/migrations/
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
   0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
+  0018_people_interns.sql         # People: intern profiles, daily logs, weekly reports (own-rows RLS, week lock, review flow)
   0015–0017 sales_*.sql          # Sales: products, tiers, stock; quotations; orders (numbering, locking, stock triggers)
   0014_crm_deal_fields.sql        # CRM: deal value, next action, samples, lost reason (trigger), buyer segment; pipeline → CRM account link
 tests/unit/                     # calculators, permissions, crm, cards (+ wallet JWT) tests
@@ -260,7 +263,7 @@ npm run e2e:perf   # Performance baseline on a production build
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order
-(`0001_init.sql` … `0017_sales_orders.sql`) in the SQL editor (0003 has an
+(`0001_init.sql` … `0018_people_interns.sql`) in the SQL editor (0003 has an
 ACTION REQUIRED header: insert an ingest secret before the marketing site can post
 leads). **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.

@@ -44,6 +44,9 @@ function buildItems(access: Access): PaletteItem[] {
       { href: "/sales/stock", label: "Stock", description: "Pairs on hand and reserved", group: "Go to", iconKey: "boxes" }
     );
   }
+  if (canSee(access, "people")) {
+    items.push({ href: "/people", label: "Intern logs", description: "Daily hours and weekly reports", group: "Go to", iconKey: "users" });
+  }
   if (canSee(access, "tasks")) {
     items.push({ href: "/tasks", label: "Projects & boards", description: "Task management", group: "Go to", iconKey: "tasks" });
   }

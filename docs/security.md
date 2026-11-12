@@ -190,3 +190,15 @@ here. "Planned" rows are not controls yet. Owners and waves are in
 | A08 Software or Data Integrity Failures | Provenance columns set by the database; append-only comments and activities | access tests assert no update/delete on append-only tables | Audit log on sales and finance tables; issued documents read-only |
 | A09 Security Logging and Alerting Failures | none (§5.5, §5.6) | none | Error tracking; alert on repeated failed ingest auth; Supabase log review routine |
 | A10 Mishandling of Exceptional Conditions | Functions refuse a NULL role (0008); optimistic UI rolls back on error | access tests include the anonymous and no-role callers | Error boundary per section; malformed-input tests for every function |
+
+## 10. Intern records (personal data)
+
+Intern profiles, daily logs and weekly reports (0018) are personal data under the Data
+Privacy Act. Purpose: supervision and crediting the intern's school. Access: the intern, their
+supervisor and a super_admin, enforced by RLS and proven in
+`tests/integration/access/people-rules.itest.ts`. Nothing is collected beyond hours, a text
+summary and a report. Retention is **manual**: keep records until a year after the internship
+ends, then delete on request or archive. Tell each intern what is recorded when you invite them.
+NPC registration is not expected at this size (threshold: 250 employees or sensitive data of
+1,000 people), but confirm against NPC Circular 2022-04; breach notification within 72 hours
+applies regardless.

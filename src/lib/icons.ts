@@ -11,6 +11,7 @@ import {
   Gem,
   Handshake,
   Hotel,
+  Users,
   Hourglass,
   Inbox,
   LayoutDashboard,
@@ -68,6 +69,7 @@ export const ICONS = {
   "file-text": FileText,
   "clipboard-list": ClipboardList,
   boxes: Boxes,
+  users: Users,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconKey = keyof typeof ICONS;
