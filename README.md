@@ -1,7 +1,7 @@
 # Bughaw Suite
 
 Internal operations platform for Bughaw Innovations — calculators, CRM, and task
-management in one place. Next.js 14 (App Router) + TypeScript + Tailwind + Supabase
+management in one place. Next.js 16 (App Router) + TypeScript + Tailwind + Supabase
 (Postgres + Auth). All figures in ₱ (PHP). **Login is required for the entire app;
 signups are invite-only.**
 
@@ -63,7 +63,7 @@ CI (`.github/workflows/ci.yml`) runs lint + tests + build on every push/PR to `m
 
 ## How auth works
 
-- `src/middleware.ts` refreshes the Supabase session and redirects any signed-out
+- `src/proxy.ts` refreshes the Supabase session and redirects any signed-out
   request to `/login` (only `/login` and `/auth/*` are public).
 - Signups hit a `before insert` trigger on `auth.users` that rejects any email not in
   `public.allowed_emails` — this covers email/password *and* OAuth.

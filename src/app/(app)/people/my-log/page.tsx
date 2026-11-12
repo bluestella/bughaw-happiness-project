@@ -13,7 +13,8 @@ export const metadata: Metadata = { title: "My log — People" };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
-export default async function MyLogPage({ searchParams }: { searchParams: { week?: string } }) {
+export default async function MyLogPage(props: { searchParams: Promise<{ week?: string }> }) {
+  const searchParams = await props.searchParams;
   const p = await requirePeople();
   if (!p.own) redirect("/people");
   const today = manilaDate();

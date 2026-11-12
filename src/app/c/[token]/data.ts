@@ -19,7 +19,7 @@ import {
 export const getPublicCard = cache(async (token: string): Promise<PublicCard | null> => {
   if (!isValidCardToken(token)) return null;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase.rpc("get_public_card", { p_token: token });
     if (error) {
       console.error("[cards] get_public_card failed", error.message);
@@ -42,10 +42,10 @@ export async function recordCardEvent(
   event: CardEvent,
   opts: { source?: CardSource; target?: ClickTarget | null; userAgent?: string | null } = {}
 ): Promise<void> {
-  const ua = opts.userAgent ?? headers().get("user-agent");
+  const ua = opts.userAgent ?? (await headers()).get("user-agent");
   if (!isValidCardToken(token) || isBotUserAgent(ua)) return;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase.rpc("record_card_event", {
       p_token: token,
       p_event: event,
@@ -60,11 +60,11 @@ export async function recordCardEvent(
 }
 
 /** Absolute origin of this request (used for QR / wallet / vCard URLs). */
-export function requestOrigin(request?: Request): string {
+export async function requestOrigin(request?: Request): Promise<string> {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
   if (configured && configured.startsWith("https://")) return configured;
   if (request) return new URL(request.url).origin;
-  const h = headers();
+  const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   return `${proto}://${host}`;

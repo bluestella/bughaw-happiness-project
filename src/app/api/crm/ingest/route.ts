@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   let data: unknown;
   let error: { message: string } | null;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     ({ data, error } = await supabase.rpc("ingest_form_submission", {
       p_secret: secret,
       p_payload: body,

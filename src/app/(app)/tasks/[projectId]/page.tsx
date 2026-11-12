@@ -6,12 +6,13 @@ import { ProjectDetail } from "./ProjectDetail";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { projectId: string };
-}): Promise<Metadata> {
-  const supabase = createClient();
+export async function generateMetadata(
+  props: {
+    params: Promise<{ projectId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
+  const supabase = await createClient();
   const { data: project } = await supabase
     .from("projects")
     .select("id, name")
@@ -25,12 +26,13 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProjectPage({
-  params,
-}: {
-  params: { projectId: string };
-}) {
-  const supabase = createClient();
+export default async function ProjectPage(
+  props: {
+    params: Promise<{ projectId: string }>;
+  }
+) {
+  const params = await props.params;
+  const supabase = await createClient();
   const [{ data: project }, role, userRes] = await Promise.all([
     supabase
       .from("projects")

@@ -8,7 +8,8 @@ import { OrderDetail } from "./OrderDetail";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Order — Sales" };
 
-export default async function OrderPage({ params }: { params: { id: string } }) {
+export default async function OrderPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase, role } = await requireSales();
   const { data } = await supabase.from("sales_orders").select(ORDER_COLUMNS).eq("id", params.id).maybeSingle();
   if (!data) notFound();

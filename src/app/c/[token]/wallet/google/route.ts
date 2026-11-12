@@ -13,14 +13,15 @@ import { getPublicCard, recordCardEvent, requestOrigin } from "../../data";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request, { params }: { params: { token: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   const config = googleWalletConfig();
   if (!config) return new NextResponse("Not found", { status: 404 });
 
   const card = await getPublicCard(params.token);
   if (!card) return new NextResponse("Not found", { status: 404 });
 
-  const origin = requestOrigin(request);
+  const origin = await requestOrigin(request);
   let jwt: string;
   try {
     jwt = signJwtRS256(

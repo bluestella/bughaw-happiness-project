@@ -6,7 +6,8 @@ import { getPublicCard, recordCardEvent, requestOrigin } from "../data";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request, { params }: { params: { token: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   const card = await getPublicCard(params.token);
   if (!card) return new NextResponse("Not found", { status: 404 });
 
@@ -16,7 +17,7 @@ export async function GET(request: Request, { params }: { params: { token: strin
     userAgent: request.headers.get("user-agent"),
   });
 
-  const vcf = buildVCard(card, cardUrl(requestOrigin(request), card.token));
+  const vcf = buildVCard(card, cardUrl(await requestOrigin(request), card.token));
   return new NextResponse(vcf, {
     status: 200,
     headers: {

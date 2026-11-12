@@ -7,8 +7,8 @@ export function useAppState<T>(key: string, initial: T) {
   const [value, setValue] = useState<T>(initial);
   const [loaded, setLoaded] = useState(false);
   const [status, setStatus] = useState("");
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
-  const statusTimer = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const statusTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const supabase = useRef(createClient());
 
   useEffect(() => {

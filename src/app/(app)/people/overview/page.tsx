@@ -25,7 +25,8 @@ export const metadata: Metadata = { title: "Overview — People" };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
-export default async function OverviewPage({ searchParams }: { searchParams: { week?: string } }) {
+export default async function OverviewPage(props: { searchParams: Promise<{ week?: string }> }) {
+  const searchParams = await props.searchParams;
   const p = await requirePeople();
   if (!p.reviewer) redirect("/people");
   const today = manilaDate();
