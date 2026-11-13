@@ -348,6 +348,7 @@ rights, and the recomputed `total_hours`. `people_can_see_intern()` is the acces
 policies call.
 
 
+<<<<<<< HEAD
 ## Strategy worksheets (0022)
 
 ```
@@ -364,6 +365,28 @@ One row per worksheet; the document's shape depends on `kind` and is cleaned by
 
 The `strategy` section is on for members by default and off for contractors. Create, retitle and
 delete are in `audit_log`; the document itself is left out.
+=======
+## Production and R&D (0023)
+
+```
+supplier_lots      (lot_no unique per supplier, ignoring case; quantity > 0; total_cost >= 0; received_on not in the future)
+production_batches (batch_no unique; product_id FK restrict; qty_rejected <= qty_made; status open|completed;
+                    completed_at set exactly when completed)
+material_tests     (outcome pass|fail|inconclusive; batch_id and lot_id optional, FK set null)
+```
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| supplier_lots | `production` | `production` | `production` | SA |
+| production_batches | `production` | `production` | `production` while open; nobody once completed | SA, open only |
+| material_tests | `production` | `production` | its creator or SA | SA |
+
+Completing a batch (open to completed) is a super_admin act. The same statement adds
+`qty_made - qty_rejected` to `stock_levels.on_hand` and writes a `production` row in
+`stock_adjustments` (note `Batch <no>`), through a security-definer trigger, so no client has write
+access to stock. A completed batch is locked for everyone; only service-role maintenance may delete
+one. All three tables are in `audit_log`, without the free-text notes.
+>>>>>>> origin/main
 
 ## Finance (0020)
 

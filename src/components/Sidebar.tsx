@@ -134,6 +134,7 @@ export function Sidebar({
     }
     const showCrm = canSee(access, "crm");
     const showSales = canSee(access, "sales");
+    const showProduction = canSee(access, "production");
     const showPeople = canSee(access, "people");
     const showFinance = canSee(access, "finance");
     const showStrategy = canSee(access, "strategy");
@@ -188,6 +189,21 @@ export function Sidebar({
               </NavLink>
               <NavLink href="/sales/stock" iconKey="boxes" onNavigate={onNavigate} pathname={pathname}>
                 Stock
+              </NavLink>
+            </>
+          )}
+
+          {showProduction && (
+            <>
+              <SectionLabel>Production</SectionLabel>
+              <NavLink href="/production" iconKey="factory" onNavigate={onNavigate} pathname={pathname}>
+                Batches
+              </NavLink>
+              <NavLink href="/production/lots" iconKey="package" onNavigate={onNavigate} pathname={pathname}>
+                Supplier lots
+              </NavLink>
+              <NavLink href="/production/tests" iconKey="flask-conical" onNavigate={onNavigate} pathname={pathname}>
+                Material tests
               </NavLink>
             </>
           )}

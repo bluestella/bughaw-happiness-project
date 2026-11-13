@@ -5,7 +5,11 @@ import {
   FileText,
   Bookmark,
   Calculator,
+<<<<<<< HEAD
   Compass,
+=======
+  Factory,
+>>>>>>> origin/main
   Droplet,
   FlaskConical,
   FolderKanban,
@@ -61,7 +65,11 @@ export const ICONS = {
   package: Package,
   calculator: Calculator,
   wallet: Wallet,
+<<<<<<< HEAD
   compass: Compass,
+=======
+  factory: Factory,
+>>>>>>> origin/main
   tag: Tag,
   timer: Timer,
   "shield-check": ShieldCheck,

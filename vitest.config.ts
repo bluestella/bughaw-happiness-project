@@ -18,7 +18,11 @@ const COVERAGE_INCLUDE = [
   "src/lib/sales.ts",
   "src/lib/people.ts",
   "src/lib/finance.ts",
+<<<<<<< HEAD
   "src/lib/strategy.ts",
+=======
+  "src/lib/production.ts",
+>>>>>>> origin/main
   "src/lib/pnl.ts",
   "src/lib/tasks.ts",
   "src/lib/tools.ts",

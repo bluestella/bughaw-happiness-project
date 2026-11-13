@@ -85,6 +85,7 @@ access** (`/admin/access`). Super admins always see everything.
   runway that gives. A CSV export for the accountant. It is a working view, not bookkeeping:
   there is no ledger and no tax treatment.
 
+<<<<<<< HEAD
 **Strategy worksheets** (`/strategy`, section `strategy`, on for members by default)
 - Six saved frameworks, each a short form that works out its own result: Porter's Five Forces
   (market attractiveness), Three Horizons (effort against a 70/20/10 starting point), Balanced
@@ -92,6 +93,17 @@ access** (`/admin/access`). Super admins always see everything.
   grid (performance against potential) and the Sean Ellis survey (40% very disappointed is the
   fit line). Anyone with the section can edit; a save is refused if someone saved a newer
   version; only a super_admin deletes.
+=======
+**Production and R&D** (`/production`, section `production`, on for members, off for contractors)
+- Production batches: batch number, product, date, pairs made and rejected, labour hours and
+  total cost, with yield, cost per good pair and hours per pair worked out. A super_admin
+  completes a batch, which adds its good pairs to stock and locks it; a mistake is fixed with a
+  stock correction. Supplier lots: supplier, lot number, material, quantity, unit and cost,
+  with cost per unit. Material tests: what, how, result, pass / fail / inconclusive, optionally
+  linked to a batch and a lot; the person who recorded one (or a super_admin) can correct it.
+  CSV export of batches. An intern gets access per person at `/admin/access`; to choose a
+  product they also need Sales access.
+>>>>>>> origin/main
 
 **Outreach**
 - Digital business cards (`/admin/cards`, super_admin only): branded cards with
