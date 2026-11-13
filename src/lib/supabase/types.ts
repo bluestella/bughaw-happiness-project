@@ -1652,6 +1652,36 @@ export type Database = {
           },
         ]
       }
+      strategy_worksheets: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          data: Json
+          id: string
+          kind: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       supplier_lots: {
         Row: {
           created_at: string
@@ -2086,4 +2116,3 @@ export const Constants = {
     },
   },
 } as const
-

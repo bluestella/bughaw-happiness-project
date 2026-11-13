@@ -30,6 +30,9 @@ interface TableSpec {
 // Every table exposed by PostgREST must be listed here or in IGNORED_RELATIONS;
 // assertCoversSchema() fails the run when a migration adds an unknown table.
 export const TABLES: TableSpec[] = [
+  // Strategy worksheets (0022): no children.
+  { table: "strategy_worksheets", key: ["id"] },
+
   // Production (0023): tests point at batches and lots (set null); batches point at products
   // (restrict), so all three go before sales_products.
   { table: "material_tests", key: ["id"] },

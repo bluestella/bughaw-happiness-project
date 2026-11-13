@@ -14,6 +14,7 @@ export type SectionKey =
   | "production"
   | "people"
   | "finance"
+  | "strategy"
   | "tasks"
   | "calculators"
   | "saved"
@@ -40,6 +41,7 @@ export const SECTIONS: SectionDef[] = [
   { key: "production", label: "Production and R&D (batches, tests, lots)", group: "Sections", paths: ["/production"] },
   { key: "people", label: "People (intern logs and reports)", group: "Sections", paths: ["/people"] },
   { key: "finance", label: "Finance (expenses, cash, budget)", group: "Sections", paths: ["/finance"] },
+  { key: "strategy", label: "Strategy worksheets", group: "Sections", paths: ["/strategy"] },
   { key: "tasks", label: "Projects & boards", group: "Sections", paths: ["/tasks"] },
   { key: "calculators", label: "Calculators", group: "Sections", paths: ["/calculators"] },
   { key: "saved", label: "Saved calculations", group: "Sections", paths: ["/saved"] },
