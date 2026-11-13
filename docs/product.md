@@ -85,6 +85,14 @@ access** (`/admin/access`). Super admins always see everything.
   runway that gives. A CSV export for the accountant. It is a working view, not bookkeeping:
   there is no ledger and no tax treatment.
 
+**Strategy worksheets** (`/strategy`, section `strategy`, on for members by default)
+- Six saved frameworks, each a short form that works out its own result: Porter's Five Forces
+  (market attractiveness), Three Horizons (effort against a 70/20/10 starting point), Balanced
+  Scorecard (progress to target across four perspectives), RICE (ranked ideas), the nine-box
+  grid (performance against potential) and the Sean Ellis survey (40% very disappointed is the
+  fit line). Anyone with the section can edit; a save is refused if someone saved a newer
+  version; only a super_admin deletes.
+
 **Outreach**
 - Digital business cards (`/admin/cards`, super_admin only): branded cards with
   link, QR, NFC, email-signature and `.vcf` sharing, Apple/Google Wallet passes

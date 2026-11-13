@@ -1501,6 +1501,36 @@ export type Database = {
           },
         ]
       }
+      strategy_worksheets: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          data: Json
+          id: string
+          kind: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       task_comments: {
         Row: {
           author_email: string

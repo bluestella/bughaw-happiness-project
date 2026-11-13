@@ -347,6 +347,23 @@ rights, and the recomputed `total_hours`. `people_can_see_intern()` is the acces
 policies call.
 
 
+## Strategy worksheets (0022)
+
+```
+strategy_worksheets (kind in porter|three_horizons|balanced_scorecard|rice|nine_box|sean_ellis,
+                     title <= 120 chars, data jsonb object <= 64 KB)
+```
+
+One row per worksheet; the document's shape depends on `kind` and is cleaned by
+`src/lib/strategy.ts`. No score is stored, so none can drift from its inputs.
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| strategy_worksheets | `strategy` | `strategy` | `strategy` | SA |
+
+The `strategy` section is on for members by default and off for contractors. Create, retitle and
+delete are in `audit_log`; the document itself is left out.
+
 ## Finance (0020)
 
 Not bookkeeping: no ledger, no tax treatment. The `finance` section is **off by default** for

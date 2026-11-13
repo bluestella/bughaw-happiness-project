@@ -284,6 +284,13 @@ export const TABLES: TableCase[] = [
     allowed: { select: ADMIN, insert: ADMIN, update: NOBODY, delete: NOBODY },
   },
 
+  // --- Strategy worksheets (0022): the `strategy` section; members yes by default -----
+  {
+    table: "strategy_worksheets", key: ["id"],
+    make: (t) => ({ kind: "rice", title: `[access] ${t}`, data: { items: [] } }),
+    patch: { title: "[access] changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
   // --- Finance (0020): off by default for members and contractors -----------------
   {
     table: "fin_categories", key: ["id"],
