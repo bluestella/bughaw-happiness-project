@@ -57,7 +57,7 @@ jobs:
       # Fails when a migration changed the schema but the generated types were not refreshed.
       - run: npm run db:types && git diff --exit-code -- src/lib/supabase/types.ts
       - run: npm run e2e:smoke
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
