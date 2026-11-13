@@ -287,11 +287,12 @@ Deploy: Vercel, auto from `main`. CI must be green.
   map its key in `app_state_section()`** (new migration); unmapped keys are
   super_admin-only. A new section = `app_sections` row + `role_section_defaults`
   rows + `SECTIONS` entry in `src/lib/access.ts` (the access test diffs them).
-- **The CRM ingest secret is stored in plaintext** in `crm_ingest_secrets` (a table
-  with RLS and no policies, so service-role only — same posture as
-  `allowed_emails`). Rotating it means updating that row and the marketing site's
-  env var together. `ingest_form_submission()` is the only function granted to
-  `anon`; keep it that way.
+- **The CRM ingest secret is stored only as a SHA-256 hash** (0021) in
+  `crm_ingest_secrets` (RLS, no policies, so service-role only — same posture as
+  `allowed_emails`). Nobody can read the secret back; to rotate it, write a new
+  `secret_hash` (snippet in 0021) and change the marketing site's env var together.
+  `ingest_form_submission()` is the only function granted to `anon`; keep it that way.
+  It refuses a secret over its `max_per_minute` (default 60) with HTTP 429.
 - **Contributor emails** must be on the invite list (0019); the database refuses
   anything else and lower-cases what it stores.
 - **`audit_log`** (0019) records who changed roles, page access, sales documents, interns

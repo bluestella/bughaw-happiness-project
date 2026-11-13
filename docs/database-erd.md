@@ -500,8 +500,16 @@ Seeded keys: `crm`, `tasks`, `calculators`, `saved`, `tool:pipeline`,
 | Field | Type | Null | Default | Constraint / mapping |
 |---|---|---|---|---|
 | `name` | text | NN | | **PK** |
-| `secret` | text | NN | | Plaintext shared secret; compared in constant time by `ingest_form_submission()` |
+| `secret_hash` | text | NN | | SHA-256 of the shared secret, 64 hex characters (0021 replaced the plaintext `secret` column); compared in constant time by `ingest_form_submission()` |
+| `max_per_minute` | integer | NN | `60` | `>= 1`; calls per minute this secret may make (0021) |
 | `created_at` | timestamptz | NN | `now()` | |
+
+#### `crm_ingest_rate` (0021)
+| Field | Type | Null | Default | Constraint / mapping |
+|---|---|---|---|---|
+| `name` | text | NN | | **PK part**, FK → `crm_ingest_secrets.name` (cascade) |
+| `window_start` | timestamptz | NN | | **PK part**, the minute |
+| `n` | integer | NN | `0` | Calls counted in that minute; rows older than an hour are deleted |
 
 ### 5.4 Workspace (shared team data)
 
@@ -609,7 +617,7 @@ Upsert and dedupe rules:
 - **Lead:** always a new row per submission, never deduped.
 - **Activity:** each ingest adds a `system` row, `Submitted via <form>`, `to_status = 'New'`.
 - **Honeypot:** a non-empty `website_field_hp` returns `{status: 'dropped'}` and stores nothing.
-- **Auth:** `p_secret` must match a row in `crm_ingest_secrets` (constant-time compare).
+- **Auth:** the SHA-256 of `p_secret` must match a `crm_ingest_secrets.secret_hash` (constant-time compare). A matching secret may make `max_per_minute` calls a minute; the next is refused with errcode `54000` (HTTP 429).
   `ingest_form_submission()` is the only function granted to `anon`.
 
 ### 5.7 Soft-link (email) mapping

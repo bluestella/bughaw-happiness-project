@@ -49,7 +49,7 @@ in the site's Vercel project):
 | Variable | Value |
 |---|---|
 | `CRM_URL` | Base URL of the Bughaw Suite deployment, no trailing slash |
-| `CRM_INGEST_SECRET` | The shared secret. Ask the owner — it is stored in the CRM's `crm_ingest_secrets` table and is not in either repo. |
+| `CRM_INGEST_SECRET` | The shared secret. Ask the owner — the CRM keeps only a hash of it (`crm_ingest_secrets`), so it cannot be looked up there, and it is not in either repo. |
 
 If either variable is missing, skip the mirror silently. The site must still deploy
 and work with them unset.
@@ -116,6 +116,7 @@ Notes on the metadata block:
 | `200` | `{"message": "...", "status": "dropped"}` | Honeypot hit, deliberately not stored |
 | `400` | `{"message": "Validation failed.", "details": {"<field>": "<reason>"}}` | Payload failed the CRM's copy of this site's own rules |
 | `401` | `{"message": "Unauthorized."}` | Missing or wrong secret |
+| `429` | `{"message": "Too many submissions. Try again in a minute."}` | This secret passed its per-minute limit (60 by default). Log it; do not retry in a loop |
 | `500` | `{"message": "Could not record the submission."}` | CRM-side problem |
 
 The CRM enforces the **same validation rules as this site** (min/max lengths, the

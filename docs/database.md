@@ -136,7 +136,8 @@ crm_leads      (contact_id FK, account_id FK,
                 submitted_at)
 crm_lead_activities (lead_id FK cascade, kind note|status_change|system, body,
                      from_status, to_status, author_email) — append-only
-crm_ingest_secrets  (name PK, secret) — RLS enabled, NO policies (service role only)
+crm_ingest_secrets  (name PK, secret_hash sha256 hex, max_per_minute) — RLS enabled, NO policies (service role only)
+crm_ingest_rate     (name FK cascade, window_start, n) — per-minute call counter; RLS enabled, NO policies
 ```
 
 One **lead row per submission**; contacts and accounts are deduped (FORMS_AUDIT

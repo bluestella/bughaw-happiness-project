@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -39,13 +39,13 @@ jobs:
       CI: "true"
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: 2.109.1
       - run: supabase start
@@ -57,7 +57,7 @@ jobs:
       # Fails when a migration changed the schema but the generated types were not refreshed.
       - run: npm run db:types && git diff --exit-code -- src/lib/supabase/types.ts
       - run: npm run e2e:smoke
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report

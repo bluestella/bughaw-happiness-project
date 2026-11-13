@@ -72,6 +72,12 @@ export async function POST(request: Request) {
     if (error.message.includes("unauthorized")) {
       return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
     }
+    if (error.message.includes("rate limit")) {
+      return NextResponse.json(
+        { message: "Too many submissions. Try again in a minute." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
     // Log for us, stay sanitised for the caller (audit §8.1).
     console.error("[crm/ingest] rpc error", error.message);
     return NextResponse.json({ message: "Could not record the submission." }, { status: 500 });
