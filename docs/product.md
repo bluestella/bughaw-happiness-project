@@ -85,6 +85,16 @@ access** (`/admin/access`). Super admins always see everything.
   runway that gives. A CSV export for the accountant. It is a working view, not bookkeeping:
   there is no ledger and no tax treatment.
 
+**Production and R&D** (`/production`, section `production`, on for members, off for contractors)
+- Production batches: batch number, product, date, pairs made and rejected, labour hours and
+  total cost, with yield, cost per good pair and hours per pair worked out. A super_admin
+  completes a batch, which adds its good pairs to stock and locks it; a mistake is fixed with a
+  stock correction. Supplier lots: supplier, lot number, material, quantity, unit and cost,
+  with cost per unit. Material tests: what, how, result, pass / fail / inconclusive, optionally
+  linked to a batch and a lot; the person who recorded one (or a super_admin) can correct it.
+  CSV export of batches. An intern gets access per person at `/admin/access`; to choose a
+  product they also need Sales access.
+
 **Outreach**
 - Digital business cards (`/admin/cards`, super_admin only): branded cards with
   link, QR, NFC, email-signature and `.vcf` sharing, Apple/Google Wallet passes

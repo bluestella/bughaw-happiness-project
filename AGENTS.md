@@ -68,6 +68,7 @@ src/
         NewProjectForm.tsx
         [projectId]/            # Project detail (mini-projects + contributors)
         [projectId]/[miniProjectId]/   # Kanban Board.tsx + TaskPanel.tsx
+      production/                # Batches, supplier lots, material tests (section `production`)
       finance/                  # Cash, expenses, budget (section `finance`, off by default for non-admins)
       people/                   # Intern logs, weekly reports, review, overview, interns (section `people`)
       sales/                    # Quotations, orders, stock, products (section `sales`)
@@ -90,6 +91,7 @@ src/
     calculators/types.ts        # CalculatorConfig, InputField, ChartSpec, CATEGORIES
     calculators/registry.ts     # ALL_CALCULATORS + lookup helpers
     calculators/configs/*.ts    # 26 calculator definitions (pure, declarative); startup.ts = Wave 2 planning tools
+    production.ts               # Production: batch yield and cost per pair, lot unit cost, test pass rate, form validation, CSV (pure; mirrors 0023)
     finance.ts                  # Finance: months, budget vs actual, burn and runway, expense validation, CSV (pure; mirrors 0020)
     people.ts                   # People: weeks, hours progress, edit window, report flow, row types (pure; mirrors 0018)
     sales.ts                    # Sales: statuses, transitions, totals, stock shortages, row types (pure; mirrors 0015–0017)
@@ -121,6 +123,7 @@ supabase/migrations/
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
   0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
+  0023_production_rd.sql         # Production: supplier lots, batches (super_admin completes: adds good pairs to stock, locks), material tests; `production` section
   0020_finance.sql                # Finance: categories, expenses (void, never delete), cash snapshots, monthly budgets; section off by default
   0019_hardening_audit.sql        # Team-directory role guard, contributor email validation, audit_log + triggers
   0018_people_interns.sql         # People: intern profiles, daily logs, weekly reports (own-rows RLS, week lock, review flow)

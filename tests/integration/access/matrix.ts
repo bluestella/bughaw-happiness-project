@@ -284,6 +284,28 @@ export const TABLES: TableCase[] = [
     allowed: { select: ADMIN, insert: ADMIN, update: NOBODY, delete: NOBODY },
   },
 
+  // --- Production and R&D (0023): the `production` section; members yes by default ----
+  {
+    table: "supplier_lots", key: ["id"],
+    make: (t) => ({ lot_no: `lot-${t}`, supplier: "[access] supplier", material: "Coir", received_on: manilaToday(), quantity: 10 }),
+    patch: { unit: "m" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    table: "production_batches", key: ["id"],
+    parents: (t) => [productParent(t)],
+    make: (t) => ({ batch_no: `b-${t}`, product_id: uuidFor(t, 2), made_on: manilaToday(), qty_made: 10, qty_rejected: 1 }),
+    patch: { notes: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    // The service-role fixture is created by nobody, so only a super_admin may edit it; a member
+    // editing their own test is proved in production-rules.itest.ts.
+    table: "material_tests", key: ["id"],
+    make: () => ({ tested_on: manilaToday(), material: "Coir", test_name: "Tear", result: "ok", outcome: "pass" }),
+    patch: { notes: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: ADMIN, delete: ADMIN },
+  },
   // --- Finance (0020): off by default for members and contractors -----------------
   {
     table: "fin_categories", key: ["id"],

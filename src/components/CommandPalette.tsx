@@ -44,6 +44,13 @@ function buildItems(access: Access): PaletteItem[] {
       { href: "/sales/stock", label: "Stock", description: "Pairs on hand and reserved", group: "Go to", iconKey: "boxes" }
     );
   }
+  if (canSee(access, "production")) {
+    items.push(
+      { href: "/production", label: "Production batches", description: "Pairs made, rejected, cost per pair", group: "Go to", iconKey: "factory" },
+      { href: "/production/lots", label: "Supplier lots", description: "Raw material received", group: "Go to", iconKey: "package" },
+      { href: "/production/tests", label: "Material tests", description: "Test results and outcomes", group: "Go to", iconKey: "flask-conical" }
+    );
+  }
   if (canSee(access, "people")) {
     items.push({ href: "/people", label: "Intern logs", description: "Daily hours and weekly reports", group: "Go to", iconKey: "users" });
   }
