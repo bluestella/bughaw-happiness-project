@@ -36,6 +36,6 @@ insert into public.allowed_emails (email, note, role) values
 on conflict (email) do update set role = excluded.role, note = excluded.note;
 
 -- Shared secret the ingest route checks (TC-INGEST-*). Local value only.
-insert into public.crm_ingest_secrets (name, secret) values
-  ('e2e', 'e2e-ingest-secret')
-on conflict (name) do update set secret = excluded.secret;
+insert into public.crm_ingest_secrets (name, secret_hash) values
+  ('e2e', encode(sha256(convert_to('e2e-ingest-secret', 'utf8')), 'hex'))
+on conflict (name) do update set secret_hash = excluded.secret_hash;

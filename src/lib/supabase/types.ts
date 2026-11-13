@@ -292,21 +292,50 @@ export type Database = {
           },
         ]
       }
+      crm_ingest_rate: {
+        Row: {
+          n: number
+          name: string
+          window_start: string
+        }
+        Insert: {
+          n?: number
+          name: string
+          window_start: string
+        }
+        Update: {
+          n?: number
+          name?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_ingest_rate_name_fkey"
+            columns: ["name"]
+            isOneToOne: false
+            referencedRelation: "crm_ingest_secrets"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
       crm_ingest_secrets: {
         Row: {
           created_at: string
+          max_per_minute: number
           name: string
-          secret: string
+          secret_hash: string
         }
         Insert: {
           created_at?: string
+          max_per_minute?: number
           name: string
-          secret: string
+          secret_hash: string
         }
         Update: {
           created_at?: string
+          max_per_minute?: number
           name?: string
-          secret?: string
+          secret_hash?: string
         }
         Relationships: []
       }
