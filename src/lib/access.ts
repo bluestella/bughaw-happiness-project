@@ -11,6 +11,7 @@ import type { Role } from "@/lib/permissions";
 export type SectionKey =
   | "crm"
   | "sales"
+  | "production"
   | "people"
   | "finance"
   | "tasks"
@@ -36,6 +37,7 @@ export interface SectionDef {
 export const SECTIONS: SectionDef[] = [
   { key: "crm", label: "CRM (lead funnel + import)", group: "Sections", paths: ["/crm"] },
   { key: "sales", label: "Sales (quotes, orders, stock)", group: "Sections", paths: ["/sales"] },
+  { key: "production", label: "Production and R&D (batches, tests, lots)", group: "Sections", paths: ["/production"] },
   { key: "people", label: "People (intern logs and reports)", group: "Sections", paths: ["/people"] },
   { key: "finance", label: "Finance (expenses, cash, budget)", group: "Sections", paths: ["/finance"] },
   { key: "tasks", label: "Projects & boards", group: "Sections", paths: ["/tasks"] },
