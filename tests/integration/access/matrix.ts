@@ -86,8 +86,14 @@ export const TABLES: TableCase[] = [
   },
   {
     table: "crm_ingest_secrets", key: ["name"],
-    make: (t) => ({ name: t, secret: "access-test-secret" }),
-    patch: { secret: "changed" },
+    make: (t) => ({ name: t, secret_hash: "a".repeat(64) }),
+    patch: { max_per_minute: 7 },
+    allowed: all(NOBODY),
+  },
+  {
+    table: "crm_ingest_rate", key: ["name", "window_start"],
+    make: () => ({ name: "e2e", window_start: "2000-01-01T00:00:00Z", n: 1 }),
+    patch: { n: 2 },
     allowed: all(NOBODY),
   },
   {

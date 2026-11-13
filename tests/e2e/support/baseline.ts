@@ -73,6 +73,7 @@ export const TABLES: TableSpec[] = [
   { table: "saved_calculations", key: ["id"] },
   { table: "pipeline_accounts", key: ["id"] },
   { table: "app_state", key: ["key"] },
+  { table: "crm_ingest_rate", key: ["name", "window_start"] },
   { table: "crm_ingest_secrets", key: ["name"] },
   { table: "user_section_overrides", key: ["email", "section"] },
   { table: "role_section_defaults", key: ["role", "section"] },
