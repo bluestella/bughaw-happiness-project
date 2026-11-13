@@ -348,7 +348,6 @@ rights, and the recomputed `total_hours`. `people_can_see_intern()` is the acces
 policies call.
 
 
-<<<<<<< HEAD
 ## Strategy worksheets (0022)
 
 ```
@@ -365,7 +364,7 @@ One row per worksheet; the document's shape depends on `kind` and is cleaned by
 
 The `strategy` section is on for members by default and off for contractors. Create, retitle and
 delete are in `audit_log`; the document itself is left out.
-=======
+
 ## Production and R&D (0023)
 
 ```
@@ -386,8 +385,6 @@ Completing a batch (open to completed) is a super_admin act. The same statement 
 `stock_adjustments` (note `Batch <no>`), through a security-definer trigger, so no client has write
 access to stock. A completed batch is locked for everyone; only service-role maintenance may delete
 one. All three tables are in `audit_log`, without the free-text notes.
->>>>>>> origin/main
-
 ## Finance (0020)
 
 Not bookkeeping: no ledger, no tax treatment. The `finance` section is **off by default** for

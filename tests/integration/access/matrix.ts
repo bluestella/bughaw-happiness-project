@@ -290,7 +290,6 @@ export const TABLES: TableCase[] = [
     allowed: { select: ADMIN, insert: ADMIN, update: NOBODY, delete: NOBODY },
   },
 
-<<<<<<< HEAD
   // --- Strategy worksheets (0022): the `strategy` section; members yes by default -----
   {
     table: "strategy_worksheets", key: ["id"],
@@ -298,7 +297,7 @@ export const TABLES: TableCase[] = [
     patch: { title: "[access] changed" },
     allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
   },
-=======
+
   // --- Production and R&D (0023): the `production` section; members yes by default ----
   {
     table: "supplier_lots", key: ["id"],
@@ -321,7 +320,6 @@ export const TABLES: TableCase[] = [
     patch: { notes: "changed" },
     allowed: { select: TEAM, insert: TEAM, update: ADMIN, delete: ADMIN },
   },
->>>>>>> origin/main
   // --- Finance (0020): off by default for members and contractors -----------------
   {
     table: "fin_categories", key: ["id"],

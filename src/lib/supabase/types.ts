@@ -1652,7 +1652,6 @@ export type Database = {
           },
         ]
       }
-<<<<<<< HEAD
       strategy_worksheets: {
         Row: {
           created_at: string
@@ -1661,7 +1660,28 @@ export type Database = {
           id: string
           kind: string
           title: string
-=======
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       supplier_lots: {
         Row: {
           created_at: string
@@ -1675,18 +1695,11 @@ export type Database = {
           supplier: string
           total_cost: number
           unit: string
->>>>>>> origin/main
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by_email?: string
-<<<<<<< HEAD
-          data?: Json
-          id?: string
-          kind: string
-          title: string
-=======
           id?: string
           lot_no: string
           material: string
@@ -1696,18 +1709,11 @@ export type Database = {
           supplier: string
           total_cost?: number
           unit?: string
->>>>>>> origin/main
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by_email?: string
-<<<<<<< HEAD
-          data?: Json
-          id?: string
-          kind?: string
-          title?: string
-=======
           id?: string
           lot_no?: string
           material?: string
@@ -1717,7 +1723,6 @@ export type Database = {
           supplier?: string
           total_cost?: number
           unit?: string
->>>>>>> origin/main
           updated_at?: string
         }
         Relationships: []
@@ -2111,4 +2116,3 @@ export const Constants = {
     },
   },
 } as const
-
