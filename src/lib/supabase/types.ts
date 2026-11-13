@@ -738,6 +738,146 @@ export type Database = {
           },
         ]
       }
+      people_eval_criteria: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          description: string | null
+          discipline: string | null
+          id: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          description?: string | null
+          discipline?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          description?: string | null
+          discipline?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      people_evaluation_scores: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by_email: string
+          criterion_id: string
+          criterion_label: string
+          evaluation_id: string
+          id: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by_email?: string
+          criterion_id: string
+          criterion_label?: string
+          evaluation_id: string
+          id?: string
+          score: number
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by_email?: string
+          criterion_id?: string
+          criterion_label?: string
+          evaluation_id?: string
+          id?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_evaluation_scores_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "people_eval_criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_evaluation_scores_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "people_evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_evaluations: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          evaluated_on: string
+          id: string
+          improvements: string | null
+          intern_id: string
+          period: string
+          recommendation: string | null
+          shared_at: string | null
+          status: string
+          strengths: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          evaluated_on: string
+          id?: string
+          improvements?: string | null
+          intern_id: string
+          period: string
+          recommendation?: string | null
+          shared_at?: string | null
+          status?: string
+          strengths?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          evaluated_on?: string
+          id?: string
+          improvements?: string | null
+          intern_id?: string
+          period?: string
+          recommendation?: string | null
+          shared_at?: string | null
+          status?: string
+          strengths?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_evaluations_intern_id_fkey"
+            columns: ["intern_id"]
+            isOneToOne: false
+            referencedRelation: "people_interns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       people_interns: {
         Row: {
           created_at: string
@@ -1719,6 +1859,11 @@ export type Database = {
           email: string
           note: string
         }[]
+      }
+      people_can_evaluate: { Args: { p_intern_id: string }; Returns: boolean }
+      people_can_read_evaluation: {
+        Args: { p_intern_id: string; p_status: string }
+        Returns: boolean
       }
       people_can_see_intern: { Args: { p_email: string }; Returns: boolean }
       people_week_hours: {

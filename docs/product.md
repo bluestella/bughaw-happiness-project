@@ -77,6 +77,12 @@ access** (`/admin/access`). Super admins always see everything.
   required hours, and report status. Approved reports print for the school with
   signature spaces. Interns see only their own records. No screen, location or activity
   tracking: only reviewed output.
+- Evaluations: a super_admin types in the criteria (one set for everyone and/or per discipline;
+  nothing is preset, so a school's form is entered as data). A supervisor or super_admin scores
+  an intern 1 to 5 on each criterion, adds a comment per criterion and written strengths,
+  improvements and a recommendation, and keeps it as a private draft. Sharing releases it to the
+  intern, read-only, and makes it final; a correction is a new evaluation. Nobody evaluates
+  themself. It prints from the browser.
 
 **Finance** (`/finance`, section `finance`, off by default for members and contractors)
 - Cash on hand (dated snapshots), expenses with a category, vendor, receipt number and a

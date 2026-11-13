@@ -106,6 +106,7 @@ npm run db:types      # regenerate src/lib/supabase/types.ts after a migration
 | `people-rules.itest.ts` | The intern rules: own-rows-only, the 7-day window, the week lock, every report status pair against the real triggers, review rights, recomputed hours. |
 | `audit-rules.itest.ts` | The audit log (read by super_admin only, written by triggers only, no-op updates skipped, text columns left out) and the contributor invite-list check. |
 | `finance-rules.itest.ts` | Finance is closed to members and contractors by default and a per-person grant opens it; expense limits; void locks an expense; one cash balance per day, corrections super_admin only; budgets unique per category and month. |
+| `evaluation-rules.itest.ts` | Evaluations: rubric access, supervisor / intern / super_admin rights, no self-evaluation, drafts hidden from the intern, sharing needs a score and locks everything, criterion wording kept, discipline and in-use checks, audit without the feedback. |
 | `coverage.itest.ts` | Fails when the database has a table or function with no test. This is the merge gate in [standards/database.md](standards/database.md) §10. |
 
 CI runs it in the `e2e-smoke` job, followed by a check that the generated types

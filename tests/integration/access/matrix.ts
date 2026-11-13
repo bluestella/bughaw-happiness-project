@@ -49,6 +49,15 @@ const categoryParent = (t: string) => ({
 const allowedEmailParent = (t: string) => ({
   table: "allowed_emails", key: ["email"], row: { email: `${t}@test.local`, note: "access test", role: "member" },
 });
+const internParent = (t: string) => ({
+  table: "people_interns", key: ["id"], row: { id: uuidFor(t, 5), email: `${t}@test.local`, discipline: "marketing" },
+});
+const criterionParent = (t: string) => ({
+  table: "people_eval_criteria", key: ["id"], row: { id: uuidFor(t, 7), label: `[access] criterion ${t}` },
+});
+const evaluationParent = (t: string) => ({
+  table: "people_evaluations", key: ["id"], row: { id: uuidFor(t, 6), intern_id: uuidFor(t, 5), period: `p-${t}`, evaluated_on: manilaToday() },
+});
 /** Today in Manila as YYYY-MM-DD. */
 const manilaToday = (): string =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -284,6 +293,29 @@ export const TABLES: TableCase[] = [
     allowed: { select: ADMIN, insert: ADMIN, update: NOBODY, delete: NOBODY },
   },
 
+  // --- Intern evaluations (0024) --------------------------------------------------------
+  {
+    table: "people_eval_criteria", key: ["id"],
+    make: (t) => ({ label: `[access] ${t}` }),
+    patch: { sort_order: 5 },
+    allowed: { select: BOARD, insert: ADMIN, update: ADMIN, delete: NOBODY },
+  },
+  {
+    // An evaluation about someone who is not any actor: only a super_admin may see or write it.
+    // The supervisor, intern and sharing rules are in evaluation-rules.itest.ts.
+    table: "people_evaluations", key: ["id"],
+    parents: (t) => [allowedEmailParent(t), internParent(t)],
+    make: (t) => ({ intern_id: uuidFor(t, 5), period: `p-${t}`, evaluated_on: manilaToday() }),
+    patch: { strengths: "changed" },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: ADMIN },
+  },
+  {
+    table: "people_evaluation_scores", key: ["id"],
+    parents: (t) => [allowedEmailParent(t), internParent(t), criterionParent(t), evaluationParent(t)],
+    make: (t) => ({ evaluation_id: uuidFor(t, 6), criterion_id: uuidFor(t, 7), score: 3 }),
+    patch: { comment: "changed" },
+    allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: ADMIN },
+  },
   // --- Finance (0020): off by default for members and contractors -----------------
   {
     table: "fin_categories", key: ["id"],

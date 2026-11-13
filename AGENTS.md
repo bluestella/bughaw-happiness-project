@@ -69,7 +69,7 @@ src/
         [projectId]/            # Project detail (mini-projects + contributors)
         [projectId]/[miniProjectId]/   # Kanban Board.tsx + TaskPanel.tsx
       finance/                  # Cash, expenses, budget (section `finance`, off by default for non-admins)
-      people/                   # Intern logs, weekly reports, review, overview, interns (section `people`)
+      people/                   # Intern logs, weekly reports, review, overview, interns, evaluations, criteria (section `people`)
       sales/                    # Quotations, orders, stock, products (section `sales`)
       crm/                      # CRM
         page.tsx                # Funnel board + all-leads table
@@ -91,6 +91,7 @@ src/
     calculators/registry.ts     # ALL_CALCULATORS + lookup helpers
     calculators/configs/*.ts    # 26 calculator definitions (pure, declarative); startup.ts = Wave 2 planning tools
     finance.ts                  # Finance: months, budget vs actual, burn and runway, expense validation, CSV (pure; mirrors 0020)
+    evaluations.ts              # Intern evaluations: rubric, scores, averages, form validation, score diff (pure; mirrors 0024)
     people.ts                   # People: weeks, hours progress, edit window, report flow, row types (pure; mirrors 0018)
     sales.ts                    # Sales: statuses, transitions, totals, stock shortages, row types (pure; mirrors 0015–0017)
     permissions.ts              # Pure role helpers — MIRRORS RLS, UI-gating only
@@ -123,6 +124,7 @@ supabase/migrations/
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
   0020_finance.sql                # Finance: categories, expenses (void, never delete), cash snapshots, monthly budgets; section off by default
   0019_hardening_audit.sql        # Team-directory role guard, contributor email validation, audit_log + triggers
+  0024_intern_evaluations.sql     # Evaluations: editable rubric, score per criterion, draft -> shared (final, locked); no self-evaluation
   0018_people_interns.sql         # People: intern profiles, daily logs, weekly reports (own-rows RLS, week lock, review flow)
   0015–0017 sales_*.sql          # Sales: products, tiers, stock; quotations; orders (numbering, locking, stock triggers)
   0014_crm_deal_fields.sql        # CRM: deal value, next action, samples, lost reason (trigger), buyer segment; pipeline → CRM account link

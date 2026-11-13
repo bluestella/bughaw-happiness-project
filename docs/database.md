@@ -347,6 +347,28 @@ rights, and the recomputed `total_hours`. `people_can_see_intern()` is the acces
 policies call.
 
 
+## Intern evaluations (0024)
+
+```
+people_eval_criteria      (label unique per discipline, ignoring case; discipline null = all; sort_order; is_active)  ← nothing seeded
+people_evaluations        (intern_id FK restrict; period unique per intern; evaluated_on not in the future;
+                           strengths/improvements/recommendation; status draft|shared; shared_at set exactly when shared)
+people_evaluation_scores  (evaluation_id FK cascade; criterion_id FK restrict; score 1..5; comment;
+                           criterion_label = the criterion's wording when scored; unique per criterion)
+```
+
+| Table | select | insert | update | delete |
+|---|---|---|---|---|
+| people_eval_criteria | `people` | SA | SA | **none** (retire instead) |
+| people_evaluations | the intern's supervisor or SA; the intern once shared | supervisor or SA, never about oneself | same, while a draft | SA, drafts only |
+| people_evaluation_scores | follows the evaluation | follows the evaluation | while the evaluation is a draft | while a draft |
+
+`people_can_evaluate(intern_id)` and `people_can_read_evaluation(intern_id, status)` are the
+security-definer helpers the policies call. Sharing needs at least one score and sets `shared_at`;
+a shared evaluation and its scores are locked, and a signed-in user cannot delete it (service-role
+maintenance can). A score may only use a criterion that is in use and for everyone or the intern's
+discipline. Created, shared and deleted are in `audit_log`, without the written feedback.
+
 ## Finance (0020)
 
 Not bookkeeping: no ledger, no tax treatment. The `finance` section is **off by default** for

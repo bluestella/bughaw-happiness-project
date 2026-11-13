@@ -38,6 +38,11 @@ export const TABLES: TableSpec[] = [
   // People (0018). Reports and logs before profiles; logs of a submitted week are locked
   // against direct deletes, so the profile (cascade) is not used to clear them: the
   // guard allows a nested delete only, so delete the report rows first, then logs.
+  // Evaluations (0024): deleting an evaluation removes its scores (a nested delete the guard
+  // allows); a shared evaluation's scores cannot be deleted directly, so evaluations go first.
+  { table: "people_evaluations", key: ["id"] },
+  { table: "people_evaluation_scores", key: ["id"] },
+  { table: "people_eval_criteria", key: ["id"] },
   { table: "people_weekly_reports", key: ["id"] },
   { table: "people_daily_logs", key: ["id"] },
   { table: "people_interns", key: ["id"] },
