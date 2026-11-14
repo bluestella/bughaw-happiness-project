@@ -16,14 +16,12 @@ export function createClient(request: NextRequest) {
   const { url, key } = getSupabaseCredentials();
 
   if (!url || !key) {
-    return {
-      supabase: null,
-      response: NextResponse.next({
-        request: {
-          headers: request.headers,
-        },
-      }),
-    };
+    const response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+    return { supabase: null, getResponse: () => response };
   }
 
   let response = NextResponse.next({
@@ -47,5 +45,8 @@ export function createClient(request: NextRequest) {
     },
   });
 
-  return { supabase, response };
+  // `setAll` replaces `response` when the session is refreshed, so callers must
+  // read it through this getter after their auth calls. Capturing it before
+  // would drop the refreshed cookies and re-refresh on every request.
+  return { supabase, getResponse: () => response };
 }

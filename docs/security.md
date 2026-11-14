@@ -24,8 +24,10 @@ reach exactly two narrow security-definer functions and no table.
    Supabase surfaces the raised exception as a generic "Database error saving new
    user"; `login/page.tsx` maps that to a friendly invite-only message. Keep that
    mapping.
-2. **Session middleware** (`src/proxy.ts`): refreshes the session cookie via
-   `auth.getUser()` on every non-static request; signed-out users are redirected to
+2. **Session middleware** (`src/proxy.ts`): refreshes the session cookie and verifies
+   the JWT via `auth.getClaims()` on every non-static request (signature checked locally
+   with asymmetric signing keys; with a symmetric secret it calls the Auth server, as
+   `getUser()` does). Refreshed cookies are copied onto redirects too; signed-out users are redirected to
    `/login?next=…`. Only `/login`, `/auth/*`, the secret-authed `/api/crm/ingest`
    and the public card route `/c/*` (§8) skip the login redirect.
 3. **Section routing** (0010): the middleware reads `current_user_access()` (role +

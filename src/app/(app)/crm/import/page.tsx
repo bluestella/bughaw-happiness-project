@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Inbox } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { getAccess } from "@/lib/session";
 import { canSee, landingPath } from "@/lib/access";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { ImportClient } from "./ImportClient";
@@ -17,8 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CrmImportPage() {
-  const supabase = await createClient();
-  const access = await getCurrentUserAccess(supabase);
+  const access = await getAccess();
   if (!canSee(access, "crm")) redirect(landingPath(access));
 
   return (

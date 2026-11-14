@@ -6,8 +6,7 @@ import { getIcon } from "@/lib/icons";
 import { FeaturedCard } from "@/components/ui/card";
 import { SectionIntro } from "@/components/SectionIntro";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { getAccess } from "@/lib/session";
 import { canSee, toolSection } from "@/lib/access";
 
 export const metadata: Metadata = {
@@ -49,7 +48,7 @@ function QuickLink({
 
 export default async function Dashboard() {
   // Each card only renders for people who can open it (0010_section_access.sql).
-  const access = await getCurrentUserAccess(await createClient());
+  const access = await getAccess();
   const visibleTools = TOOLS.filter((t) => {
     const key = toolSection(t.id);
     return key !== null && canSee(access, key);

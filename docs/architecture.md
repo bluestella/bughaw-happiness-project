@@ -29,8 +29,9 @@ the DB the single source of truth for permissions.
 
 1. Every request (except static assets, per the middleware `matcher`) hits
    `src/proxy.ts`, which builds a Supabase client bound to request cookies
-   (`src/utils/supabase/middleware.ts`), calls `auth.getUser()` (refreshes the
-   session), and:
+   (`src/utils/supabase/middleware.ts`), calls `auth.getClaims()` (refreshes the
+   session and verifies the JWT, locally when the project uses asymmetric signing
+   keys), and:
    - unauthenticated + non-public path → redirect `/login?next=<path>`
    - one RPC, `current_user_access()`, returns the caller's role + visible sections
    - authenticated on `/login` → redirect to `landingPath()` (`/`, else `/tasks`, else `/crm`)
@@ -38,9 +39,13 @@ the DB the single source of truth for permissions.
      `/saved`, `/tools/<id>`) → redirect to `landingPath()`; see `src/lib/access.ts`
    - `/c/*` (public digital card) → passed through untouched, plus
      `X-Robots-Tag: noindex`. See [digital-cards.md](digital-cards.md).
-2. Server components under `src/app/(app)/` fetch initial data server-side
-   (e.g., the board page runs parallel queries for mini-project, tasks,
-   contributors, role, user) and pass it to client components as props.
+2. Server components under `src/app/(app)/` fetch initial data server-side and
+   pass it to client components as props. The user and access come from
+   `src/lib/session.ts` (React `cache()`, so the layout and page share one identity
+   check and one access RPC), and queries keyed by URL params run in one
+   `Promise.all` (e.g., the board page fetches mini-project, project, tasks and
+   contributors together). `src/app/(app)/loading.tsx` shows a skeleton the moment a
+   link is clicked.
 3. Client components perform mutations directly against Supabase and update local
    state optimistically, rolling back on error.
 

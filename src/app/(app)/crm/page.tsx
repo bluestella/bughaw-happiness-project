@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Target } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { getAccess, getSupabase } from "@/lib/session";
 import { canSee, landingPath } from "@/lib/access";
 import type { CrmLeadRow } from "@/lib/crm";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
@@ -18,8 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CrmPage() {
-  const supabase = await createClient();
-  const access = await getCurrentUserAccess(supabase);
+  const [supabase, access] = await Promise.all([getSupabase(), getAccess()]);
   const role = access.role;
 
   // Middleware already redirects anyone without the 'crm' section; this is the
