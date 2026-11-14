@@ -20,7 +20,13 @@ export function PeopleTabs({ hasOwn, reviewer, isAdmin }: { hasOwn: boolean; rev
           { href: "/people/overview", label: "Overview" },
         ]
       : []),
-    ...(isAdmin ? [{ href: "/people/interns", label: "Interns" }] : []),
+    ...(hasOwn || reviewer ? [{ href: "/people/evaluations", label: "Evaluations" }] : []),
+    ...(isAdmin
+      ? [
+          { href: "/people/criteria", label: "Criteria" },
+          { href: "/people/interns", label: "Interns" },
+        ]
+      : []),
   ];
   return (
     <nav aria-label="People" className="mb-5 flex flex-wrap gap-1.5 print:hidden">

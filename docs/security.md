@@ -205,6 +205,13 @@ NPC registration is not expected at this size (threshold: 250 employees or sensi
 1,000 people), but confirm against NPC Circular 2022-04; breach notification within 72 hours
 applies regardless.
 
+Evaluations (0024) are the most sensitive records here: scores and written feedback about a
+named person. A draft is visible only to the intern's supervisor and a super_admin; the intern
+reads it only after it is shared, and a shared evaluation can no longer be edited or deleted by
+a signed-in user. Nobody can write one about themself. The audit log records who created and
+shared each evaluation but leaves the feedback text out. Proven in
+`tests/integration/access/evaluation-rules.itest.ts`.
+
 ## 11. Audit log and the dependency advisory (Wave 2)
 
 **Audit log (0019).** `audit_log` has one row per change on: `allowed_emails`,

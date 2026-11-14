@@ -70,6 +70,7 @@ src/
         [projectId]/[miniProjectId]/   # Kanban Board.tsx + TaskPanel.tsx
       production/                # Batches, supplier lots, material tests (section `production`)
       finance/                  # Cash, expenses, budget (section `finance`, off by default for non-admins)
+      people/                   # Intern logs, weekly reports, review, overview, interns, evaluations, criteria (section `people`)
       strategy/                 # Strategy worksheets: six saved frameworks (section `strategy`)
       people/                   # Intern logs, weekly reports, review, overview, interns (section `people`)
       sales/                    # Quotations, orders, stock, products (section `sales`)
@@ -95,6 +96,7 @@ src/
     strategy.ts                 # Strategy worksheets: Five Forces, Three Horizons, scorecard, RICE, nine-box, Sean Ellis (pure; mirrors 0022)
     production.ts               # Production: batch yield and cost per pair, lot unit cost, test pass rate, form validation, CSV (pure; mirrors 0023)
     finance.ts                  # Finance: months, budget vs actual, burn and runway, expense validation, CSV (pure; mirrors 0020)
+    evaluations.ts              # Intern evaluations: rubric, scores, averages, form validation, score diff (pure; mirrors 0024)
     people.ts                   # People: weeks, hours progress, edit window, report flow, row types (pure; mirrors 0018)
     sales.ts                    # Sales: statuses, transitions, totals, stock shortages, row types (pure; mirrors 0015–0017)
     permissions.ts              # Pure role helpers — MIRRORS RLS, UI-gating only
@@ -129,6 +131,7 @@ supabase/migrations/
   0023_production_rd.sql         # Production: supplier lots, batches (super_admin completes: adds good pairs to stock, locks), material tests; `production` section
   0020_finance.sql                # Finance: categories, expenses (void, never delete), cash snapshots, monthly budgets; section off by default
   0019_hardening_audit.sql        # Team-directory role guard, contributor email validation, audit_log + triggers
+  0024_intern_evaluations.sql     # Evaluations: editable rubric, score per criterion, draft -> shared (final, locked); no self-evaluation
   0018_people_interns.sql         # People: intern profiles, daily logs, weekly reports (own-rows RLS, week lock, review flow)
   0015–0017 sales_*.sql          # Sales: products, tiers, stock; quotations; orders (numbering, locking, stock triggers)
   0014_crm_deal_fields.sql        # CRM: deal value, next action, samples, lost reason (trigger), buyer segment; pipeline → CRM account link

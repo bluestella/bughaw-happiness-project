@@ -10,6 +10,9 @@ test.describe("people", () => {
   // week locks its logs against direct deletes.
   test.describe.configure({ mode: "serial" });
   test.afterEach(async ({ db }) => {
+    // Evaluations (0024) point at the profile, and their criteria at the scores.
+    await db.from("people_evaluations").delete().not("id", "is", null);
+    await db.from("people_eval_criteria").delete().like("label", "[e2e]%");
     await db.from("people_weekly_reports").delete().eq("intern_email", USERS.contractor.email);
     await db.from("people_daily_logs").delete().eq("intern_email", USERS.contractor.email);
     await db.from("people_interns").delete().eq("email", USERS.contractor.email);
@@ -111,5 +114,69 @@ test.describe("people", () => {
     await admin.goto("/people/overview");
     await expect(admin.getByRole("table", { name: "Intern overview" })).toContainText("Casey Intern");
     await expect(admin.getByRole("table", { name: "Intern overview" })).toContainText("Chemical Engineering");
+  });
+
+  test("TC-PEOPLE-05 a supervisor scores an intern and shares it; the intern sees it only then", { tag: ["@smoke", "@area-people"], annotation: major }, async ({ asRole, db }) => {
+    await db.from("people_interns").insert({
+      email: USERS.contractor.email, full_name: "Casey Intern", discipline: "marketing",
+      school: "Test University", required_hours: 100, supervisor_email: USERS.member.email,
+    });
+
+    // --- A super_admin types in the rubric: one for everyone, one for marketing only.
+    const admin = await asRole("super_admin");
+    await admin.goto("/people/criteria");
+    await expect(admin.getByText("Nothing is preset")).toBeVisible();
+    for (const [label, discipline] of [["[e2e] Reliability", ""], ["[e2e] Campaign craft", "marketing"], ["[e2e] Layout", "graphics"]]) {
+      await admin.getByLabel("Criterion", { exact: true }).fill(label);
+      await admin.getByRole("combobox", { name: "Applies to" }).selectOption(discipline);
+      await admin.getByRole("button", { name: "Add criterion" }).click();
+      await expect(admin.getByRole("listitem").filter({ hasText: label })).toBeVisible();
+    }
+
+    // --- The supervisor starts and scores an evaluation. Graphics criteria are not offered.
+    const sup = await asRole("member");
+    await sup.goto("/people/evaluations");
+    await sup.getByRole("combobox", { name: "Intern" }).selectOption({ label: "Casey Intern (Marketing)" });
+    await sup.getByLabel("Period").fill("Midterm");
+    await sup.getByRole("button", { name: "Start evaluation" }).click();
+    await expect(sup.getByRole("heading", { level: 1, name: /Casey Intern · Midterm/ })).toBeVisible();
+    await expect(sup.getByText("[e2e] Layout")).toHaveCount(0);
+    await sup.getByRole("combobox", { name: "Score for [e2e] Reliability" }).selectOption("4");
+    await sup.getByRole("combobox", { name: "Score for [e2e] Campaign craft" }).selectOption("5");
+    await sup.getByLabel("Comment on [e2e] Campaign craft").fill("Led the resort launch posts");
+    await sup.getByLabel("Strengths").fill("Reliable and creative");
+    await sup.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(sup.getByText("Saved.")).toBeVisible();
+    await expect(sup.getByText("4.5 of 5")).toBeVisible();
+
+    // --- The intern cannot see the draft, and cannot write evaluations.
+    const intern = await asRole("contractor");
+    await intern.goto("/people/evaluations");
+    await expect(intern.getByText("Nothing here yet.")).toBeVisible();
+    await expect(intern.getByRole("form", { name: "New evaluation" })).toHaveCount(0);
+
+    // --- Sharing releases it, read-only.
+    await sup.getByRole("button", { name: "Share with intern" }).click();
+    await sup.getByRole("button", { name: "Share", exact: true }).click();
+    await expect(sup.getByText("Shared with the intern.")).toBeVisible();
+    await expect(sup.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
+
+    await intern.goto("/people/evaluations");
+    await intern.getByRole("link", { name: /Casey Intern · Midterm/ }).click();
+    await expect(intern.getByText("Shared with intern")).toBeVisible();
+    await expect(intern.getByText("4.5 of 5")).toBeVisible();
+    await expect(intern.getByText("Led the resort launch posts")).toBeVisible();
+    await expect(intern.getByText("Reliable and creative")).toBeVisible();
+    await expect(intern.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
+    await expect(intern.getByRole("button", { name: "Share with intern" })).toHaveCount(0);
+  });
+
+  test("TC-PEOPLE-06 only a super_admin edits the criteria", { tag: ["@area-people"], annotation: major }, async ({ asRole, db }) => {
+    await db.from("people_interns").insert({ email: USERS.contractor.email, discipline: "marketing", required_hours: 50, supervisor_email: USERS.member.email });
+    for (const role of ["member", "contractor"] as const) {
+      const page = await asRole(role);
+      await page.goto("/people/criteria");
+      await expect(page).not.toHaveURL(/\/people\/criteria/);
+    }
   });
 });
