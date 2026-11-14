@@ -321,6 +321,8 @@ export const TABLES: TableCase[] = [
     make: (t) => ({ evaluation_id: uuidFor(t, 6), criterion_id: uuidFor(t, 7), score: 3 }),
     patch: { comment: "changed" },
     allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: ADMIN },
+  },
+
   // --- Strategy worksheets (0022): the `strategy` section; members yes by default -----
   {
     table: "strategy_worksheets", key: ["id"],

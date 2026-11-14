@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { buildVCard, cardUrl, parseSource, vcardFileName } from "@/lib/cards";
 import { getPublicCard, recordCardEvent, requestOrigin } from "../data";
 
 // PUBLIC — "Save contact": returns the card as a vCard 3.0 file.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 10;
 
 export async function GET(request: Request, props: { params: Promise<{ token: string }> }) {
   const params = await props.params;
@@ -12,10 +13,14 @@ export async function GET(request: Request, props: { params: Promise<{ token: st
   if (!card) return new NextResponse("Not found", { status: 404 });
 
   const source = parseSource(new URL(request.url).searchParams.get("s"));
-  await recordCardEvent(card.token, "save_contact", {
-    source,
-    userAgent: request.headers.get("user-agent"),
-  });
+  const userAgent = request.headers.get("user-agent");
+  // Analytics never delays the download: on Vercel, after() runs via waitUntil.
+  after(() =>
+    recordCardEvent(card.token, "save_contact", {
+      source,
+      userAgent,
+    })
+  );
 
   const vcf = buildVCard(card, cardUrl(await requestOrigin(request), card.token));
   return new NextResponse(vcf, {

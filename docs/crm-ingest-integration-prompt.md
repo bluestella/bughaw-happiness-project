@@ -110,14 +110,22 @@ Notes on the metadata block:
 
 ### Responses
 
+Every response body also carries a `requestId` (and an `X-Request-Id` header);
+errors carry a machine-readable `code`. Branch on status and `code`, never on
+`message`. Send `x-request-id` yourself to have it echoed. Full contract and the
+recommended client: [api-consumer-update-prompt.md](api-consumer-update-prompt.md).
+
 | Status | Body | Meaning |
 |---|---|---|
-| `200` | `{"message": "...", "status": "ok"}` | Recorded |
-| `200` | `{"message": "...", "status": "dropped"}` | Honeypot hit, deliberately not stored |
-| `400` | `{"message": "Validation failed.", "details": {"<field>": "<reason>"}}` | Payload failed the CRM's copy of this site's own rules |
-| `401` | `{"message": "Unauthorized."}` | Missing or wrong secret |
-| `429` | `{"message": "Too many submissions. Try again in a minute."}` | This secret passed its per-minute limit (60 by default). Log it; do not retry in a loop |
-| `500` | `{"message": "Could not record the submission."}` | CRM-side problem |
+| `200` | `{"message": "...", "status": "ok", "requestId": "..."}` | Recorded |
+| `200` | `{"message": "...", "status": "dropped", "requestId": "..."}` | Honeypot hit, deliberately not stored |
+| `400` | `{"message": "Validation failed.", "code": "validation_failed", "details": {"<field>": "<reason>"}}` | Payload failed the CRM's copy of this site's own rules |
+| `400` | `{"code": "invalid_json", ...}` | Body was not a JSON object |
+| `401` | `{"message": "Unauthorized.", "code": "unauthorized"}` | Missing or wrong secret |
+| `413` | `{"code": "payload_too_large", ...}` | Body over 64 KiB |
+| `415` | `{"code": "unsupported_media_type", ...}` | `Content-Type` was not `application/json` |
+| `429` | `{"message": "Too many submissions. Try again in a minute.", "code": "rate_limited"}` | This secret passed its per-minute limit (60 by default). Log it; do not retry in a loop |
+| `500` | `{"message": "Could not record the submission.", "code": "internal_error"}` | CRM-side problem |
 
 The CRM enforces the **same validation rules as this site** (min/max lengths, the
 `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` email regex). A `400` therefore means the two

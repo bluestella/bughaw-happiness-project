@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { cardUrl, parseSource } from "@/lib/cards";
 import { appleWalletConfig, buildApplePass } from "@/lib/wallet";
 import { getPublicCard, recordCardEvent, requestOrigin } from "../../data";
@@ -7,6 +7,7 @@ import { getPublicCard, recordCardEvent, requestOrigin } from "../../data";
 // 404 until APPLE_* env vars are configured (see .env.example).
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 10;
 
 async function fetchAsset(origin: string, path: string): Promise<Buffer> {
   const res = await fetch(`${origin}${path}`, { cache: "force-cache" });
@@ -41,10 +42,14 @@ export async function GET(request: Request, props: { params: Promise<{ token: st
     return new NextResponse("Wallet pass unavailable", { status: 503 });
   }
 
-  await recordCardEvent(card.token, "wallet_apple", {
-    source: parseSource(new URL(request.url).searchParams.get("s")),
-    userAgent: request.headers.get("user-agent"),
-  });
+  const userAgent = request.headers.get("user-agent");
+  // Analytics never delays the download: on Vercel, after() runs via waitUntil.
+  after(() =>
+    recordCardEvent(card.token, "wallet_apple", {
+      source: parseSource(new URL(request.url).searchParams.get("s")),
+      userAgent,
+    })
+  );
 
   return new NextResponse(new Uint8Array(pkpass), {
     status: 200,

@@ -130,6 +130,7 @@ is right. **Never "fix" a permission bug in TypeScript only.**
       grants EXECUTE to PUBLIC by default, and Supabase also grants anon.
 - [ ] Role guards are null-safe: `if current_user_role() is distinct from
       'super_admin'`, never `<>` (a NULL role must be refused).
+- [ ] Route handlers follow [api.md](api.md): one error shape with `code`, size-capped JSON reads, errcode-based DB error mapping, same-origin checks on browser POSTs, no PII in logs.
 - [ ] Anything reachable without login (`/c/*`, `/api/crm/ingest`) reads only through
       a security-definer function returning display-safe columns. No anon
       table policies.
