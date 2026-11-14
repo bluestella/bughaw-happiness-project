@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { KeyRound } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/utils/supabase/role";
+import { getAccess, getSupabase, getSessionUser } from "@/lib/session";
 import { canManageAccess } from "@/lib/permissions";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { AccessManager, type AccessSnapshot } from "./AccessManager";
@@ -17,13 +16,12 @@ export const metadata: Metadata = {
 const EMPTY: AccessSnapshot = { sections: [], defaults: [], overrides: [], people: [] };
 
 export default async function AccessPage() {
-  const supabase = await createClient();
-  const role = await getCurrentUserRole(supabase);
+  const [supabase, { role }] = await Promise.all([getSupabase(), getAccess()]);
   if (!canManageAccess(role)) redirect("/");
 
-  const [{ data, error }, { data: userData }] = await Promise.all([
+  const [{ data, error }, user] = await Promise.all([
     supabase.rpc("admin_get_section_access"),
-    supabase.auth.getUser(),
+    getSessionUser(),
   ]);
 
   return (
@@ -37,7 +35,7 @@ export default async function AccessPage() {
       <AccessManager
         initial={(data as AccessSnapshot | null) ?? EMPTY}
         loadError={error?.message ?? null}
-        selfEmail={userData.user?.email?.toLowerCase() ?? null}
+        selfEmail={user?.email?.toLowerCase() ?? null}
       />
     </div>
   );

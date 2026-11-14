@@ -1,31 +1,39 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/utils/supabase/role";
+import { getAccess, getSessionUser, getSupabase } from "@/lib/session";
 import type { Task } from "@/lib/tasks";
 import { Board } from "./Board";
 
 export const dynamic = "force-dynamic";
+
+/** Shared by generateMetadata and the page so each row is read once per request. */
+const getMiniProject = cache(async (projectId: string, miniProjectId: string) => {
+  const supabase = await getSupabase();
+  const { data } = await supabase
+    .from("mini_projects")
+    .select("id, project_id, name, description")
+    .eq("id", miniProjectId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  return data;
+});
+
+const getProjectName = cache(async (projectId: string) => {
+  const supabase = await getSupabase();
+  const { data } = await supabase.from("projects").select("id, name").eq("id", projectId).maybeSingle();
+  return data;
+});
 
 export async function generateMetadata(
   props: {
     params: Promise<{ projectId: string; miniProjectId: string }>;
   }
 ): Promise<Metadata> {
-  const params = await props.params;
-  const supabase = await createClient();
-  const [{ data: miniProject }, { data: project }] = await Promise.all([
-    supabase
-      .from("mini_projects")
-      .select("id, project_id, name")
-      .eq("id", params.miniProjectId)
-      .eq("project_id", params.projectId)
-      .maybeSingle(),
-    supabase
-      .from("projects")
-      .select("id, name")
-      .eq("id", params.projectId)
-      .maybeSingle(),
+  const { projectId, miniProjectId } = await props.params;
+  const [miniProject, project] = await Promise.all([
+    getMiniProject(projectId, miniProjectId),
+    getProjectName(projectId),
   ]);
   const boardName = miniProject?.name ?? "Board";
   const parentName = project?.name ?? "Project";
@@ -41,41 +49,36 @@ export default async function MiniProjectPage(
   }
 ) {
   const params = await props.params;
-  const supabase = await createClient();
-  const [{ data: miniProject }, role, userRes] = await Promise.all([
-    supabase
-      .from("mini_projects")
-      .select("id, project_id, name, description")
-      .eq("id", params.miniProjectId)
-      .eq("project_id", params.projectId)
-      .maybeSingle(),
-    getCurrentUserRole(supabase),
-    supabase.auth.getUser(),
-  ]);
-
-  if (!miniProject) notFound();
-
+  const supabase = await getSupabase();
+  const { projectId, miniProjectId } = params;
+  // One round trip: every query is keyed by the URL. If the board is not in
+  // this project, getMiniProject returns null and the page 404s.
   const [
-    { data: project },
+    miniProject,
+    project,
+    access,
+    user,
     { data: tasks },
     { data: mpContributors },
     { data: projectContributors },
   ] = await Promise.all([
-    supabase.from("projects").select("id, name").eq("id", miniProject.project_id).maybeSingle(),
+    getMiniProject(projectId, miniProjectId),
+    getProjectName(projectId),
+    getAccess(),
+    getSessionUser(),
     supabase
       .from("tasks")
       .select("*")
-      .eq("mini_project_id", miniProject.id)
+      .eq("mini_project_id", miniProjectId)
       .order("position", { ascending: true }),
     supabase
       .from("mini_project_contributors")
       .select("user_email, added_by_email")
-      .eq("mini_project_id", miniProject.id),
-    supabase
-      .from("project_contributors")
-      .select("user_email")
-      .eq("project_id", miniProject.project_id),
+      .eq("mini_project_id", miniProjectId),
+    supabase.from("project_contributors").select("user_email").eq("project_id", projectId),
   ]);
+
+  if (!miniProject) notFound();
 
   return (
     <Board
@@ -84,8 +87,8 @@ export default async function MiniProjectPage(
       initialTasks={(tasks ?? []) as Task[]}
       initialScopedContributors={mpContributors ?? []}
       inheritedContributorEmails={(projectContributors ?? []).map((c) => c.user_email)}
-      role={role}
-      userEmail={userRes.data.user?.email ?? ""}
+      role={access.role}
+      userEmail={user?.email ?? ""}
     />
   );
 }

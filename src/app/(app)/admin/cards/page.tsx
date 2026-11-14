@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { IdCard } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/utils/supabase/role";
+import { getAccess, getSupabase } from "@/lib/session";
 import { canManageCards } from "@/lib/permissions";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import type { BusinessCard, RollupRow } from "@/lib/cards";
@@ -20,8 +19,7 @@ export const metadata: Metadata = {
 const ROLLUP_DAYS = 90;
 
 export default async function CardsAdminPage() {
-  const supabase = await createClient();
-  const role = await getCurrentUserRole(supabase);
+  const [supabase, { role }] = await Promise.all([getSupabase(), getAccess()]);
   if (!canManageCards(role)) redirect("/tasks");
 
   const [cardsRes, rollupRes] = await Promise.all([

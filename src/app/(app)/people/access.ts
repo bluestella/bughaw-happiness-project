@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { getAccess, getSessionUser, getSupabase } from "@/lib/session";
 import { canSee, landingPath } from "@/lib/access";
 import { INTERN_COLUMNS, type InternRow } from "@/lib/people";
 
@@ -11,14 +10,15 @@ import { INTERN_COLUMNS, type InternRow } from "@/lib/people";
  * tell us which role they play here.
  */
 export async function requirePeople() {
-  const supabase = await createClient();
-  const access = await getCurrentUserAccess(supabase);
+  const supabase = await getSupabase();
+  // The profile read runs alongside the access check; RLS scopes what it returns.
+  const [access, user, { data }] = await Promise.all([
+    getAccess(),
+    getSessionUser(),
+    supabase.from("people_interns").select(INTERN_COLUMNS).order("full_name"),
+  ]);
   if (!canSee(access, "people")) redirect(landingPath(access));
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   const email = (user?.email ?? "").toLowerCase();
-  const { data } = await supabase.from("people_interns").select(INTERN_COLUMNS).order("full_name");
   const profiles = (data ?? []) as unknown as InternRow[];
   const isAdmin = access.role === "super_admin";
   const own = profiles.find((p) => p.email.toLowerCase() === email && p.is_active) ?? null;

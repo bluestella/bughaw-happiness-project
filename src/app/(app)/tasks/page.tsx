@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FolderKanban } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/utils/supabase/role";
+import { getAccess, getSupabase } from "@/lib/session";
 import { canCreateProject } from "@/lib/permissions";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { NewProjectForm } from "./NewProjectForm";
@@ -16,13 +15,14 @@ export const metadata: Metadata = {
 };
 
 export default async function TasksPage() {
-  const supabase = await createClient();
-  const role = await getCurrentUserRole(supabase);
-
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("id, name, description, created_by_email, created_at")
-    .order("created_at", { ascending: true });
+  const supabase = await getSupabase();
+  const [{ role }, { data: projects }] = await Promise.all([
+    getAccess(),
+    supabase
+      .from("projects")
+      .select("id, name, description, created_by_email, created_at")
+      .order("created_at", { ascending: true }),
+  ]);
 
   return (
     <div>

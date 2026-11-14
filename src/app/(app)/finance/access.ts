@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { getAccess, getSupabase } from "@/lib/session";
 import { canSee, landingPath } from "@/lib/access";
 
 /**
@@ -8,8 +7,7 @@ import { canSee, landingPath } from "@/lib/access";
  * 'finance' section (off by default for members and contractors); RLS is the real boundary.
  */
 export async function requireFinance() {
-  const supabase = await createClient();
-  const access = await getCurrentUserAccess(supabase);
+  const [supabase, access] = await Promise.all([getSupabase(), getAccess()]);
   if (!canSee(access, "finance")) redirect(landingPath(access));
   return { supabase, role: access.role, isAdmin: access.role === "super_admin" };
 }

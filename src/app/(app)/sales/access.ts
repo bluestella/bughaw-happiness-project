@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserAccess } from "@/utils/supabase/access";
+import { getAccess, getSessionUser, getSupabase } from "@/lib/session";
 import { canSee, landingPath } from "@/lib/access";
 
 /**
@@ -9,11 +8,7 @@ import { canSee, landingPath } from "@/lib/access";
  * is the real boundary.
  */
 export async function requireSales() {
-  const supabase = await createClient();
-  const access = await getCurrentUserAccess(supabase);
+  const [supabase, access, user] = await Promise.all([getSupabase(), getAccess(), getSessionUser()]);
   if (!canSee(access, "sales")) redirect(landingPath(access));
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   return { supabase, access, role: access.role, email: user?.email ?? null, canSeeCrm: canSee(access, "crm") };
 }

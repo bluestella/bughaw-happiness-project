@@ -114,10 +114,10 @@ src/
     pricing.ts                  # Volume price tiers: priceForQty, unitsToNextTier (pure; used by calculators, later by quotes)
     useAppState.ts              # Shared team JSONB state hook (debounced upsert)
     supabase/{client,server}.ts # Re-exports of utils/supabase (import from here)
+    session.ts                  # Server components: cached getSupabase/getSessionUser/getAccess (one per request)
     tools.ts                    # TOOLS nav registry
   utils/supabase/
     client.ts, server.ts, middleware.ts   # @supabase/ssr client factories
-    role.ts                     # getCurrentUserRole() → RPC current_user_role()
     access.ts                   # getCurrentUserAccess() → RPC current_user_access()
 supabase/migrations/
   0001_init.sql                 # Allowlist, signup trigger, workspace tables, RLS
@@ -308,9 +308,15 @@ Deploy: Vercel, auto from `main`. CI must be green.
   and report status, and CRM leads. Super_admin read only; see docs/security.md §11.
 - **Open advisory:** `passkit-generator` / `joi` (Wallet passes, dormant) report high
   advisories whose fix is a major change (docs/security.md §11).
-- **Middleware runs an RPC per request** (`current_user_role`) for signed-in users —
-  a known latency cost; if it becomes a problem, cache the role in the JWT
-  (custom claims) rather than trusting a client-stored value.
+- **Auth cost per request.** The proxy verifies the session with `getClaims()` (a local
+  JWT check with asymmetric signing keys; a symmetric secret falls back to one Auth-server
+  call) and runs one `current_user_access()` RPC. Server components get the user and
+  access only through `src/lib/session.ts`, whose React `cache()` gives one check and one
+  RPC per render however many components ask. Don't call `auth.getUser()` or
+  `getCurrentUserAccess()` directly in pages; that brings back the sequential waterfall.
+  To go further, put the access in a JWT custom claim; never trust a client-stored value.
+  Switching the Supabase project to asymmetric JWT signing keys (dashboard → JWT keys)
+  removes the remaining Auth-server round trip.
 - **`task_comments` is append-only by design** (no update/delete policies).
 - **Signup allowlist trigger** raises inside `auth.users` insert, which Supabase
   surfaces as a generic "Database error saving new user" — the login page maps this

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/utils/supabase/role";
+import { getAccess, getSupabase } from "@/lib/session";
 import { canManageAllowlist } from "@/lib/permissions";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { AllowlistManager, type AllowedEmailRow } from "./AllowlistManager";
@@ -15,8 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AllowlistPage() {
-  const supabase = await createClient();
-  const role = await getCurrentUserRole(supabase);
+  const [supabase, { role }] = await Promise.all([getSupabase(), getAccess()]);
 
   if (!canManageAllowlist(role)) redirect("/tasks");
 

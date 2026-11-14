@@ -42,10 +42,17 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 }
 
 export async function proxy(request: NextRequest) {
-  const { supabase, response } = createClient(request);
+  const { supabase, getResponse } = createClient(request);
+
+  /** A redirect that keeps any session cookies refreshed during this request. */
+  const redirect = (url: URL) => {
+    const res = NextResponse.redirect(url);
+    for (const cookie of getResponse().cookies.getAll()) res.cookies.set(cookie);
+    return applySecurityHeaders(res);
+  };
 
   if (!supabase) {
-    return applySecurityHeaders(response);
+    return applySecurityHeaders(getResponse());
   }
 
   const { pathname } = request.nextUrl;
@@ -53,23 +60,28 @@ export async function proxy(request: NextRequest) {
   if (matchesPublic(pathname) && pathname !== "/login") {
     if (pathname.startsWith(PUBLIC_CARD_PREFIX)) {
       // Cards are shared by link/QR, never discovered via search engines.
+      const response = getResponse();
       response.headers.set("X-Robots-Tag", "noindex, nofollow");
+      return applySecurityHeaders(response);
     }
-    return applySecurityHeaders(response);
+    return applySecurityHeaders(getResponse());
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() refreshes an expiring session (writing the new cookies onto
+  // the response) and verifies the JWT. With asymmetric signing keys that check
+  // is local, so the common request makes no Auth-server round trip; with a
+  // symmetric secret it falls back to the same call getUser() makes.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const signedIn = Boolean(claimsData?.claims?.sub);
 
   const isLoginPath = pathname === "/login";
 
-  if (!user) {
-    if (isLoginPath) return applySecurityHeaders(response);
+  if (!signedIn) {
+    if (isLoginPath) return applySecurityHeaders(getResponse());
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
-    return applySecurityHeaders(NextResponse.redirect(url));
+    return redirect(url);
   }
 
   // Role + visible sections in one RPC. The rules live in the DB
@@ -81,7 +93,7 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = landingPath(access);
     url.search = "";
-    return applySecurityHeaders(NextResponse.redirect(url));
+    return redirect(url);
   }
 
   const redirectTo = routeRedirect(pathname, access);
@@ -89,10 +101,10 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = redirectTo;
     url.search = "";
-    return applySecurityHeaders(NextResponse.redirect(url));
+    return redirect(url);
   }
 
-  return applySecurityHeaders(response);
+  return applySecurityHeaders(getResponse());
 }
 
 export const config = {
