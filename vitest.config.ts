@@ -6,6 +6,7 @@ import path from "path";
 // middleware, and Supabase client wrappers are integration glue and are
 // intentionally excluded — see docs on the 95% coverage gate.
 const COVERAGE_INCLUDE = [
+  "src/lib/api/**/*.ts",
   "src/lib/calculators/**/*.ts",
   "src/lib/chartTheme.ts",
   "src/lib/cn.ts",

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { cardUrl, parseSource } from "@/lib/cards";
 import {
   googleWalletConfig,
@@ -12,6 +12,7 @@ import { getPublicCard, recordCardEvent, requestOrigin } from "../../data";
 // 404 until GOOGLE_WALLET_* env vars are configured (see .env.example).
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 10;
 
 export async function GET(request: Request, props: { params: Promise<{ token: string }> }) {
   const params = await props.params;
@@ -39,10 +40,14 @@ export async function GET(request: Request, props: { params: Promise<{ token: st
     return new NextResponse("Wallet pass unavailable", { status: 503 });
   }
 
-  await recordCardEvent(card.token, "wallet_google", {
-    source: parseSource(new URL(request.url).searchParams.get("s")),
-    userAgent: request.headers.get("user-agent"),
-  });
+  const userAgent = request.headers.get("user-agent");
+  // Analytics never delays the download: on Vercel, after() runs via waitUntil.
+  after(() =>
+    recordCardEvent(card.token, "wallet_google", {
+      source: parseSource(new URL(request.url).searchParams.get("s")),
+      userAgent,
+    })
+  );
 
   return NextResponse.redirect(googleWalletSaveUrl(jwt), {
     status: 302,
