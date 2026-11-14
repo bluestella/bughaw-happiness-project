@@ -22,16 +22,18 @@ first. Deeper detail lives in the child docs under [`docs/`](docs/):
 ## 1. What this app is
 
 An **internal, invite-only web app for Bughaw Innovations** (a Philippine startup
-selling sustainable coconut-coir slippers/amenities to hotels). Two halves:
+selling sustainable coconut-coir slippers/amenities to hotels). It covers:
 
-1. **Calculators & tools** — unit economics, go-to-market, forecasting math, plus four
-   migrated interactive tools (Pipeline mini-CRM, Unit Cost Calculator, Unit Economics
-   Simulator, P&L Machine). All money is **₱ PHP, `en-PH` locale**.
+1. **Calculators & tools** — unit economics, go-to-market, forecasting math, plus six
+   interactive tools (Pipeline Simulator, Unit Cost Calculator, Unit Economics
+   Simulator, P&L Machine, Funding & Investor Ask, QR Studio). All money is **₱ PHP, `en-PH` locale**.
 2. **Task management** — projects → mini-projects → kanban task boards, with a
    three-tier role system (`super_admin` / `member` / `contractor`).
 3. **CRM** — leads from the public marketing site (bughawinnovations.ph), deduped
    into accounts/contacts and worked on a funnel board. Field-level provenance for
    every CRM column lives in [`FORMS_AUDIT.md`](FORMS_AUDIT.md).
+4. **Operations** — Sales (quotations, orders, stock), Production and R&D, People
+   (intern logs, reports, evaluations), Finance, and Strategy worksheets, each its own section.
 
 **Login is required for the entire app.** Signups are invite-only via a DB allowlist.
 The only public surfaces are `/login`, `/auth/*`, the secret-authed CRM ingest, and
@@ -62,7 +64,7 @@ src/
       page.tsx                  # Dashboard (calculator grid)
       saved/page.tsx            # Browse team-shared saved calculations
       calculators/[category]/[calculatorId]/page.tsx   # Config-driven calculators
-      tools/{pipeline,cost-calculator,unit-economics,pnl,qr-studio}/page.tsx  # Migrated tools
+      tools/{pipeline,cost-calculator,unit-economics,pnl,funding,qr-studio}/page.tsx  # Interactive tools
       tasks/                    # Task management
         page.tsx                # Project list
         NewProjectForm.tsx
@@ -72,7 +74,6 @@ src/
       finance/                  # Cash, expenses, budget (section `finance`, off by default for non-admins)
       people/                   # Intern logs, weekly reports, review, overview, interns, evaluations, criteria (section `people`)
       strategy/                 # Strategy worksheets: six saved frameworks (section `strategy`)
-      people/                   # Intern logs, weekly reports, review, overview, interns (section `people`)
       sales/                    # Quotations, orders, stock, products (section `sales`)
       crm/                      # CRM
         page.tsx                # Funnel board + all-leads table
@@ -127,6 +128,7 @@ supabase/migrations/
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
   0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
+  0021_crm_ingest_hardening.sql   # CRM ingest: secret stored only as a SHA-256 hash; per-secret rate limit (HTTP 429)
   0022_strategy_worksheets.sql   # Strategy worksheets: one JSON document per worksheet, `strategy` section (members yes), super_admin deletes
   0023_production_rd.sql         # Production: supplier lots, batches (super_admin completes: adds good pairs to stock, locks), material tests; `production` section
   0020_finance.sql                # Finance: categories, expenses (void, never delete), cash snapshots, monthly budgets; section off by default
@@ -162,8 +164,9 @@ Three roles stored on `public.allowed_emails.role`, read via the security-define
 `current_user_role()` (the allowlist table itself has RLS with **no policies** — only
 service role can touch it):
 
-**Which sections a person sees is data, not code (0010).** Sections are CRM,
-Projects & boards, Calculators, Saved calculations, plus each Tool page. Each role
+**Which sections a person sees is data, not code (0010).** Sections are CRM, Sales,
+Production, People, Finance, Strategy, Projects & boards, Calculators, Saved
+calculations, plus each Tool page (the list lives in `SECTIONS`, `src/lib/access.ts`). Each role
 has editable defaults, and a super_admin can allow or deny any section for one
 person at `/admin/access`. Effective = super_admin → all; else override ?? role
 default ?? none. It is enforced by the middleware (redirect), the nav (hidden) and
@@ -276,9 +279,9 @@ npm run e2e:perf   # Performance baseline on a production build
 ```
 
 Supabase setup: run every file in `supabase/migrations/` in numeric order
-(`0001_init.sql` … `0020_finance.sql`) in the SQL editor (0003 has an
-ACTION REQUIRED header: insert an ingest secret before the marketing site can post
-leads). **Edit the `allowed_emails` inserts and
+(from `0001_init.sql` to the highest number) in the SQL editor. Then insert the
+CRM ingest secret's hash with the snippet in 0021's header, or the marketing site
+can't post leads. **Edit the `allowed_emails` inserts and
 role updates first** — that table is the invite list and role assignment.
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is accepted as a fallback name for the anon key.
 
@@ -312,7 +315,7 @@ Deploy: Vercel, auto from `main`. CI must be green.
 - **Signup allowlist trigger** raises inside `auth.users` insert, which Supabase
   surfaces as a generic "Database error saving new user" — the login page maps this
   to a friendly invite-only message; keep that mapping if you touch signup.
-- No E2E/integration tests, no error tracking (Sentry), no rate limiting — see
+- No error tracking (Sentry), and no rate limiting outside the CRM ingest — see
   docs/testing.md and docs/security.md for the recommended order of improvement.
 
 <!-- BEGIN:nextjs-agent-rules -->
