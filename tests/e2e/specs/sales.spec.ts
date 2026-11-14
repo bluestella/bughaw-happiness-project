@@ -14,10 +14,12 @@ test.describe("sales", () => {
     await admin.getByLabel("Name", { exact: true }).fill("[e2e] Coir slipper");
     await admin.getByRole("button", { name: "Add product" }).click();
     await expect(admin.getByText("Product added.")).toBeVisible();
-    await admin.getByLabel("From quantity").fill("10");
-    await admin.getByLabel("Price per pair (₱)").fill("120");
-    await admin.getByRole("button", { name: "Add tier" }).click();
-    await expect(admin.getByText("From 10 pairs")).toBeVisible();
+    // Scope to this product's card: other specs create products on the same page in parallel.
+    const card = admin.getByRole("listitem").filter({ hasText: "E2E-SLIP" });
+    await card.getByLabel("From quantity").fill("10");
+    await card.getByLabel("Price per pair (₱)").fill("120");
+    await card.getByRole("button", { name: "Add tier" }).click();
+    await expect(card.getByText("From 10 pairs")).toBeVisible();
 
     await admin.goto("/sales/stock");
     await admin.getByRole("combobox", { name: "Product" }).selectOption({ label: "[e2e] Coir slipper" });

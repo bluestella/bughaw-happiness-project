@@ -134,8 +134,10 @@ export function Sidebar({
     }
     const showCrm = canSee(access, "crm");
     const showSales = canSee(access, "sales");
+    const showProduction = canSee(access, "production");
     const showPeople = canSee(access, "people");
     const showFinance = canSee(access, "finance");
+    const showStrategy = canSee(access, "strategy");
     const showTasks = canSee(access, "tasks");
     const tools = TOOLS.filter((t) => {
       const key = toolSection(t.id);
@@ -191,6 +193,21 @@ export function Sidebar({
             </>
           )}
 
+          {showProduction && (
+            <>
+              <SectionLabel>Production</SectionLabel>
+              <NavLink href="/production" iconKey="factory" onNavigate={onNavigate} pathname={pathname}>
+                Batches
+              </NavLink>
+              <NavLink href="/production/lots" iconKey="package" onNavigate={onNavigate} pathname={pathname}>
+                Supplier lots
+              </NavLink>
+              <NavLink href="/production/tests" iconKey="flask-conical" onNavigate={onNavigate} pathname={pathname}>
+                Material tests
+              </NavLink>
+            </>
+          )}
+
           {showPeople && (
             <>
               <SectionLabel>People</SectionLabel>
@@ -205,6 +222,15 @@ export function Sidebar({
               <SectionLabel>Finance</SectionLabel>
               <NavLink href="/finance" iconKey="wallet" onNavigate={onNavigate} pathname={pathname}>
                 Cash and spending
+              </NavLink>
+            </>
+          )}
+
+          {showStrategy && (
+            <>
+              <SectionLabel>Strategy</SectionLabel>
+              <NavLink href="/strategy" iconKey="compass" onNavigate={onNavigate} pathname={pathname}>
+                Worksheets
               </NavLink>
             </>
           )}

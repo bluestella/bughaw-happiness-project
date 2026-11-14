@@ -292,21 +292,50 @@ export type Database = {
           },
         ]
       }
+      crm_ingest_rate: {
+        Row: {
+          n: number
+          name: string
+          window_start: string
+        }
+        Insert: {
+          n?: number
+          name: string
+          window_start: string
+        }
+        Update: {
+          n?: number
+          name?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_ingest_rate_name_fkey"
+            columns: ["name"]
+            isOneToOne: false
+            referencedRelation: "crm_ingest_secrets"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
       crm_ingest_secrets: {
         Row: {
           created_at: string
+          max_per_minute: number
           name: string
-          secret: string
+          secret_hash: string
         }
         Insert: {
           created_at?: string
+          max_per_minute?: number
           name: string
-          secret: string
+          secret_hash: string
         }
         Update: {
           created_at?: string
+          max_per_minute?: number
           name?: string
-          secret?: string
+          secret_hash?: string
         }
         Relationships: []
       }
@@ -623,6 +652,69 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "fin_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_tests: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          created_by_email: string
+          id: string
+          lot_id: string | null
+          material: string
+          method: string | null
+          notes: string | null
+          outcome: string
+          result: string
+          test_name: string
+          tested_on: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          lot_id?: string | null
+          material: string
+          method?: string | null
+          notes?: string | null
+          outcome: string
+          result: string
+          test_name: string
+          tested_on: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          lot_id?: string | null
+          material?: string
+          method?: string | null
+          notes?: string | null
+          outcome?: string
+          result?: string
+          test_name?: string
+          tested_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_tests_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_tests_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_lots"
             referencedColumns: ["id"]
           },
         ]
@@ -1061,6 +1153,65 @@ export type Database = {
             columns: ["crm_account_id"]
             isOneToOne: false
             referencedRelation: "crm_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batches: {
+        Row: {
+          batch_no: string
+          completed_at: string | null
+          created_at: string
+          created_by_email: string
+          id: string
+          labor_hours: number
+          made_on: string
+          notes: string | null
+          product_id: string
+          qty_made: number
+          qty_rejected: number
+          status: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          batch_no: string
+          completed_at?: string | null
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          labor_hours?: number
+          made_on: string
+          notes?: string | null
+          product_id: string
+          qty_made: number
+          qty_rejected?: number
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_no?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          labor_hours?: number
+          made_on?: string
+          notes?: string | null
+          product_id?: string
+          qty_made?: number
+          qty_rejected?: number
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sales_products"
             referencedColumns: ["id"]
           },
         ]
@@ -1641,6 +1792,81 @@ export type Database = {
           },
         ]
       }
+      strategy_worksheets: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          data: Json
+          id: string
+          kind: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          data?: Json
+          id?: string
+          kind?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      supplier_lots: {
+        Row: {
+          created_at: string
+          created_by_email: string
+          id: string
+          lot_no: string
+          material: string
+          notes: string | null
+          quantity: number
+          received_on: string
+          supplier: string
+          total_cost: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          lot_no: string
+          material: string
+          notes?: string | null
+          quantity: number
+          received_on: string
+          supplier: string
+          total_cost?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_email?: string
+          id?: string
+          lot_no?: string
+          material?: string
+          notes?: string | null
+          quantity?: number
+          received_on?: string
+          supplier?: string
+          total_cost?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       task_comments: {
         Row: {
           author_email: string
@@ -2035,4 +2261,3 @@ export const Constants = {
     },
   },
 } as const
-

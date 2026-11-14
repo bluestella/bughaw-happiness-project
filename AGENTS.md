@@ -68,8 +68,11 @@ src/
         NewProjectForm.tsx
         [projectId]/            # Project detail (mini-projects + contributors)
         [projectId]/[miniProjectId]/   # Kanban Board.tsx + TaskPanel.tsx
+      production/                # Batches, supplier lots, material tests (section `production`)
       finance/                  # Cash, expenses, budget (section `finance`, off by default for non-admins)
       people/                   # Intern logs, weekly reports, review, overview, interns, evaluations, criteria (section `people`)
+      strategy/                 # Strategy worksheets: six saved frameworks (section `strategy`)
+      people/                   # Intern logs, weekly reports, review, overview, interns (section `people`)
       sales/                    # Quotations, orders, stock, products (section `sales`)
       crm/                      # CRM
         page.tsx                # Funnel board + all-leads table
@@ -90,6 +93,8 @@ src/
     calculators/types.ts        # CalculatorConfig, InputField, ChartSpec, CATEGORIES
     calculators/registry.ts     # ALL_CALCULATORS + lookup helpers
     calculators/configs/*.ts    # 26 calculator definitions (pure, declarative); startup.ts = Wave 2 planning tools
+    strategy.ts                 # Strategy worksheets: Five Forces, Three Horizons, scorecard, RICE, nine-box, Sean Ellis (pure; mirrors 0022)
+    production.ts               # Production: batch yield and cost per pair, lot unit cost, test pass rate, form validation, CSV (pure; mirrors 0023)
     finance.ts                  # Finance: months, budget vs actual, burn and runway, expense validation, CSV (pure; mirrors 0020)
     evaluations.ts              # Intern evaluations: rubric, scores, averages, form validation, score diff (pure; mirrors 0024)
     people.ts                   # People: weeks, hours progress, edit window, report flow, row types (pure; mirrors 0018)
@@ -122,6 +127,8 @@ supabase/migrations/
   0009_digital_cards.sql        # Cards, events, public RPCs, admin rollup
   0010_section_access.sql       # Page access: sections, role defaults, per-user overrides, has_section() RLS
   0013_crm_nulls_and_owner_fk.sql # CRM: NULL (not '') for absent values; crm_leads.owner_email FK → allowed_emails
+  0022_strategy_worksheets.sql   # Strategy worksheets: one JSON document per worksheet, `strategy` section (members yes), super_admin deletes
+  0023_production_rd.sql         # Production: supplier lots, batches (super_admin completes: adds good pairs to stock, locks), material tests; `production` section
   0020_finance.sql                # Finance: categories, expenses (void, never delete), cash snapshots, monthly budgets; section off by default
   0019_hardening_audit.sql        # Team-directory role guard, contributor email validation, audit_log + triggers
   0024_intern_evaluations.sql     # Evaluations: editable rubric, score per criterion, draft -> shared (final, locked); no self-evaluation
@@ -286,11 +293,12 @@ Deploy: Vercel, auto from `main`. CI must be green.
   map its key in `app_state_section()`** (new migration); unmapped keys are
   super_admin-only. A new section = `app_sections` row + `role_section_defaults`
   rows + `SECTIONS` entry in `src/lib/access.ts` (the access test diffs them).
-- **The CRM ingest secret is stored in plaintext** in `crm_ingest_secrets` (a table
-  with RLS and no policies, so service-role only — same posture as
-  `allowed_emails`). Rotating it means updating that row and the marketing site's
-  env var together. `ingest_form_submission()` is the only function granted to
-  `anon`; keep it that way.
+- **The CRM ingest secret is stored only as a SHA-256 hash** (0021) in
+  `crm_ingest_secrets` (RLS, no policies, so service-role only — same posture as
+  `allowed_emails`). Nobody can read the secret back; to rotate it, write a new
+  `secret_hash` (snippet in 0021) and change the marketing site's env var together.
+  `ingest_form_submission()` is the only function granted to `anon`; keep it that way.
+  It refuses a secret over its `max_per_minute` (default 60) with HTTP 429.
 - **Contributor emails** must be on the invite list (0019); the database refuses
   anything else and lower-cases what it stores.
 - **`audit_log`** (0019) records who changed roles, page access, sales documents, interns

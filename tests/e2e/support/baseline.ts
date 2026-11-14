@@ -30,6 +30,14 @@ interface TableSpec {
 // Every table exposed by PostgREST must be listed here or in IGNORED_RELATIONS;
 // assertCoversSchema() fails the run when a migration adds an unknown table.
 export const TABLES: TableSpec[] = [
+  // Strategy worksheets (0022): no children.
+  { table: "strategy_worksheets", key: ["id"] },
+
+  // Production (0023): tests point at batches and lots (set null); batches point at products
+  // (restrict), so all three go before sales_products.
+  { table: "material_tests", key: ["id"] },
+  { table: "production_batches", key: ["id"] },
+  { table: "supplier_lots", key: ["id"] },
   // Finance (0020): expenses and budgets point at categories (restrict), so they go first.
   { table: "fin_expenses", key: ["id"] },
   { table: "fin_budgets", key: ["id"] },
@@ -73,6 +81,7 @@ export const TABLES: TableSpec[] = [
   { table: "saved_calculations", key: ["id"] },
   { table: "pipeline_accounts", key: ["id"] },
   { table: "app_state", key: ["key"] },
+  { table: "crm_ingest_rate", key: ["name", "window_start"] },
   { table: "crm_ingest_secrets", key: ["name"] },
   { table: "user_section_overrides", key: ["email", "section"] },
   { table: "role_section_defaults", key: ["role", "section"] },

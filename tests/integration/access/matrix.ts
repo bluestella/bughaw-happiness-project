@@ -95,8 +95,14 @@ export const TABLES: TableCase[] = [
   },
   {
     table: "crm_ingest_secrets", key: ["name"],
-    make: (t) => ({ name: t, secret: "access-test-secret" }),
-    patch: { secret: "changed" },
+    make: (t) => ({ name: t, secret_hash: "a".repeat(64) }),
+    patch: { max_per_minute: 7 },
+    allowed: all(NOBODY),
+  },
+  {
+    table: "crm_ingest_rate", key: ["name", "window_start"],
+    make: () => ({ name: "e2e", window_start: "2000-01-01T00:00:00Z", n: 1 }),
+    patch: { n: 2 },
     allowed: all(NOBODY),
   },
   {
@@ -315,6 +321,35 @@ export const TABLES: TableCase[] = [
     make: (t) => ({ evaluation_id: uuidFor(t, 6), criterion_id: uuidFor(t, 7), score: 3 }),
     patch: { comment: "changed" },
     allowed: { select: ADMIN, insert: ADMIN, update: ADMIN, delete: ADMIN },
+  // --- Strategy worksheets (0022): the `strategy` section; members yes by default -----
+  {
+    table: "strategy_worksheets", key: ["id"],
+    make: (t) => ({ kind: "rice", title: `[access] ${t}`, data: { items: [] } }),
+    patch: { title: "[access] changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+
+  // --- Production and R&D (0023): the `production` section; members yes by default ----
+  {
+    table: "supplier_lots", key: ["id"],
+    make: (t) => ({ lot_no: `lot-${t}`, supplier: "[access] supplier", material: "Coir", received_on: manilaToday(), quantity: 10 }),
+    patch: { unit: "m" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    table: "production_batches", key: ["id"],
+    parents: (t) => [productParent(t)],
+    make: (t) => ({ batch_no: `b-${t}`, product_id: uuidFor(t, 2), made_on: manilaToday(), qty_made: 10, qty_rejected: 1 }),
+    patch: { notes: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: TEAM, delete: ADMIN },
+  },
+  {
+    // The service-role fixture is created by nobody, so only a super_admin may edit it; a member
+    // editing their own test is proved in production-rules.itest.ts.
+    table: "material_tests", key: ["id"],
+    make: () => ({ tested_on: manilaToday(), material: "Coir", test_name: "Tear", result: "ok", outcome: "pass" }),
+    patch: { notes: "changed" },
+    allowed: { select: TEAM, insert: TEAM, update: ADMIN, delete: ADMIN },
   },
   // --- Finance (0020): off by default for members and contractors -----------------
   {

@@ -38,5 +38,8 @@ export const FUNCTIONS: Record<string, string> = {
   people_can_see_intern: "people-rules.itest.ts, through RLS",
   people_week_start: "pure date helper; holds no data",
   people_week_hours: "people-rules.itest.ts: asking about someone else's week returns 0",
+  production_no_future_date: "internal trigger function; production-rules.itest.ts proves nobody can call it",
+  production_batches_guard: "internal trigger function; production-rules.itest.ts proves nobody can call it",
+  production_batches_apply_stock: "internal trigger function; production-rules.itest.ts proves nobody can call it",
   ct_equal: "pure comparison helper; holds no data",
 };
